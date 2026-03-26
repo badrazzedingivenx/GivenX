@@ -1,0 +1,374 @@
+/* ══════════════════════════════
+   LEGAL CULTURE — Site-Consistent Theme
+   Beige / Forest Green Aesthetic
+   ══════════════════════════════ */
+
+/* ── Page Shell ── */
+.rc-page {
+  min-height: 100vh;
+  background: #f6f1e8;
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 20px 72px;
+  gap: 24px;
+}
+
+/* ── Right Tabs Panel ── */
+.rc-right-panel {
+  position: sticky;
+  top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.rc-tab {
+  background: white;
+  border: 1.5px solid #e4dfd4;
+  color: #6b7870;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  font-family: 'Tajawal', sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.rc-tab:hover {
+  color: #14532d;
+  border-color: #14532d;
+}
+
+.rc-tab.active {
+  background: #14532d;
+  border-color: #14532d;
+  color: white;
+  font-weight: 900;
+  box-shadow: 0 4px 14px rgba(20,83,45,0.2);
+}
+
+/* ── Feed ── */
+.rc-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ── Reel Wrap ── */
+.rc-reel-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+/* ── Video Player Card ── */
+.rc-player {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 20px 50px rgba(20,83,45,0.15),
+    0 4px 12px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(0,0,0,0.04);
+  flex-shrink: 0;
+}
+
+/* ── Discover Pill ── */
+.rc-discover-pill {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+  padding: 8px 22px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ── Central Illustration ── */
+.rc-illustration {
+  font-size: 100px;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
+  z-index: 1;
+}
+
+/* ── Progress Bar ── */
+.rc-progress-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 3px;
+  background: rgba(255,255,255,0.2);
+}
+
+.rc-progress-fill {
+  width: 42%;
+  height: 100%;
+  background: #d97706;
+  border-radius: 3px;
+}
+
+/* ── Bottom Overlay ── */
+.rc-bottom-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 40px 20px 20px;
+  background: linear-gradient(to top,
+    rgba(5,46,22,0.92) 0%,
+    rgba(5,46,22,0.5) 55%,
+    transparent 100%);
+  z-index: 5;
+}
+
+/* Creator Row */
+.rc-creator-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rc-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 800; color: white;
+  border: 2px solid rgba(255,255,255,0.5);
+  flex-shrink: 0;
+}
+
+.rc-creator-info { flex: 1; }
+
+.rc-creator-name {
+  display: block;
+  font-size: 14px; font-weight: 800; color: white;
+}
+
+.rc-creator-badge {
+  display: block;
+  font-size: 11px; color: #86efac;
+  margin-top: 2px;
+}
+
+.rc-follow-btn {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 800;
+  cursor: pointer; transition: .25s;
+  font-family: 'Tajawal', sans-serif;
+  white-space: nowrap;
+}
+
+.rc-follow-btn:hover,
+.rc-follow-btn.following {
+  background: #d97706;
+  border-color: #d97706;
+  color: white;
+}
+
+/* Post Text */
+.rc-post-title {
+  font-size: 17px; font-weight: 900;
+  color: white;
+  line-height: 1.4; margin-bottom: 6px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.rc-post-desc {
+  font-size: 12.5px; color: rgba(255,255,255,0.8);
+  line-height: 1.6; margin-bottom: 12px;
+}
+
+/* Tags */
+.rc-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.rc-tag {
+  background: rgba(217,119,6,0.2);
+  border: 1px solid rgba(217,119,6,0.4);
+  color: #fcd34d;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 700;
+  text-decoration: none; transition: .2s;
+}
+
+.rc-tag:hover {
+  background: #d97706;
+  color: white;
+  border-color: #d97706;
+}
+
+/* ── Side Action Buttons ── */
+.rc-side-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 40px;
+  flex-shrink: 0;
+}
+
+.rc-action {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  cursor: pointer; color: #4b6354;
+  transition: .25s;
+}
+
+.rc-action span {
+  font-size: 11px; font-weight: 800;
+  color: #4b6354;
+}
+
+.rc-action-icon {
+  width: 46px; height: 46px;
+  background: white;
+  border: 1.5px solid #e4dfd4;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #2e3b33;
+  transition: all .25s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.rc-action-icon svg { width: 18px; height: 18px; }
+
+.rc-action:hover .rc-action-icon {
+  background: #14532d;
+  border-color: #14532d;
+  color: white;
+  transform: scale(1.08);
+}
+
+.rc-action:hover span { color: #14532d; }
+
+.rc-action.active .rc-action-icon {
+  background: #14532d;
+  border-color: #14532d;
+  color: white;
+}
+
+.rc-action.active span { color: #14532d; }
+
+.rc-action-book .rc-action-icon {
+  background: #14532d;
+  border-color: #14532d;
+  color: white;
+}
+
+.rc-action-book:hover .rc-action-icon {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* ── Booking Modal ── */
+.rc-booking-overlay {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+
+.rc-booking-modal {
+  background: #0d1f0d;
+  border: 1px solid rgba(20,83,45,0.4);
+  color: white; padding: 40px;
+  border-radius: 24px; width: 390px;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+}
+
+.rc-close-btn {
+  position: absolute; top: 16px; left: 16px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.35);
+  font-size: 18px; cursor: pointer; transition: .2s;
+}
+.rc-close-btn:hover { color: white; }
+
+.rc-booking-title {
+  font-size: 20px; font-weight: 900;
+  margin-bottom: 24px; text-align: center;
+  color: #86efac;
+}
+
+.rc-booking-section { margin-bottom: 20px; }
+
+.rc-booking-label {
+  font-size: 11px; color: #86efac; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 10px; display: block;
+}
+
+.rc-days-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.rc-day-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 8px 4px;
+  text-align: center; cursor: pointer; transition: .2s;
+}
+.rc-day-card:hover,
+.rc-day-card.active { background: rgba(20,83,45,0.4); border-color: #14532d; }
+
+.rc-day-name { display: block; font-size: 9px; color: rgba(255,255,255,0.45); margin-bottom: 2px; }
+.rc-day-date { display: block; font-size: 15px; font-weight: 800; }
+
+.rc-times-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.rc-time-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: white; border-radius: 10px;
+  padding: 9px; font-size: 12.5px; cursor: pointer;
+  transition: .2s; font-family: 'Tajawal', sans-serif;
+}
+.rc-time-card:hover,
+.rc-time-card.active { background: rgba(20,83,45,0.4); border-color: #14532d; color: #86efac; }
+
+.rc-next-btn {
+  width: 100%; padding: 14px;
+  background: #14532d;
+  color: white; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 900;
+  cursor: pointer; margin-top: 8px; transition: .2s;
+  font-family: 'Tajawal', sans-serif;
+  box-shadow: 0 4px 16px rgba(20,83,45,0.3);
+}
+.rc-next-btn:hover { background: #d97706; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .rc-page { padding: 12px 8px 40px; gap: 10px; }
+  .rc-right-panel { display: none; }
+  .rc-feed { max-width: 100%; }
+}
