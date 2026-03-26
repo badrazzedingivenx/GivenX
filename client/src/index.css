@@ -1,17 +1,10 @@
-body{
-margin:0;
-font-family:Arial, sans-serif;
-background:#e8e3d8;
-direction:rtl;
+* {
+  box-sizing: border-box;
+  font-family: 'Cairo', 'Outfit', sans-serif;
 }
 
-*{
-box-sizing:border-box;
-}
-body{
-background:linear-gradient(
-180deg,
-#e8e3d8 0%,
-#f7f4ee 100%
-);
+body {
+  margin: 0;
+  direction: rtl;
+  background: #f7f3ec; /* Matches the header/home cream background */
 }

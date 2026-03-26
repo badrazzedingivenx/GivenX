@@ -71,105 +71,108 @@ const ChatBox = forwardRef((props, ref) => {
 
   return (
 
-    <div className="wrapper">
+    <div className="chat-container">
 
-      <div className="chatArea">
+      <div className="chat-messages">
 
         {messages.map((msg, i) =>
           msg.type === "user" ? (
 
-            <div key={i} className="userRow">
-
-              <div className="userBubble">
+            <div key={i} className="message-wrapper user">
+              <div className="message-bubble">
                 {msg.text}
-                <span className="msgTime">{formatTime(msg.time)}</span>
               </div>
-
-              <div className="userAvatar">
-                ر
-              </div>
-
+              <div className="user-avatar">ر</div>
             </div>
 
           ) : (
 
-            <div key={i} className="aiRow">
-
-              <div className="aiAvatar">
-                ⚖️
+            <div key={i} className="message-wrapper ai">
+              <div className="ai-avatar-circle">
+                <span className="ai-icon">⚖️</span>
               </div>
-
-              <div className="aiBubble">
-                {msg.text}
-                <span className="msgTime">{formatTime(msg.time)}</span>
+              <div className="message-bubble">
+                <div className="ai-intro">
+                  السلام عليكم! أنا المساعد القانوني لـ <b>حقي</b> 🇲🇦
+                </div>
+                <div className="ai-body">
+                  {msg.text}
+                </div>
+                <span className="msg-time">{formatTime(msg.time)}</span>
               </div>
-
             </div>
 
           )
         )}
 
-        {loading && (
-
-          <div className="aiRow">
-
-            <div className="aiAvatar">
-              ⚖️
+        {/* Initial message if empty to match image */}
+        {messages.length === 0 && (
+          <div className="message-wrapper ai">
+            <div className="ai-avatar-circle">
+              <span className="ai-icon">⚖️</span>
             </div>
-
-            <div className="aiBubble typingBubble">
-              <span className="dot" />
-              <span className="dot" />
-              <span className="dot" />
+            <div className="message-bubble">
+              <div className="ai-intro">
+                السلام عليكم! أنا المساعد القانوني لـ <span className="brand-name">حقي</span> 🇲🇦
+              </div>
+              <div className="ai-body">
+                يمكنني مساعدتك في القانون المغربي — كراء، شغل، أسرة، تجارة...
+                <br />
+                اسأل بالدارجة أو العربية!
+              </div>
+              <span className="msg-time">الآن</span>
             </div>
-
           </div>
+        )}
 
+        {loading && (
+          <div className="message-wrapper ai">
+            <div className="ai-avatar-circle">
+              <span className="ai-icon">⚖️</span>
+            </div>
+            <div className="message-bubble typing">
+              <span className="dot" />
+              <span className="dot" />
+              <span className="dot" />
+            </div>
+          </div>
         )}
 
         <div ref={messagesEndRef} />
-
       </div>
 
-      <div className="inputWrapper">
+      <div className="chat-input-section">
+        <div className="input-outer-box">
+          <div className="suggestions-bar">
+            {SUGGESTIONS.map((s, i) => (
+              <button
+                key={i}
+                className="suggestion-chip"
+                onClick={() => sendMessage(s)}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
 
-        <div className="suggestions">
-
-          {SUGGESTIONS.map((s, i) => (
-
+          <div className="input-inner-box">
             <button
-              key={i}
-              className="chip"
-              onClick={() => sendMessage(s)}
+              className="send-button"
+              onClick={() => sendMessage()}
             >
-              {s}
+              <span className="send-arrow">←</span>
             </button>
-
-          ))}
-
+            <input
+              className="chat-input"
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="اكتب سؤالك القانوني..."
+              dir="rtl"
+            />
+          </div>
         </div>
-
-        <div className="inputRow">
-
-          <button
-            className="sendBtn"
-            onClick={() => sendMessage()}
-          >
-            →
-          </button>
-
-          <input
-            className="input"
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="اكتب سؤالك القانوني..."
-            dir="rtl"
-          />
-
-        </div>
-
       </div>
 
     </div>

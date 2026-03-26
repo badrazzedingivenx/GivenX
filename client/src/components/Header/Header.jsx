@@ -1,69 +1,41 @@
 import "./Header.css";
+import { NavLink } from "react-router-dom";
 
 function Header() {
 
-    return (
+  return (
 
-        <header className="header">
+    <header className="header" dir="rtl">
 
-            {/* LOGO RIGHT */}
+      <div className="logo">
+        <div className="logo-icon">⚖️</div>
+        <h2 className="logo-text">
+          <span className="green">حقي</span>
+        </h2>
+      </div>
 
-            <div className="logo">
-                <div className="logo-icon">
-                    ⚖️
-                </div>
-                <h2 className="logo-text">
-                    <span className="gold">حق</span>
-                    <span className="green">ي</span>
-                </h2>
+      <nav className="nav">
+        <NavLink to="/home">الرئيسية</NavLink>
+        <NavLink to="/ai" className="ai-link">🤖 المساعد AI</NavLink>
+        <NavLink to="/contracts">📄 العقود</NavLink>
+        <NavLink to="/lawyers">⚖️ المحامون</NavLink>
+        <NavLink to="/culture">🎬 ثقافة قانونية</NavLink>
+        <NavLink to="/dashboard">📊 لوحتي</NavLink>
+        <NavLink to="/business">💼 Business Model</NavLink>
+      </nav>
 
+      <div className="actions">
+        <button className="start">ابدأ مجاناً</button>
+        <button className="dashboard-btn">لوحتي</button>
+        <div className="notifications">
+          <span className="bell">🔔</span>
+          <span className="notif-dot"></span>
+        </div>
+      </div>
 
+    </header>
 
-            </div>
-
-
-            {/* NAVIGATION */}
-
-            <nav className="nav">
-
-                <a href="#">الرئيسية</a>
-
-                <a href="#" className="ai-link">
-                    🤖 المساعد AI
-                </a>
-
-                <a href="#">العقود 📄</a>
-                <a href="#">المحامون ⚖️</a>
-                <a href="#">ثقافة قانونية 🎓</a>
-                <a href="#">لوحتي 📊</a>
-                <a href="#">Business Model 💼</a>
-
-                <span className="bell">
-                    🔔
-                    <span className="notif-dot"></span>
-                </span>
-
-            </nav>
-
-
-            {/* LEFT BUTTONS */}
-
-            <div className="actions">
-
-                <button className="dashboard">
-                    لوحتي
-                </button>
-
-                <button className="start">
-                    ابدأ مجاناً
-                </button>
-
-            </div>
-
-        </header>
-
-    )
-
+  )
 }
 
 export default Header
