@@ -33,6 +33,34 @@ class AIService
             throw new \Exception('Clé API OpenRouter manquante dans le fichier .env');
         }
 
+        return $this->chat([
+            [
+                'role'    => 'user',
+                'content' => $message,
+            ],
+        ], $langue);
+    }
+
+    /**
+     * @param array $messages Array of {role: user|assistant, content: string} (no system prompt inside)
+     */
+    public function chat(array $messages, string $langue = 'fr'): string
+    {
+        if (empty($this->apiKey)) {
+            throw new \Exception('Clé API OpenRouter manquante dans le fichier .env');
+        }
+
+        // Normalisation/validation légère côté service.
+        $messages = array_values(array_filter($messages, fn ($m) => is_array($m) && isset($m['role'], $m['content'])));
+        foreach ($messages as $m) {
+            if (!in_array($m['role'], ['user', 'assistant'], true)) {
+                throw new \Exception('Rôle invalide dans l\'historique (user/assistant attendu)');
+            }
+            if (!is_string($m['content']) || trim($m['content']) === '') {
+                throw new \Exception('Contenu invalide dans l\'historique');
+            }
+        }
+
         $systemPrompt = $this->prompts[$langue] ?? $this->prompts['fr'];
 
         $response = Http::withoutVerifying()
@@ -43,16 +71,15 @@ class AIService
                 'Content-Type'  => 'application/json',
             ])->post($this->apiUrl, [
                 'model'    => $this->model,
-                'messages' => [
+                'messages' => array_merge(
                     [
-                        'role'    => 'system',
-                        'content' => $systemPrompt
+                        [
+                            'role'    => 'system',
+                            'content' => $systemPrompt,
+                        ],
                     ],
-                    [
-                        'role'    => 'user',
-                        'content' => $message
-                    ]
-                ]
+                    $messages
+                ),
             ]);
 
         // Erreur HTTP (4xx, 5xx)

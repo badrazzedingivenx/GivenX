@@ -6,5 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class AiConversation extends Model
 {
-    //
+    protected $fillable = [
+        'user_id',
+        'content',
+        'category',
+        'questions_count',
+        'is_archived',
+    ];
+
+    public function messages()
+    {
+        return $this->hasMany(AiMessage::class, 'conversation_id');
+    }
 }
