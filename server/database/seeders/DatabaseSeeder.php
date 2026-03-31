@@ -15,11 +15,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (!User::where('email', 'test@test.com')->exists()) {
+            User::factory()->create([
+                'username' => 'testuser',
+                'full_name' => 'Test User',
+                'email' => 'test@test.com',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            ]);
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            VideoSeeder::class,
         ]);
     }
 }
