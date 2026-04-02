@@ -1,0 +1,81 @@
+.hero{
+background:#1f6f43;
+color:white;
+padding:10px 80px; /* صغرناه أكثر */
+}
+
+.hero-container{
+max-width:1200px;
+margin:auto;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:40px;
+}
+
+/* النص */
+
+.hero-text{
+
+direction:rtl;
+text-align:right;
+}
+
+.hero-text h1{
+font-size:40px;
+margin-bottom:10px;
+}
+
+.hero-text p{
+font-size:18px;
+color:#cfe5d6;
+margin-bottom:25px;
+}
+
+/* الأزرار */
+
+.categories{
+display:flex;
+gap:12px;
+justify-content:flex-end;
+flex-wrap:nowrap;
+}
+
+.categories button{
+background:rgba(255,255,255,0.1);
+border:1px solid rgba(255,255,255,0.3);
+color:white;
+padding:6px 12px;
+border-radius:25px;
+cursor:pointer;
+transition:0.3s;
+font-size:12px;
+}
+
+.categories button:hover{
+background:white;
+color:#1f6f43;
+}
+
+/* الصورة */
+
+.hero-image{
+
+display:flex;
+justify-content:flex-start;
+}
+
+.hero-image img{
+max-width:280px;
+height:auto;
+}
+
+.hero-text h1{
+font-size:28px;
+margin-bottom:5px;
+}
+
+.hero-text p{
+font-size:14px;
+margin-bottom:15px;
+}
