@@ -127,7 +127,7 @@ fun AccountOptionCard(
                 Image(
                     painter = painterResource(id = iconRes),
                     contentDescription = title,
-                    modifier = Modifier.size(160.dp)
+                    modifier = Modifier.size(100.dp)
                 )
             }
             Column(
