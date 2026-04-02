@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "109755839508",
+    "project_id": "app-haq",
+    "storage_bucket": "app-haq.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:109755839508:android:f520b0b59d7a420028e301",
+        "android_client_info": {
+          "package_name": "com.example.myt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKzGuYkznRSN83Cvq6RCuLYvd-wTZkVTU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
