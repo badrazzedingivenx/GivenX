@@ -9,6 +9,8 @@ import androidx.navigation.navArgument
 import com.example.client_mobile.Screens.AvocatProfile
 import com.example.client_mobile.Screens.CreeAvocatScreen
 import com.example.client_mobile.Screens.CreeUserScreen
+import com.example.client_mobile.Screens.AboutScreen
+import com.example.client_mobile.Screens.HomeScreen
 import com.example.client_mobile.Screens.LawyerDashboard
 import com.example.client_mobile.Screens.LoginScreen
 import com.example.client_mobile.Screens.ScreenSwipeInfo
@@ -101,8 +103,22 @@ fun AppNavigation() {
         }
 
         composable("UserHome") {
+            HomeScreen(
+                onNavigateToCases = { navController.navigate("UserCases") },
+                onNavigateToProfile = {},
+                onNavigateToAbout = { navController.navigate("About") }
+            )
+        }
+
+        composable("UserCases") {
             UserDashboard(
                 onNavigateToProfile = {}
+            )
+        }
+
+        composable("About") {
+            AboutScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }
