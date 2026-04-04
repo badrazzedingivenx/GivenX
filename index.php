@@ -20,4 +20,4 @@ if ($prefix !== '/' && stripos($uri, $prefix) === 0) {
     $_SERVER['REQUEST_URI'] = $path . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '');
 }
 
-require __DIR__ . '/haqqi-ai/public/index.php';
+require 'C:/Users/hp/StudioProjects/GivenX/server/public/index.php';
