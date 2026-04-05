@@ -10,12 +10,11 @@ import com.example.client_mobile.Screens.AvocatProfile
 import com.example.client_mobile.Screens.CreeAvocatScreen
 import com.example.client_mobile.Screens.CreeUserScreen
 import com.example.client_mobile.Screens.AboutScreen
-import com.example.client_mobile.Screens.HomeScreen
-import com.example.client_mobile.Screens.LawyerDashboard
+import com.example.client_mobile.Screens.LawyerDashboardHost
+import com.example.client_mobile.Screens.UserDashboardHost
 import com.example.client_mobile.Screens.LoginScreen
 import com.example.client_mobile.Screens.ScreenSwipeInfo
 import com.example.client_mobile.Screens.TypeCompteScreen
-import com.example.client_mobile.Screens.UserDashboard
 
 @Composable
 fun AppNavigation() {
@@ -91,7 +90,7 @@ fun AppNavigation() {
 
         // 5. Home / Profile Screens
         composable("LawyerHome") {
-            LawyerDashboard(
+            LawyerDashboardHost(
                 onNavigateToProfile = { navController.navigate("AvocatProfile") }
             )
         }
@@ -103,16 +102,9 @@ fun AppNavigation() {
         }
 
         composable("UserHome") {
-            HomeScreen(
-                onNavigateToCases = { navController.navigate("UserCases") },
+            UserDashboardHost(
                 onNavigateToProfile = {},
                 onNavigateToAbout = { navController.navigate("About") }
-            )
-        }
-
-        composable("UserCases") {
-            UserDashboard(
-                onNavigateToProfile = {}
             )
         }
 

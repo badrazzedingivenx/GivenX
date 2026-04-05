@@ -134,6 +134,8 @@ fun StatusChip(
             fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.Bold,
             color = textColor,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
         )
     }
@@ -255,6 +257,119 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
                     )
                     Text(
                         text = label,
+                        color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── Navigation Route Tokens ──────────────────────────────────────────────────
+sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
+    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,   "Accueil")
+    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,   "Messages")
+    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups, "Clients")
+    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person, "Profil")
+    companion object { val all = listOf(Home, Messages, Clients, Profile) }
+}
+
+sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
+    data object Home     : UserTab("user_home",     Icons.Default.Home,       "Accueil")
+    data object Cases    : UserTab("user_cases",    Icons.Default.Assignment, "Dossiers")
+    data object Messages : UserTab("user_messages", Icons.Default.Chat,       "Messages")
+    data object Profile  : UserTab("user_profile",  Icons.Default.Person,     "Profil")
+    companion object { val all = listOf(Home, Cases, Messages, Profile) }
+}
+
+// ─── Lawyer Nav Bottom Bar ─────────────────────────────────────────────────────
+@Composable
+fun LawyerNavBottomBar(
+    currentRoute: String?,
+    onNavigateTo: (LawyerTab) -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(70.dp),
+        shape = RoundedCornerShape(25.dp),
+        color = AppDarkGreen,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LawyerTab.all.forEach { tab ->
+                val selected = currentRoute == tab.route
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable { onNavigateTo(tab) }
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.label,
+                        tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = tab.label,
+                        color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── User Nav Bottom Bar ───────────────────────────────────────────────────────
+@Composable
+fun UserNavBottomBar(
+    currentRoute: String?,
+    onNavigateTo: (UserTab) -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(70.dp),
+        shape = RoundedCornerShape(25.dp),
+        color = AppDarkGreen,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            UserTab.all.forEach { tab ->
+                val selected = currentRoute == tab.route
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable { onNavigateTo(tab) }
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.label,
+                        tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = tab.label,
                         color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Serif,

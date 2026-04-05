@@ -32,6 +32,10 @@ import com.example.client_mobile.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class ScheduleItem(val clientName: String, val time: String, val type: String)
@@ -39,17 +43,161 @@ data class LeadItem(val name: String, val topic: String, val timeAgo: String)
 data class TaskItem(val label: String, val dueDate: String, val isDone: Boolean)
 data class ActivityItem(val clientName: String, val action: String, val timeAgo: String)
 
-// ─── Lawyer Dashboard Screen ──────────────────────────────────────────────────
+// ─── Lawyer Dashboard Host ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LawyerDashboard(
+fun LawyerDashboardHost(
     fullName: String = "Yassine El Amrani",
     speciality: String = "Droit Pénal",
     isMasculine: Boolean = true,
     onNavigateToProfile: () -> Unit = {}
 ) {
+    val innerNavController = rememberNavController()
+    val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_app),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(330.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {}) {
+                        BadgedBox(badge = { Badge { Text("3") } }) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = AppDarkGreen
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        bottomBar = {
+            LawyerNavBottomBar(currentRoute = currentRoute) { tab ->
+                if (tab is LawyerTab.Profile) {
+                    onNavigateToProfile()
+                } else {
+                    innerNavController.navigate(tab.route) {
+                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
+        },
+        containerColor = Color.Transparent
+    ) { paddingValues ->
+        DashBoardBackground {
+            NavHost(
+                navController = innerNavController,
+                startDestination = LawyerTab.Home.route
+            ) {
+                composable(LawyerTab.Home.route) {
+                    LawyerHomeTabContent(
+                        paddingValues = paddingValues,
+                        fullName = fullName,
+                        speciality = speciality,
+                        isMasculine = isMasculine
+                    )
+                }
+                composable(LawyerTab.Messages.route) {
+                    LawyerMessagesTabContent(paddingValues = paddingValues)
+                }
+                composable(LawyerTab.Clients.route) {
+                    LawyerClientsTabContent(paddingValues = paddingValues)
+                }
+            }
+        }
+    }
+}
+
+// ─── Lawyer Home Tab (placeholder tabs) ──────────────────────────────────────
+@Composable
+private fun LawyerMessagesTabContent(paddingValues: PaddingValues) {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(paddingValues),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Chat,
+                contentDescription = null,
+                tint = AppDarkGreen.copy(alpha = 0.35f),
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                text = "Messages",
+                fontSize = 20.sp,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                color = AppDarkGreen
+            )
+            Text(
+                text = "Bientôt disponible",
+                fontSize = 14.sp,
+                fontFamily = FontFamily.Serif,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@Composable
+private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(paddingValues),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Groups,
+                contentDescription = null,
+                tint = AppDarkGreen.copy(alpha = 0.35f),
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                text = "Clients",
+                fontSize = 20.sp,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                color = AppDarkGreen
+            )
+            Text(
+                text = "Bientôt disponible",
+                fontSize = 14.sp,
+                fontFamily = FontFamily.Serif,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+// ─── Lawyer Dashboard Screen ──────────────────────────────────────────────────
+@Composable
+private fun LawyerHomeTabContent(
+    paddingValues: PaddingValues,
+    fullName: String = "Yassine El Amrani",
+    speciality: String = "Droit Pénal",
+    isMasculine: Boolean = true,
+) {
     val scrollState = rememberScrollState()
-    var selectedTab by remember { mutableIntStateOf(0) }
 
     val today = remember {
         SimpleDateFormat("EEEE d MMMM yyyy", Locale("fr")).format(Date())
@@ -87,79 +235,38 @@ fun LawyerDashboard(
         ActivityItem("Aya Berrada", "a soumis une nouvelle demande", "Hier")
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(330.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        BadgedBox(badge = { Badge { Text("3") } }) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        bottomBar = {
-            AvocatBottomBar(
-                backgroundColor = AppDarkGreen,
-                selectedColor = AppGoldColor,
-                selectedTab = selectedTab,
-                onTabSelected = { index ->
-                    selectedTab = index
-                    if (index == 3) onNavigateToProfile()
-                }
-            )
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp)
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Spacer(modifier = Modifier.height(4.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 20.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(4.dp))
 
-                // ── Greeting Banner ───────────────────────────────────────────
-                DarkDashCard {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isMasculine) "Bonjour, Maître" else "Bonjour, Maîtresse",
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppGoldColor
-                            )
-                            Text(
-                                text = fullName,
-                                fontSize = 22.sp,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
+        // ── Greeting Banner ───────────────────────────────────────────
+        DarkDashCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isMasculine) "Bonjour, Maître" else "Bonjour, Maîtresse",
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppGoldColor
+                    )
+                    Text(
+                        text = fullName,
+                        fontSize = 22.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
                                 text = speciality,
                                 fontSize = 13.sp,
                                 fontFamily = FontFamily.Serif,
@@ -311,8 +418,6 @@ fun LawyerDashboard(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
-            }
-        }
     }
 }
 
