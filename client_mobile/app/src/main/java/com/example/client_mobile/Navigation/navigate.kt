@@ -157,6 +157,7 @@ fun AppNavigation() {
         }
 
         composable("Appointments") {
+<<<<<<< HEAD
             AppointmentsScreen(
                 onBack = { navController.popBackStack() }
             )
@@ -172,6 +173,17 @@ fun AppNavigation() {
             BillingScreen(
                 onBack = { navController.popBackStack() }
             )
+=======
+            AppointmentsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable("DocumentVault") {
+            DocumentVaultScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable("Billing") {
+            BillingScreen(onBack = { navController.popBackStack() })
+>>>>>>> developer_mobile
         }
 
         composable("About") {

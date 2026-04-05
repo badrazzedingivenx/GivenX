@@ -2,7 +2,10 @@ package com.example.client_mobile.Screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+<<<<<<< HEAD
 import androidx.compose.foundation.background
+=======
+>>>>>>> developer_mobile
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -16,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+<<<<<<< HEAD
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -40,6 +44,33 @@ fun BillingScreen(
         BillingInvoice("FAC-2025-001", "Maître Yassine El Amrani", "1 200 MAD", "Payée", true),
         BillingInvoice("FAC-2025-002", "Maître Sara Benali", "1 200 MAD", "Payée", true),
         BillingInvoice("FAC-2025-003", "Maître Khalid Tazi", "800 MAD", "En attente", false)
+=======
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+private data class BillingInvoice(
+    val number: String,
+    val lawyerName: String,
+    val amount: String,
+    val status: String,
+    val isPaid: Boolean
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BillingScreen(onBack: () -> Unit = {}) {
+    val paidAmount   = 2400f
+    val pendingAmount = 800f
+    val total        = paidAmount + pendingAmount
+
+    val invoices = listOf(
+        BillingInvoice("FAC-2025-001", "Maître Yassine El Amrani", "1 200 MAD", "Payée",      true),
+        BillingInvoice("FAC-2025-002", "Maître Sara Benali",       "1 200 MAD", "Payée",      true),
+        BillingInvoice("FAC-2025-003", "Maître Khalid Tazi",       "800 MAD",   "En attente", false)
+>>>>>>> developer_mobile
     )
 
     Scaffold(
@@ -56,11 +87,15 @@ fun BillingScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
+<<<<<<< HEAD
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Retour",
                             tint = AppDarkGreen
                         )
+=======
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
+>>>>>>> developer_mobile
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -78,7 +113,11 @@ fun BillingScreen(
             ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
 
+<<<<<<< HEAD
                 // ── Summary Card ───────────────────────────────────────────────
+=======
+                // Summary card
+>>>>>>> developer_mobile
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -96,6 +135,7 @@ fun BillingScreen(
                                 )
                             }
                             Column(
+<<<<<<< HEAD
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(24.dp),
@@ -122,6 +162,19 @@ fun BillingScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
+=======
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text("Résumé de Facturation", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppGoldColor)
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    BillingStat("Total Facturé", "${total.toInt()} MAD", Color.White)
+                                    BillingStat("Payé",          "${paidAmount.toInt()} MAD", Color(0xFF34A853))
+                                    BillingStat("En attente",    "${pendingAmount.toInt()} MAD", AppGoldColor)
+                                }
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+>>>>>>> developer_mobile
                                         Text("Progression", fontFamily = FontFamily.Serif, fontSize = 11.sp, color = Color.White.copy(alpha = 0.60f))
                                         Text("${((paidAmount / total) * 100).toInt()}%", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppGoldColor)
                                     }
@@ -149,6 +202,7 @@ fun BillingScreen(
     }
 }
 
+<<<<<<< HEAD
 private data class BillingInvoice(
     val number: String,
     val lawyerName: String,
@@ -157,6 +211,8 @@ private data class BillingInvoice(
     val isPaid: Boolean
 )
 
+=======
+>>>>>>> developer_mobile
 @Composable
 private fun BillingStat(label: String, value: String, valueColor: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -171,10 +227,14 @@ private fun InvoiceCard(invoice: BillingInvoice) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         color = Color.White,
+<<<<<<< HEAD
         border = BorderStroke(
             0.5.dp,
             if (invoice.isPaid) AppDarkGreen.copy(alpha = 0.10f) else AppGoldColor.copy(alpha = 0.45f)
         ),
+=======
+        border = BorderStroke(0.5.dp, if (invoice.isPaid) AppDarkGreen.copy(alpha = 0.10f) else AppGoldColor.copy(alpha = 0.45f)),
+>>>>>>> developer_mobile
         shadowElevation = if (invoice.isPaid) 2.dp else 4.dp
     ) {
         Row(
@@ -198,6 +258,7 @@ private fun InvoiceCard(invoice: BillingInvoice) {
                 }
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+<<<<<<< HEAD
                 Text(
                     invoice.number,
                     fontFamily = FontFamily.Serif,
@@ -220,6 +281,13 @@ private fun InvoiceCard(invoice: BillingInvoice) {
                     fontSize = 14.sp,
                     color = AppDarkGreen
                 )
+=======
+                Text(invoice.number,    fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AppDarkGreen)
+                Text(invoice.lawyerName, fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppDarkGreen.copy(alpha = 0.55f))
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(invoice.amount, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppDarkGreen)
+>>>>>>> developer_mobile
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = if (invoice.isPaid) Color(0xFF34A853).copy(alpha = 0.12f) else AppGoldColor.copy(alpha = 0.15f)

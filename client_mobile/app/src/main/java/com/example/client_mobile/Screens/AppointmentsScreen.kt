@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+<<<<<<< HEAD
 // ─── Appointments Screen ──────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +31,14 @@ fun AppointmentsScreen(
     val upcomingAppointments = listOf(
         Triple("Maître Yassine El Amrani", "Droit Pénal", "Mardi 7 Avril — 10:30"),
         Triple("Maître Sara Benali", "Droit de la Famille", "Jeudi 9 Avril — 14:00")
+=======
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppointmentsScreen(onBack: () -> Unit = {}) {
+    val appointments = listOf(
+        Triple("Maître Yassine El Amrani", "Droit Pénal",        "Mardi 7 Avril — 10:30"),
+        Triple("Maître Sara Benali",       "Droit de la Famille","Jeudi 9 Avril — 14:00")
+>>>>>>> developer_mobile
     )
 
     Scaffold(
@@ -46,11 +55,15 @@ fun AppointmentsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
+<<<<<<< HEAD
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Retour",
                             tint = AppDarkGreen
                         )
+=======
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
+>>>>>>> developer_mobile
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -68,6 +81,7 @@ fun AppointmentsScreen(
             ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
 
+<<<<<<< HEAD
                 item { SectionHeader(title = "À venir (${upcomingAppointments.size})") }
 
                 items(upcomingAppointments.size) { idx ->
@@ -77,6 +91,13 @@ fun AppointmentsScreen(
                         specialty = specialty,
                         datetime = datetime
                     )
+=======
+                item { SectionHeader(title = "À venir (${appointments.size})") }
+
+                items(appointments.size) { idx ->
+                    val (name, specialty, datetime) = appointments[idx]
+                    AppointmentCard(lawyerName = name, specialty = specialty, datetime = datetime)
+>>>>>>> developer_mobile
                 }
 
                 item {
@@ -143,11 +164,15 @@ fun AppointmentsScreen(
 }
 
 @Composable
+<<<<<<< HEAD
 private fun AppointmentCard(
     lawyerName: String,
     specialty: String,
     datetime: String
 ) {
+=======
+private fun AppointmentCard(lawyerName: String, specialty: String, datetime: String) {
+>>>>>>> developer_mobile
     val initials = lawyerName
         .removePrefix("Maître ")
         .split(" ")
@@ -174,6 +199,7 @@ private fun AppointmentCard(
                     .background(AppDarkGreen),
                 contentAlignment = Alignment.Center
             ) {
+<<<<<<< HEAD
                 Text(
                     initials,
                     fontFamily = FontFamily.Serif,
@@ -229,6 +255,20 @@ private fun AppointmentCard(
                     color = Color(0xFF34A853),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                 )
+=======
+                Text(initials, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppGoldColor)
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(lawyerName, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppDarkGreen)
+                Text(specialty, fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppGoldColor)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(Icons.Default.AccessTime, contentDescription = null, tint = AppDarkGreen.copy(alpha = 0.45f), modifier = Modifier.size(12.dp))
+                    Text(datetime, fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppDarkGreen.copy(alpha = 0.60f))
+                }
+            }
+            Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFF34A853).copy(alpha = 0.12f)) {
+                Text("Confirmé", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = Color(0xFF34A853), modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
+>>>>>>> developer_mobile
             }
         }
     }
