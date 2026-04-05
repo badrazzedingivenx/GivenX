@@ -3,13 +3,14 @@ package com.example.client_mobile.Screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
@@ -17,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,35 +27,39 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 // ─── Data Model ───────────────────────────────────────────────────────────────
 data class LegalCategory(
     val title: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val domaine: String   // matches LawyerItem.domaine for filtering
 )
 
-// ─── Home Screen ──────────────────────────────────────────────────────────────
+// ─── User Dashboard Host ──────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onNavigateToCases: () -> Unit = {},
+fun UserDashboardHost(
     onNavigateToProfile: () -> Unit = {},
-    onNavigateToAbout: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToLawyerDetail: (String) -> Unit = {},
+    onNavigateToCategory: (String) -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {},
+    onNavigateToAppointments: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {},
+    onNavigateToFacturation: () -> Unit = {}
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-    var searchQuery by remember { mutableStateOf("") }
-
-    val categories = listOf(
-        LegalCategory("Droit de la\nFamille", Icons.Default.Groups),
-        LegalCategory("Droit des\nAffaires", Icons.Default.BusinessCenter),
-        LegalCategory("Droit\nPénal", Icons.Default.Gavel),
-        LegalCategory("Droit\nImmobilier", Icons.Default.Apartment),
-        LegalCategory("Droit du\nTravail", Icons.Default.Work),
-        LegalCategory("Droit\nFiscal", Icons.Default.AccountBalance)
-    )
+    val innerNavController = rememberNavController()
+    val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
         topBar = {
@@ -69,8 +75,20 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
-                        BadgedBox(badge = { Badge { Text("2") } }) {
+                    val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
+                    IconButton(onClick = onNavigateToNotifications) {
+                        BadgedBox(
+                            badge = {
+                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                                    Text(
+                                        if (unreadCount > 9) "9+" else "$unreadCount",
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
                             Icon(
                                 Icons.Default.Notifications,
                                 contentDescription = "Notifications",
@@ -83,69 +101,158 @@ fun HomeScreen(
             )
         },
         bottomBar = {
-            UserBottomBar(selectedTab = selectedTab) { index ->
-                selectedTab = index
-                when (index) {
-                    1 -> onNavigateToCases()
-                    3 -> onNavigateToProfile()
+            UserNavBottomBar(currentRoute = currentRoute) { tab ->
+                if (tab is UserTab.Profile) {
+                    onNavigateToProfile()
+                } else {
+                    innerNavController.navigate(tab.route) {
+                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             }
         },
         containerColor = Color.Transparent
     ) { paddingValues ->
         DashBoardBackground {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+            NavHost(
+                navController = innerNavController,
+                startDestination = UserTab.Home.route
             ) {
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // ── Hero Section ─────────────────────────────────────────────
-                HomeHeroSection(onAbout = onNavigateToAbout)
-
-                // ── Search Bar ───────────────────────────────────────────────
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        Text(
-                            "Rechercher un avocat...",
-                            fontFamily = FontFamily.Serif,
-                            color = AppDarkGreen.copy(alpha = 0.45f)
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = null,
-                            tint = AppDarkGreen
-                        )
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AppDarkGreen,
-                        unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.25f),
-                        focusedContainerColor = Color.White.copy(alpha = 0.92f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.92f)
-                    ),
-                    singleLine = true
-                )
-
-                // ── Service Grid ─────────────────────────────────────────────
-                SectionHeader(title = "Domaines Juridiques")
-                ServiceCategoryGrid(categories = categories)
-
-                // ── Quick Stats ──────────────────────────────────────────────
-                SectionHeader(title = "En chiffres")
-                HomeQuickStats()
-
-                Spacer(modifier = Modifier.height(8.dp))
+                composable(UserTab.Home.route) {
+                    UserHomeTabContent(
+                        paddingValues = paddingValues,
+                        onNavigateToAbout = onNavigateToAbout,
+                        onNavigateToCategory = onNavigateToCategory
+                    )
+                }
+                composable(UserTab.Cases.route) {
+                    UserCasesTabContent(
+                        paddingValues = paddingValues,
+                        onNavigateToConsulter = onNavigateToAppointments,
+                        onNavigateToMessages = {
+                            innerNavController.navigate(UserTab.Messages.route) {
+                                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onNavigateToDocuments = onNavigateToDocuments,
+                        onNavigateToFacturation = onNavigateToFacturation
+                    )
+                }
+                composable(UserTab.Messages.route) {
+                    MessagesInboxScreen(
+                        isLawyer = false,
+                        paddingValues = paddingValues,
+                        onNavigateToChat = onNavigateToChat
+                    )
+                }
             }
+        }
+    }
+}
+
+// ─── Home Screen ──────────────────────────────────────────────────────────────
+@Composable
+fun HomeScreen(
+    onNavigateToCases: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToLawyerDetail: (String) -> Unit = {},
+    onNavigateToCategory: (String) -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {},
+    onNavigateToAppointments: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {},
+    onNavigateToFacturation: () -> Unit = {}
+) {
+    UserDashboardHost(
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToAbout = onNavigateToAbout,
+        onNavigateToLawyerDetail = onNavigateToLawyerDetail,
+        onNavigateToCategory = onNavigateToCategory,
+        onNavigateToNotifications = onNavigateToNotifications,
+        onNavigateToChat = onNavigateToChat,
+        onNavigateToAppointments = onNavigateToAppointments,
+        onNavigateToDocuments = onNavigateToDocuments,
+        onNavigateToFacturation = onNavigateToFacturation
+    )
+}
+
+// ─── User Home Tab Content ────────────────────────────────────────────────────
+
+// ─── User Home Tab Content ────────────────────────────────────────────────────
+@Composable
+internal fun UserHomeTabContent(
+    paddingValues: PaddingValues,
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToCategory: (String) -> Unit = {}
+) {
+    val categories = listOf(
+        LegalCategory("Droit de la\nFamille", Icons.Default.Groups,        domaine = "Droit Civil"),
+        LegalCategory("Droit des\nAffaires",  Icons.Default.BusinessCenter, domaine = "Droit des Affaires"),
+        LegalCategory("Droit\nPénal",         Icons.Default.Gavel,          domaine = "Droit Pénal"),
+        LegalCategory("Droit\nImmobilier",    Icons.Default.Apartment,      domaine = "Droit Immobilier"),
+        LegalCategory("Droit du\nTravail",    Icons.Default.Work,           domaine = "Droit du Travail"),
+        LegalCategory("Droit\nFiscal",        Icons.Default.AccountBalance,  domaine = "Droit Fiscal")
+    )
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        item { Spacer(modifier = Modifier.height(4.dp)) }
+
+        // ── Hero Section ─────────────────────────────────────────────
+        item { HomeHeroSection(onAbout = onNavigateToAbout) }
+
+        // ── Service Grid ─────────────────────────────────────────────
+        item { SectionHeader(title = "Domaines Juridiques") }
+        item { ServiceCategoryGrid(categories = categories, onCategoryClick = onNavigateToCategory) }
+
+        // ── Quick Stats ──────────────────────────────────────────────
+        item { SectionHeader(title = "En chiffres") }
+        item { HomeQuickStats() }
+
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+    }
+}
+
+// ─── Messages Tab (placeholder) ───────────────────────────────────────────────
+@Composable
+internal fun UserMessagesTabContent(paddingValues: PaddingValues) {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(paddingValues),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Chat,
+                contentDescription = null,
+                tint = AppDarkGreen.copy(alpha = 0.35f),
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                text = "Messages",
+                fontSize = 20.sp,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                color = AppDarkGreen
+            )
+            Text(
+                text = "Bientôt disponible",
+                fontSize = 14.sp,
+                fontFamily = FontFamily.Serif,
+                color = Color.Gray
+            )
         }
     }
 }
@@ -242,25 +349,43 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
 
 // ─── Service Category Grid ────────────────────────────────────────────────────
 @Composable
-private fun ServiceCategoryGrid(categories: List<LegalCategory>) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(212.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        userScrollEnabled = false
-    ) {
-        items(categories) { category ->
-            CategoryCard(category = category)
+private fun ServiceCategoryGrid(
+    categories: List<LegalCategory>,
+    onCategoryClick: (String) -> Unit = {}
+) {
+    // LazyVerticalGrid cannot be nested inside a verticalScroll Column — use plain Rows
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        categories.chunked(3).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowItems.forEach { category ->
+                    CategoryCard(
+                        modifier = Modifier.weight(1f),
+                        category = category,
+                        onClick = { onCategoryClick(category.domaine) }
+                    )
+                }
+                // Pad out incomplete last row
+                repeat(3 - rowItems.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun CategoryCard(category: LegalCategory) {
+private fun CategoryCard(
+    modifier: Modifier = Modifier,
+    category: LegalCategory,
+    onClick: () -> Unit = {}
+) {
     Surface(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         color = Color.White.copy(alpha = 0.92f),
         border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
@@ -268,10 +393,10 @@ private fun CategoryCard(category: LegalCategory) {
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 14.dp, horizontal = 6.dp),
+                .fillMaxSize()
+                .padding(vertical = 12.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(7.dp)
+            verticalArrangement = Arrangement.Center
         ) {
             Surface(
                 modifier = Modifier.size(44.dp),
@@ -287,6 +412,7 @@ private fun CategoryCard(category: LegalCategory) {
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(7.dp))
             Text(
                 text = category.title,
                 fontFamily = FontFamily.Serif,
@@ -294,6 +420,8 @@ private fun CategoryCard(category: LegalCategory) {
                 fontSize = 11.sp,
                 color = AppDarkGreen,
                 textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 lineHeight = 15.sp
             )
         }

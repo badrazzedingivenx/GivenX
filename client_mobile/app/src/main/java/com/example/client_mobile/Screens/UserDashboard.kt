@@ -54,8 +54,22 @@ fun UserDashboard(
     userName: String = "Karim Bennani",
     onNavigateToProfile: () -> Unit = {}
 ) {
+    UserCasesTabContent(
+        paddingValues = PaddingValues(0.dp),
+        userName = userName
+    )
+}
+
+@Composable
+internal fun UserCasesTabContent(
+    paddingValues: PaddingValues,
+    userName: String = "Karim Bennani",
+    onNavigateToConsulter: () -> Unit = {},
+    onNavigateToMessages: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {},
+    onNavigateToFacturation: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
-    var selectedTab by remember { mutableIntStateOf(0) }
 
     val caseSteps = listOf(
         CaseStep("Soumis", "15 Jan", isDone = true, isActive = false),
@@ -81,51 +95,15 @@ fun UserDashboard(
     val pendingAmount = 800f
     val total = paidAmount + pendingAmount
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(330.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        BadgedBox(badge = { Badge { Text("2") } }) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        bottomBar = {
-            UserBottomBar(selectedTab = selectedTab) { index ->
-                selectedTab = index
-                if (index == 3) onNavigateToProfile()
-            }
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp)
-                    .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Spacer(modifier = Modifier.height(4.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 20.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(4.dp))
 
                 // ── Greeting ──────────────────────────────────────────────────
                 Column {
@@ -150,12 +128,32 @@ fun UserDashboard(
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        QuickActionButton(Icons.Default.Event, "Consulter") {}
-                        QuickActionButton(Icons.Default.Chat, "Messagerie") {}
-                        QuickActionButton(Icons.Default.CloudUpload, "Documents") {}
-                        QuickActionButton(Icons.Default.MonetizationOn, "Facturation") {}
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Event,
+                            label = "Consulter",
+                            onClick = onNavigateToConsulter
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Chat,
+                            label = "Messagerie",
+                            onClick = onNavigateToMessages
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.CloudUpload,
+                            label = "Documents",
+                            onClick = onNavigateToDocuments
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.MonetizationOn,
+                            label = "Facturation",
+                            onClick = onNavigateToFacturation
+                        )
                     }
                 }
 
@@ -197,85 +195,116 @@ fun UserDashboard(
                 BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
 
                 Spacer(modifier = Modifier.height(20.dp))
-            }
-        }
     }
 }
 
 // ─── Case Status Timeline ─────────────────────────────────────────────────────
 @Composable
 fun CaseStatusTimeline(steps: List<CaseStep>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
-    ) {
-        steps.forEachIndexed { index, step ->
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                val dotColor = when {
-                    step.isDone -> Color(0xFF34A853)
-                    step.isActive -> AppGoldColor
-                    else -> Color(0xFFD9D9D9)
-                }
-                val lineColor = if (step.isDone) Color(0xFF34A853) else Color(0xFFDDDDDD)
-                val dotSize = if (step.isActive) 22.dp else 18.dp
+    val dotContainerH = 28.dp   // uniform height for every dot slot
+    val halfContainer = 14.dp   // = dotContainerH / 2, used to inset the line
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (index > 0) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(2.dp)
-                                .background(if (steps[index - 1].isDone) Color(0xFF34A853) else Color(0xFFDDDDDD))
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(dotSize)
-                            .clip(CircleShape)
-                            .background(dotColor),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (step.isDone) {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(11.dp)
-                            )
-                        }
-                    }
+    Column(modifier = Modifier.fillMaxWidth()) {
+
+        // ── Layer: line + dots on top ────────────────────────────────────────
+        Box(modifier = Modifier.fillMaxWidth()) {
+
+            // Background line — padded so it runs only between dot centers
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = halfContainer)
+                    .align(Alignment.Center)
+
+            ) {
+                steps.forEachIndexed { index, step ->
                     if (index < steps.lastIndex) {
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(2.dp)
-                                .background(lineColor)
+                                .background(
+                                    if (step.isDone) Color(0xFF34A853) else Color(0xFFDDDDDD)
+                                )
                         )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = step.title,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = if (step.isActive) AppDarkGreen else AppDarkGreen.copy(alpha = 0.45f),
-                    fontWeight = if (step.isActive) FontWeight.Bold else FontWeight.Normal,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = step.date,
-                    fontSize = 9.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = if (step.isDone) Color(0xFF34A853) else Color.Gray,
-                    textAlign = TextAlign.Center
-                )
+            // Foreground dots — each step gets equal weight
+            Row(modifier = Modifier.fillMaxWidth()) {
+                steps.forEach { step ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(dotContainerH),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val dotColor = when {
+                            step.isDone   -> Color(0xFF34A853)
+                            step.isActive -> AppGoldColor
+                            else          -> Color(0xFFDDDDDD)
+                        }
+                        val dotSize = if (step.isActive) 22.dp else 18.dp
+                        Box(
+                            modifier = Modifier
+                                .size(dotSize)
+                                .clip(CircleShape)
+                                .background(dotColor),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                step.isDone -> Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                step.isActive -> Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.85f))
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Labels — same weight(1f) grid, completely independent of line ────
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            steps.forEach { step ->
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = step.title,
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Serif,
+                        maxLines = 1,
+                        softWrap = false,
+                        color = when {
+                            step.isActive -> AppDarkGreen
+                            step.isDone   -> AppDarkGreen.copy(alpha = 0.70f)
+                            else          -> AppDarkGreen.copy(alpha = 0.35f)
+                        },
+                        fontWeight = if (step.isActive) FontWeight.Bold else FontWeight.Normal,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = step.date,
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Serif,
+                        maxLines = 1,
+                        softWrap = false,
+                        color = if (step.isDone) Color(0xFF34A853) else Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -444,6 +473,7 @@ fun BillingSummaryCard(paid: Float, pending: Float, total: Float) {
             StatusChip(
                 label = "En cours",
                 containerColor = AppGoldColor.copy(alpha = 0.14f),
+
                 textColor = AppGoldColor
             )
         }
