@@ -7,6 +7,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.client_mobile.Screens.AvocatProfile
+import com.example.client_mobile.Screens.ChatScreen
+import com.example.client_mobile.Screens.ConversationRepository
 import com.example.client_mobile.Screens.CreeAvocatScreen
 import com.example.client_mobile.Screens.CreeUserScreen
 import com.example.client_mobile.Screens.AboutScreen
@@ -99,7 +101,8 @@ fun AppNavigation() {
         composable("LawyerHome") {
             LawyerDashboardHost(
                 onNavigateToProfile = { navController.navigate("AvocatProfile") },
-                onNavigateToNotifications = { navController.navigate("Notifications/lawyer") }
+                onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
+                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
             )
         }
 
@@ -124,7 +127,8 @@ fun AppNavigation() {
                 onNavigateToCategory = { domaine ->
                     navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}")
                 },
-                onNavigateToNotifications = { navController.navigate("Notifications/user") }
+                onNavigateToNotifications = { navController.navigate("Notifications/user") },
+                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
             )
         }
 
@@ -183,7 +187,29 @@ fun AppNavigation() {
             LawyerDetailScreen(
                 lawyerId = lawyerId,
                 onBack = { navController.popBackStack() },
-                onNavigateToChat = { id -> navController.navigate("LawyerChat/$id") }
+                onNavigateToChat = { id ->
+                    val lawyer = com.example.client_mobile.Screens.sampleLawyers.find { it.id == id }
+                        ?: com.example.client_mobile.Screens.sampleLawyers.first()
+                    val conv = ConversationRepository.getOrCreate(
+                        lawyerId = id,
+                        lawyerName = lawyer.name,
+                        lawyerSpecialty = lawyer.specialty,
+                        clientName = "Karim Bennani"
+                    )
+                    navController.navigate("Chat/${conv.id}")
+                }
+            )
+        }
+
+        composable(
+            route = "Chat/{conversationId}",
+            arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
+            ChatScreen(
+                conversationId = conversationId,
+                isLawyer = false,
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -192,8 +218,17 @@ fun AppNavigation() {
             arguments = listOf(navArgument("lawyerId") { type = NavType.StringType })
         ) { backStackEntry ->
             val lawyerId = backStackEntry.arguments?.getString("lawyerId") ?: "1"
-            LawyerChatScreen(
+            val lawyer = com.example.client_mobile.Screens.sampleLawyers.find { it.id == lawyerId }
+                ?: com.example.client_mobile.Screens.sampleLawyers.first()
+            val conv = ConversationRepository.getOrCreate(
                 lawyerId = lawyerId,
+                lawyerName = lawyer.name,
+                lawyerSpecialty = lawyer.specialty,
+                clientName = "Karim Bennani"
+            )
+            ChatScreen(
+                conversationId = conv.id,
+                isLawyer = false,
                 onBack = { navController.popBackStack() }
             )
         }

@@ -53,7 +53,8 @@ fun LawyerDashboardHost(
     speciality: String = "Droit Pénal",
     isMasculine: Boolean = true,
     onNavigateToProfile: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -127,7 +128,11 @@ fun LawyerDashboardHost(
                     )
                 }
                 composable(LawyerTab.Messages.route) {
-                    LawyerMessagesTabContent(paddingValues = paddingValues)
+                    MessagesInboxScreen(
+                        isLawyer = true,
+                        paddingValues = paddingValues,
+                        onNavigateToChat = onNavigateToChat
+                    )
                 }
                 composable(LawyerTab.Clients.route) {
                     LawyerClientsTabContent(paddingValues = paddingValues)

@@ -51,7 +51,8 @@ fun UserDashboardHost(
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -127,7 +128,11 @@ fun UserDashboardHost(
                     UserCasesTabContent(paddingValues = paddingValues)
                 }
                 composable(UserTab.Messages.route) {
-                    UserMessagesTabContent(paddingValues = paddingValues)
+                    MessagesInboxScreen(
+                        isLawyer = false,
+                        paddingValues = paddingValues,
+                        onNavigateToChat = onNavigateToChat
+                    )
                 }
             }
         }
@@ -142,14 +147,16 @@ fun HomeScreen(
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {}
 ) {
     UserDashboardHost(
         onNavigateToProfile = onNavigateToProfile,
         onNavigateToAbout = onNavigateToAbout,
         onNavigateToLawyerDetail = onNavigateToLawyerDetail,
         onNavigateToCategory = onNavigateToCategory,
-        onNavigateToNotifications = onNavigateToNotifications
+        onNavigateToNotifications = onNavigateToNotifications,
+        onNavigateToChat = onNavigateToChat
     )
 }
 
