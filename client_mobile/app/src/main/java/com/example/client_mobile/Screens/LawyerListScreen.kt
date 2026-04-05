@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,6 +51,12 @@ fun LawyerListScreen(
         mutableStateOf(TextFieldValue(""))
     }
 
+    // Chip filter — pre-select the domaine the user tapped on the home screen.
+    // Falls back to "Tous" if the domaine string doesn't appear in the chip list.
+    var selectedFilter by rememberSaveable {
+        mutableStateOf(if (domaine in lawyerFilterDomaines) domaine else "Tous")
+    }
+
     // 250 ms debounce — avoids filtering on every single keystroke
     var debouncedQuery by remember { mutableStateOf("") }
     LaunchedEffect(searchFieldValue.text) {
@@ -59,23 +66,27 @@ fun LawyerListScreen(
 
     val focusManager = LocalFocusManager.current
 
-    // ── Base list: only lawyers in this domaine ────────────────────────────────
-    val domaineList = remember(domaine) {
-        sampleLawyers.filter { it.domaine == domaine }
-    }
-
-    // ── Live filter by name (using debounced query) ────────────────────────────
+    // ── Combined filter: chip domain + search text ─────────────────────────────
     val filteredList by remember {
         derivedStateOf {
-            if (debouncedQuery.isBlank()) domaineList
-            else domaineList.filter { lawyer ->
-                lawyer.name.contains(debouncedQuery, ignoreCase = true) ||
-                    lawyer.city.contains(debouncedQuery, ignoreCase = true)
+            sampleLawyers.filter { lawyer ->
+                val matchesChip = selectedFilter == "Tous" || lawyer.domaine == selectedFilter
+                val matchesSearch = debouncedQuery.isBlank() ||
+                    lawyer.name.contains(debouncedQuery, ignoreCase = true) ||
+                    lawyer.city.contains(debouncedQuery, ignoreCase = true) ||
+                    lawyer.specialty.contains(debouncedQuery, ignoreCase = true)
+                matchesChip && matchesSearch
             }
         }
     }
 
     val isSearchActive = searchFieldValue.text.isNotEmpty()
+
+    // Total count for the subtitle — how many lawyers are in the pre-selected domain
+    val domaineTotalCount = remember(selectedFilter) {
+        if (selectedFilter == "Tous") sampleLawyers.size
+        else sampleLawyers.count { it.domaine == selectedFilter }
+    }
 
     Scaffold(
         topBar = {
@@ -92,7 +103,7 @@ fun LawyerListScreen(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = "${domaineList.size} avocats disponibles",
+                            text = "${domaineTotalCount} avocat${if (domaineTotalCount > 1) "s" else ""} disponible${if (domaineTotalCount > 1) "s" else ""}",
                             fontFamily = FontFamily.Serif,
                             fontSize = 11.sp,
                             color = AppGoldColor.copy(alpha = 0.80f)
@@ -125,6 +136,44 @@ fun LawyerListScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item { Spacer(Modifier.height(6.dp)) }
+
+            // ── Filter chips ──────────────────────────────────────────────────
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 0.dp)
+                ) {
+                    items(lawyerFilterDomaines) { filter ->
+                        FilterChip(
+                            selected = selectedFilter == filter,
+                            onClick = {
+                                selectedFilter = filter
+                                // Clear search when switching domain
+                                searchFieldValue = TextFieldValue("")
+                                focusManager.clearFocus()
+                            },
+                            label = {
+                                Text(
+                                    filter,
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 12.sp,
+                                    maxLines = 1
+                                )
+                            },
+                            leadingIcon = if (selectedFilter == filter) {
+                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AppDarkGreen,
+                                selectedLabelColor = Color.White,
+                                selectedLeadingIconColor = AppGoldColor,
+                                containerColor = Color.White,
+                                labelColor = AppDarkGreen
+                            )
+                        )
+                    }
+                }
+            }
 
             // ── Search bar ────────────────────────────────────────────────────
             item {
@@ -194,7 +243,7 @@ fun LawyerListScreen(
                 ) {
                     Text(
                         text = when {
-                            debouncedQuery.isBlank() -> "Tous les avocats"
+                            debouncedQuery.isBlank() && selectedFilter == "Tous" -> "Tous les avocats"
                             filteredList.isEmpty()   -> "Aucun résultat"
                             else -> "${filteredList.size} résultat${if (filteredList.size > 1) "s" else ""}"
                         },
