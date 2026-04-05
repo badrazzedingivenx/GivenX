@@ -146,7 +146,7 @@ fun QuickActionButton(icon: ImageVector, label: String, onClick: () -> Unit) {
         modifier = Modifier
             .clip(RoundedCornerShape(18.dp))
             .clickable { onClick() }
-            .padding(10.dp),
+            .padding(10.dp), 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
