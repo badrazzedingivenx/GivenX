@@ -145,12 +145,17 @@ fun StatusChip(
 
 // ─── Quick Action Button ──────────────────────────────────────────────────────
 @Composable
-fun QuickActionButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+fun QuickActionButton(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(18.dp))
             .clickable { onClick() }
-            .padding(10.dp),
+            .padding(vertical = 10.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

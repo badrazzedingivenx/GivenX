@@ -52,7 +52,10 @@ fun UserDashboardHost(
     onNavigateToLawyerDetail: (String) -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    onNavigateToAppointments: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {},
+    onNavigateToFacturation: () -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -125,7 +128,19 @@ fun UserDashboardHost(
                     )
                 }
                 composable(UserTab.Cases.route) {
-                    UserCasesTabContent(paddingValues = paddingValues)
+                    UserCasesTabContent(
+                        paddingValues = paddingValues,
+                        onNavigateToConsulter = onNavigateToAppointments,
+                        onNavigateToMessages = {
+                            innerNavController.navigate(UserTab.Messages.route) {
+                                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onNavigateToDocuments = onNavigateToDocuments,
+                        onNavigateToFacturation = onNavigateToFacturation
+                    )
                 }
                 composable(UserTab.Messages.route) {
                     MessagesInboxScreen(
@@ -148,7 +163,10 @@ fun HomeScreen(
     onNavigateToLawyerDetail: (String) -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    onNavigateToAppointments: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {},
+    onNavigateToFacturation: () -> Unit = {}
 ) {
     UserDashboardHost(
         onNavigateToProfile = onNavigateToProfile,
@@ -156,7 +174,10 @@ fun HomeScreen(
         onNavigateToLawyerDetail = onNavigateToLawyerDetail,
         onNavigateToCategory = onNavigateToCategory,
         onNavigateToNotifications = onNavigateToNotifications,
-        onNavigateToChat = onNavigateToChat
+        onNavigateToChat = onNavigateToChat,
+        onNavigateToAppointments = onNavigateToAppointments,
+        onNavigateToDocuments = onNavigateToDocuments,
+        onNavigateToFacturation = onNavigateToFacturation
     )
 }
 

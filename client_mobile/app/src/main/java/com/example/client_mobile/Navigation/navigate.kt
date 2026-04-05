@@ -6,10 +6,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.client_mobile.Screens.AppointmentsScreen
 import com.example.client_mobile.Screens.AvocatProfile
+import com.example.client_mobile.Screens.BillingScreen
 import com.example.client_mobile.Screens.ChatScreen
 import com.example.client_mobile.Screens.ConversationRepository
 import com.example.client_mobile.Screens.CreeAvocatScreen
+import com.example.client_mobile.Screens.DocumentVaultScreen
 import com.example.client_mobile.Screens.CreeUserScreen
 import com.example.client_mobile.Screens.AboutScreen
 import com.example.client_mobile.Screens.EditLawyerProfileScreen
@@ -128,7 +131,10 @@ fun AppNavigation() {
                     navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}")
                 },
                 onNavigateToNotifications = { navController.navigate("Notifications/user") },
-                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
+                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
+                onNavigateToAppointments = { navController.navigate("Appointments") },
+                onNavigateToDocuments = { navController.navigate("DocumentVault") },
+                onNavigateToFacturation = { navController.navigate("Billing") }
             )
         }
 
@@ -148,6 +154,18 @@ fun AppNavigation() {
             EditUserProfileScreen(
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable("Appointments") {
+            AppointmentsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable("DocumentVault") {
+            DocumentVaultScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable("Billing") {
+            BillingScreen(onBack = { navController.popBackStack() })
         }
 
         composable("About") {
