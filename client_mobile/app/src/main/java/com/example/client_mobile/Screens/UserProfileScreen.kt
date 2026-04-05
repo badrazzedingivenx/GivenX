@@ -35,7 +35,8 @@ fun UserProfileScreen(
     userPhone: String = "+212 6 12 34 56 78",
     userAddress: String = "12, Rue Hassan II, Casablanca",
     onBack: () -> Unit = {},
-    onLogOut: () -> Unit = {}
+    onLogOut: () -> Unit = {},
+    onNavigateToEdit: () -> Unit = {}
 ) {
     var biometricEnabled by remember { mutableStateOf(false) }
     var showLogOutDialog by remember { mutableStateOf(false) }
@@ -63,7 +64,7 @@ fun UserProfileScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = onNavigateToEdit) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Modifier",

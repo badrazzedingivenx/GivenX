@@ -6,6 +6,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -122,36 +124,139 @@ fun LawyerDashboardHost(
     }
 }
 
-// ─── Lawyer Home Tab (placeholder tabs) ──────────────────────────────────────
+// ─── Lawyer Messages Tab (inbox from MessageRepository) ──────────────────────
 @Composable
 private fun LawyerMessagesTabContent(paddingValues: PaddingValues) {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(paddingValues),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+    val messages = MessageRepository.messages
+
+    if (messages.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MarkEmailUnread,
+                    contentDescription = null,
+                    tint = AppDarkGreen.copy(alpha = 0.30f),
+                    modifier = Modifier.size(64.dp)
+                )
+                Text(
+                    text = "Aucun message reçu",
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen
+                )
+                Text(
+                    text = "Les messages de vos clients apparaîtront ici.",
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Serif,
+                    color = Color.Gray
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Chat,
-                contentDescription = null,
-                tint = AppDarkGreen.copy(alpha = 0.35f),
-                modifier = Modifier.size(64.dp)
-            )
-            Text(
-                text = "Messages",
-                fontSize = 20.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppDarkGreen
-            )
-            Text(
-                text = "Bientôt disponible",
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.Gray
-            )
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
+                SectionHeader(title = "Messages Reçus (${messages.size})")
+            }
+            items(messages.reversed()) { msg ->
+                InboxMessageCard(msg)
+            }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun InboxMessageCard(msg: InboxMessage) {
+    val initials = msg.fromName
+        .split(" ")
+        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+        .take(2)
+        .joinToString("")
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = if (!msg.isRead) Color.White else Color.White.copy(alpha = 0.75f),
+        border = BorderStroke(
+            width = if (!msg.isRead) 1.dp else 0.5.dp,
+            color = if (!msg.isRead) AppGoldColor.copy(alpha = 0.50f) else AppDarkGreen.copy(alpha = 0.10f)
+        ),
+        shadowElevation = if (!msg.isRead) 4.dp else 1.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(AppDarkGreen),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    initials,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = AppGoldColor
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        msg.fromName,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = if (!msg.isRead) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 14.sp,
+                        color = AppDarkGreen,
+                        maxLines = 1
+                    )
+                    Text(
+                        msg.timestamp,
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 10.sp,
+                        color = AppDarkGreen.copy(alpha = 0.40f)
+                    )
+                }
+                Text(
+                    msg.content,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 12.sp,
+                    color = AppDarkGreen.copy(alpha = 0.60f),
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                if (!msg.isRead) {
+                    Text(
+                        "Nouveau",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppGoldColor
+                    )
+                }
+            }
         }
     }
 }

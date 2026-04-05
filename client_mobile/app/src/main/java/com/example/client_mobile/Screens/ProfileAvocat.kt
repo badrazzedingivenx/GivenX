@@ -42,7 +42,8 @@ fun AvocatProfile(
     phone: String = "+212 6 61 23 45 67",
     address: String = "34, Bd Zerktouni, Casablanca",
     bio: String = "Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation. Reconnu pour son engagement envers ses clients et ses résultats probants.",
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onNavigateToEdit: () -> Unit = {}
 ) {
     val specializations = listOf(
         "Droit Pénal", "Droit Civil", "Droit des Affaires",
@@ -192,7 +193,7 @@ fun AvocatProfile(
                             )
                         }
                         OutlinedButton(
-                            onClick = {},
+                            onClick = onNavigateToEdit,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(54.dp),

@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -377,6 +379,68 @@ fun UserNavBottomBar(
                     )
                 }
             }
+        }
+    }
+}
+
+// ─── Shared Profile Text Field ────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: ImageVector,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    errorMessage: String = "",
+    singleLine: Boolean = true,
+    maxLines: Int = if (singleLine) 1 else 6,
+    minLines: Int = 1,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = {
+                Text(label, fontFamily = FontFamily.Serif, fontSize = 13.sp)
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = if (isError) MaterialTheme.colorScheme.error else AppGoldColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            isError = isError,
+            singleLine = singleLine,
+            maxLines = maxLines,
+            minLines = minLines,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = AppDarkGreen,
+                unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.28f),
+                focusedLabelColor = AppDarkGreen,
+                unfocusedLabelColor = AppDarkGreen.copy(alpha = 0.50f),
+                focusedContainerColor = Color.White.copy(alpha = 0.95f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.88f),
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                errorContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.05f),
+                cursorColor = AppDarkGreen
+            )
+        )
+        if (isError && errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 11.sp,
+                fontFamily = FontFamily.Serif,
+                modifier = Modifier.padding(start = 16.dp, top = 3.dp)
+            )
         }
     }
 }
