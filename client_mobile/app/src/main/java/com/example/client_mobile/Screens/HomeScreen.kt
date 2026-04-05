@@ -50,7 +50,8 @@ fun UserDashboardHost(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
-    onNavigateToCategory: (String) -> Unit = {}
+    onNavigateToCategory: (String) -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -70,8 +71,20 @@ fun UserDashboardHost(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
-                        BadgedBox(badge = { Badge { Text("2") } }) {
+                    val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
+                    IconButton(onClick = onNavigateToNotifications) {
+                        BadgedBox(
+                            badge = {
+                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                                    Text(
+                                        if (unreadCount > 9) "9+" else "$unreadCount",
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
                             Icon(
                                 Icons.Default.Notifications,
                                 contentDescription = "Notifications",
@@ -128,13 +141,15 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
-    onNavigateToCategory: (String) -> Unit = {}
+    onNavigateToCategory: (String) -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     UserDashboardHost(
         onNavigateToProfile = onNavigateToProfile,
         onNavigateToAbout = onNavigateToAbout,
         onNavigateToLawyerDetail = onNavigateToLawyerDetail,
-        onNavigateToCategory = onNavigateToCategory
+        onNavigateToCategory = onNavigateToCategory,
+        onNavigateToNotifications = onNavigateToNotifications
     )
 }
 

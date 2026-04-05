@@ -16,6 +16,7 @@ import com.example.client_mobile.Screens.LawyerChatScreen
 import com.example.client_mobile.Screens.LawyerDetailScreen
 import com.example.client_mobile.Screens.LawyerListScreen
 import com.example.client_mobile.Screens.LawyerDashboardHost
+import com.example.client_mobile.Screens.NotificationScreen
 import com.example.client_mobile.Screens.UserDashboardHost
 import com.example.client_mobile.Screens.UserProfileScreen
 import com.example.client_mobile.Screens.LoginScreen
@@ -97,7 +98,8 @@ fun AppNavigation() {
         // 5. Home / Profile Screens
         composable("LawyerHome") {
             LawyerDashboardHost(
-                onNavigateToProfile = { navController.navigate("AvocatProfile") }
+                onNavigateToProfile = { navController.navigate("AvocatProfile") },
+                onNavigateToNotifications = { navController.navigate("Notifications/lawyer") }
             )
         }
 
@@ -121,7 +123,8 @@ fun AppNavigation() {
                 onNavigateToLawyerDetail = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
                 onNavigateToCategory = { domaine ->
                     navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}")
-                }
+                },
+                onNavigateToNotifications = { navController.navigate("Notifications/user") }
             )
         }
 
@@ -145,6 +148,17 @@ fun AppNavigation() {
 
         composable("About") {
             AboutScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "Notifications/{userType}",
+            arguments = listOf(navArgument("userType") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val isLawyer = backStackEntry.arguments?.getString("userType") == "lawyer"
+            NotificationScreen(
+                isLawyer = isLawyer,
                 onBack = { navController.popBackStack() }
             )
         }

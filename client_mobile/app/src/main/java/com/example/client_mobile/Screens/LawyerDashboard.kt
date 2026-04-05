@@ -52,7 +52,8 @@ fun LawyerDashboardHost(
     fullName: String = "Yassine El Amrani",
     speciality: String = "Droit Pénal",
     isMasculine: Boolean = true,
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -72,8 +73,20 @@ fun LawyerDashboardHost(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {}) {
-                        BadgedBox(badge = { Badge { Text("3") } }) {
+                    val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
+                    IconButton(onClick = onNavigateToNotifications) {
+                        BadgedBox(
+                            badge = {
+                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                                    Text(
+                                        if (unreadCount > 9) "9+" else "$unreadCount",
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
                             Icon(
                                 Icons.Default.Notifications,
                                 contentDescription = "Notifications",
