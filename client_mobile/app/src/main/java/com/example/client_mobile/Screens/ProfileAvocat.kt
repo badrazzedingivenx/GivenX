@@ -1,16 +1,19 @@
 package com.example.client_mobile.Screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -18,184 +21,661 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.client_mobile.R
 
+// ─── Lawyer Profile Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvocatProfile(
-    fullName: String = "Maître Yassine",
-    speciality: String = "Droit Pénal",
-    email: String = "avocat@contact.com",
-    phone: String = "+212 6 00 00 00 00",
-    address: String = "Rabat, Maroc",
-    onBack: () -> Unit
+    fullName: String = "Maître Yassine El Amrani",
+    title: String = "Avocat au Barreau de Casablanca",
+    email: String = "y.elamrani@cabinetyassine.ma",
+    phone: String = "+212 6 61 23 45 67",
+    address: String = "34, Bd Zerktouni, Casablanca",
+    bio: String = "Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation. Reconnu pour son engagement envers ses clients et ses résultats probants.",
+    onBack: () -> Unit = {}
 ) {
-    val goldColor = Color(0xFFD4AF37)
-    val darkGreen = Color(0xFF1B3124)
-    val scrollState = rememberScrollState()
+    val specializations = listOf(
+        "Droit Pénal", "Droit Civil", "Droit des Affaires",
+        "Droit Fiscal", "Contentieux Commercial"
+    )
 
-    var isEditing by remember { mutableStateOf(false) }
-
-    // Editable states
-    var nameState by remember { mutableStateOf(fullName) }
-    var specState by remember { mutableStateOf(speciality) }
-    var emailState by remember { mutableStateOf(email) }
-    var phoneState by remember { mutableStateOf(phone) }
-    var addressState by remember { mutableStateOf(address) }
+    var showLogOutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mon Profil", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = darkGreen) },
+                title = {
+                    Text(
+                        "Profil Avocat",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = AppDarkGreen
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = darkGreen)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { isEditing = !isEditing }) {
                         Icon(
-                            imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                            contentDescription = null,
-                            tint = darkGreen
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Retour",
+                            tint = AppDarkGreen
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                actions = {
+                    IconButton(onClick = {}) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = "Partager",
+                            tint = AppDarkGreen
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
-        }
+        },
+        containerColor = Color.Transparent
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.7f)))
-
-            Column(
+        DashBoardBackground {
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(scrollState),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                Spacer(modifier = Modifier.height(20.dp))
+                item { Spacer(modifier = Modifier.height(4.dp)) }
 
-                // Using logo_user which is safe and exists
-                Box(contentAlignment = Alignment.BottomEnd) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_user),
-                        contentDescription = "Profile",
+                // ── Header Card ───────────────────────────────────────────────
+                item {
+                    LawyerHeaderCard(
+                        fullName = fullName,
+                        title = title,
+                        yearsExp = 12,
+                        casesWon = 340,
+                        rating = 4.9f
+                    )
+                }
+
+                // ── Specializations ───────────────────────────────────────────
+                item { SectionHeader(title = "Domaines d'Expertise") }
+                item { SpecializationChipsRow(specializations = specializations) }
+
+                // ── Bio ───────────────────────────────────────────────────────
+                item { SectionHeader(title = "À Propos") }
+                item { LawyerBioCard(bio = bio) }
+
+                // ── Cabinet Links ─────────────────────────────────────────────
+                item { SectionHeader(title = "Mon Cabinet") }
+                item {
+                    DashCard {
+                        LawyerActionRow(
+                            icon = Icons.Default.Business,
+                            label = "Mon Cabinet",
+                            subtitle = address,
+                            onClick = {}
+                        )
+                        LawyerDivider()
+                        LawyerActionRow(
+                            icon = Icons.Default.AttachMoney,
+                            label = "Mes Honoraires",
+                            subtitle = "Tarifs & facturation",
+                            onClick = {}
+                        )
+                        LawyerDivider()
+                        LawyerActionRow(
+                            icon = Icons.Default.CalendarMonth,
+                            label = "Disponibilité",
+                            subtitle = "Gérer mes créneaux",
+                            onClick = {}
+                        )
+                        LawyerDivider()
+                        LawyerActionRow(
+                            icon = Icons.Default.Gavel,
+                            label = "Documents Juridiques",
+                            subtitle = "Certificats & licences",
+                            onClick = {},
+                            isLast = true
+                        )
+                    }
+                }
+
+                // ── Contact Info ──────────────────────────────────────────────
+                item { SectionHeader(title = "Contact") }
+                item {
+                    DashCard {
+                        LawyerInfoRow(Icons.Default.Email, "E-mail", email)
+                        LawyerDivider()
+                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", phone)
+                        LawyerDivider()
+                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", address, isLast = true)
+                    }
+                }
+
+                // ── CTA Buttons ───────────────────────────────────────────────
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(
+                            onClick = {},
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                            border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
+                        ) {
+                            Icon(
+                                Icons.Default.CalendarMonth,
+                                contentDescription = null,
+                                tint = AppGoldColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                "Consulter mon Agenda",
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color.White
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = {},
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, AppDarkGreen.copy(alpha = 0.35f)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = AppDarkGreen
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                "Modifier le Profil",
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+                }
+
+                // ── Log Out ───────────────────────────────────────────────────
+                item {
+                    Button(
+                        onClick = { showLogOutDialog = true },
                         modifier = Modifier
-                            .size(120.dp)
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFF1F1)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFFE53935).copy(alpha = 0.35f))
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            tint = Color(0xFFE53935),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            "Se Déconnecter",
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color(0xFFE53935)
+                        )
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(24.dp)) }
+            }
+        }
+    }
+
+    if (showLogOutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogOutDialog = false },
+            shape = RoundedCornerShape(22.dp),
+            containerColor = Color.White,
+            title = {
+                Text(
+                    "Se déconnecter ?",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Text(
+                    "Vous serez redirigé vers l'écran de connexion.",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 14.sp,
+                    color = AppDarkGreen.copy(alpha = 0.65f)
+                )
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogOutDialog = false }) {
+                    Text(
+                        "Annuler",
+                        fontFamily = FontFamily.Serif,
+                        color = AppDarkGreen.copy(alpha = 0.60f)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showLogOutDialog = false; onBack() },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                ) {
+                    Text(
+                        "Déconnecter",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        )
+    }
+}
+
+// ─── Header Card ─────────────────────────────────────────────────────────────
+@Composable
+private fun LawyerHeaderCard(
+    fullName: String,
+    title: String,
+    yearsExp: Int,
+    casesWon: Int,
+    rating: Float
+) {
+    val initials = fullName
+        .removePrefix("Maître ")
+        .split(" ")
+        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+        .take(2)
+        .joinToString("")
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        color = AppDarkGreen,
+        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.45f)),
+        shadowElevation = 8.dp
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Decorative circles
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawCircle(
+                    color = Color(0xFFD4AF37).copy(alpha = 0.08f),
+                    radius = 200.dp.toPx(),
+                    center = Offset(size.width * 0.92f, -size.height * 0.12f)
+                )
+                drawCircle(
+                    color = Color(0xFFD4AF37).copy(alpha = 0.05f),
+                    radius = 130.dp.toPx(),
+                    center = Offset(0f, size.height * 1.10f)
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Avatar + verified badge
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    // Initials avatar
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
                             .clip(CircleShape)
-                            .background(Color.White)
-                            .border(3.dp, goldColor, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        AppGoldColor.copy(alpha = 0.22f),
+                                        AppGoldColor.copy(alpha = 0.06f)
+                                    )
+                                )
+                            )
+                            .border(2.dp, AppGoldColor, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = initials,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 34.sp,
+                            color = AppGoldColor
+                        )
+                    }
+                    // Verified badge
                     Surface(
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(30.dp),
                         shape = CircleShape,
-                        color = darkGreen,
-                        border = BorderStroke(1.dp, goldColor)
+                        color = Color(0xFF34A853),
+                        border = BorderStroke(2.dp, AppDarkGreen)
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = goldColor, modifier = Modifier.padding(6.dp))
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Verified,
+                                contentDescription = "Vérifié",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (isEditing) {
-                    OutlinedTextField(
-                        value = nameState,
-                        onValueChange = { nameState = it },
-                        label = { Text("Nom complet") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(15.dp)
+                // Name & title
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Text(
+                        text = fullName,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = specState,
-                        onValueChange = { specState = it },
-                        label = { Text("Spécialité") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(15.dp)
+                    Text(
+                        text = title,
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 13.sp,
+                        color = AppGoldColor.copy(alpha = 0.90f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2
                     )
-                } else {
-                    Text(text = nameState, fontSize = 24.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = darkGreen)
-                    Text(text = specState, fontSize = 16.sp, fontFamily = FontFamily.Serif, color = goldColor)
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                EditableProfileItem("E-mail", emailState, Icons.Default.Email, darkGreen, isEditing) { emailState = it }
-                EditableProfileItem("Téléphone", phoneState, Icons.Default.Phone, darkGreen, isEditing) { phoneState = it }
-                EditableProfileItem("Adresse", addressState, Icons.Default.LocationOn, darkGreen, isEditing) { addressState = it }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                if (isEditing) {
-                    Button(
-                        onClick = { isEditing = false },
-                        modifier = Modifier.fillMaxWidth().height(55.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                        shape = RoundedCornerShape(15.dp)
-                    ) {
-                        Text("Enregistrer", color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif)
-                    }
-                } else {
-                    Button(
-                        onClick = { onBack() },
-                        modifier = Modifier.fillMaxWidth().height(55.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.8f)),
-                        shape = RoundedCornerShape(15.dp)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Se déconnecter", color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif)
-                    }
+                // Stats row
+                HorizontalDivider(color = AppGoldColor.copy(alpha = 0.20f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    LawyerStatItem(value = "${yearsExp} ans", label = "Expérience")
+                    VerticalStatDivider()
+                    LawyerStatItem(value = "$casesWon+", label = "Dossiers gagnés")
+                    VerticalStatDivider()
+                    LawyerStatItem(
+                        value = "★ $rating",
+                        label = "Satisfaction",
+                        valueColor = AppGoldColor
+                    )
                 }
-                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
 }
 
 @Composable
-fun EditableProfileItem(label: String, value: String, icon: ImageVector, themeColor: Color, isEditing: Boolean, onValueChange: (String) -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White.copy(alpha = 0.9f),
-        border = BorderStroke(0.5.dp, themeColor.copy(alpha = 0.2f))
+private fun LawyerStatItem(
+    value: String,
+    label: String,
+    valueColor: Color = Color.White
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = label, fontSize = 12.sp, color = Color.Gray, fontFamily = FontFamily.Serif)
-                if (isEditing) {
-                    TextField(
-                        value = value,
-                        onValueChange = onValueChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = TextFieldDefaults.colors(unfocusedContainerColor = Color.Transparent, focusedContainerColor = Color.Transparent)
+        Text(
+            text = value,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            color = valueColor
+        )
+        Text(
+            text = label,
+            fontFamily = FontFamily.Serif,
+            fontSize = 10.sp,
+            color = Color.White.copy(alpha = 0.55f),
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun VerticalStatDivider() {
+    Box(
+        modifier = Modifier
+            .height(32.dp)
+            .width(1.dp)
+            .background(AppGoldColor.copy(alpha = 0.25f))
+    )
+}
+
+// ─── Specialization Chips Row ─────────────────────────────────────────────────
+@Composable
+private fun SpecializationChipsRow(specializations: List<String>) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp)
+    ) {
+        items(specializations) { spec ->
+            Surface(
+                shape = RoundedCornerShape(50.dp),
+                color = AppDarkGreen,
+                border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.55f)),
+                shadowElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Gavel,
+                        contentDescription = null,
+                        tint = AppGoldColor,
+                        modifier = Modifier.size(13.dp)
                     )
-                } else {
-                    Text(text = value, fontSize = 15.sp, color = themeColor, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif)
+                    Text(
+                        text = spec,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        maxLines = 1
+                    )
                 }
             }
         }
     }
 }
+
+// ─── Bio Card ─────────────────────────────────────────────────────────────────
+@Composable
+private fun LawyerBioCard(bio: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = Color.White.copy(alpha = 0.92f),
+        border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(36.dp),
+                    shape = RoundedCornerShape(11.dp),
+                    color = AppDarkGreen
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.FormatQuote,
+                            contentDescription = null,
+                            tint = AppGoldColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = "Bio professionnelle",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = AppDarkGreen
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = bio,
+                fontFamily = FontFamily.Serif,
+                fontSize = 13.sp,
+                color = AppDarkGreen.copy(alpha = 0.72f),
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+
+// ─── Action Row ───────────────────────────────────────────────────────────────
+@Composable
+private fun LawyerActionRow(
+    icon: ImageVector,
+    label: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    isLast: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(vertical = if (isLast) 0.dp else 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(44.dp),
+            shape = RoundedCornerShape(14.dp),
+            color = AppDarkGreen,
+            border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = AppGoldColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = AppDarkGreen,
+                maxLines = 1
+            )
+            Text(
+                text = subtitle,
+                fontFamily = FontFamily.Serif,
+                fontSize = 11.sp,
+                color = AppDarkGreen.copy(alpha = 0.50f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = AppDarkGreen.copy(alpha = 0.28f),
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+// ─── Info Row ─────────────────────────────────────────────────────────────────
+@Composable
+private fun LawyerInfoRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    isLast: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = if (isLast) 0.dp else 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(38.dp),
+            shape = RoundedCornerShape(12.dp),
+            color = AppDarkGreen.copy(alpha = 0.07f)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = AppGoldColor,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontFamily = FontFamily.Serif,
+                fontSize = 11.sp,
+                color = AppDarkGreen.copy(alpha = 0.50f)
+            )
+            Text(
+                text = value,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = AppDarkGreen,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+// ─── Row Divider ─────────────────────────────────────────────────────────────
+@Composable
+private fun LawyerDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(vertical = 12.dp),
+        color = AppDarkGreen.copy(alpha = 0.07f)
+    )
+}
+

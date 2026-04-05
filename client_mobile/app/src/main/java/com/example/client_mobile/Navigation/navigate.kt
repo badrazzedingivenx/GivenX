@@ -12,6 +12,7 @@ import com.example.client_mobile.Screens.CreeUserScreen
 import com.example.client_mobile.Screens.AboutScreen
 import com.example.client_mobile.Screens.LawyerDashboardHost
 import com.example.client_mobile.Screens.UserDashboardHost
+import com.example.client_mobile.Screens.UserProfileScreen
 import com.example.client_mobile.Screens.LoginScreen
 import com.example.client_mobile.Screens.ScreenSwipeInfo
 import com.example.client_mobile.Screens.TypeCompteScreen
@@ -103,8 +104,19 @@ fun AppNavigation() {
 
         composable("UserHome") {
             UserDashboardHost(
-                onNavigateToProfile = {},
+                onNavigateToProfile = { navController.navigate("UserProfile") },
                 onNavigateToAbout = { navController.navigate("About") }
+            )
+        }
+
+        composable("UserProfile") {
+            UserProfileScreen(
+                onBack = { navController.popBackStack() },
+                onLogOut = {
+                    navController.navigate("Login/user") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 
