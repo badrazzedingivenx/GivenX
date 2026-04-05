@@ -64,6 +64,10 @@ fun UserDashboard(
 internal fun UserCasesTabContent(
     paddingValues: PaddingValues,
     userName: String = "Karim Bennani",
+    onNavigateToConsulter: () -> Unit = {},
+    onNavigateToMessages: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {},
+    onNavigateToFacturation: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -124,12 +128,32 @@ internal fun UserCasesTabContent(
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        QuickActionButton(Icons.Default.Event, "Consulter") {}
-                        QuickActionButton(Icons.Default.Chat, "Messagerie") {}
-                        QuickActionButton(Icons.Default.CloudUpload, "Documents") {}
-                        QuickActionButton(Icons.Default.MonetizationOn, "Facturation") {}
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Event,
+                            label = "Consulter",
+                            onClick = onNavigateToConsulter
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Chat,
+                            label = "Messagerie",
+                            onClick = onNavigateToMessages
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.CloudUpload,
+                            label = "Documents",
+                            onClick = onNavigateToDocuments
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.MonetizationOn,
+                            label = "Facturation",
+                            onClick = onNavigateToFacturation
+                        )
                     }
                 }
 
