@@ -146,6 +146,65 @@ fun LawyerDashboardHost(
     }
 }
 
+// ─── Payments Screen ──────────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LawyerPaymentsScreen(onBack: () -> Unit) {
+    val payments = LawyerSession.payments
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Suivi des Paiements", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AppDarkGreen) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        containerColor = Color.Transparent
+    ) { paddingValues ->
+        DashBoardBackground {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(4.dp)) }
+                items(payments) { payment ->
+                    PaymentCard(payment)
+                }
+                item { Spacer(modifier = Modifier.height(24.dp)) }
+            }
+        }
+    }
+}
+
+@Composable
+fun PaymentCard(payment: PaymentItem) {
+    DashCard {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(payment.clientName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AppDarkGreen)
+                Text(payment.date, fontSize = 11.sp, color = Color.Gray)
+                Text(payment.method, fontSize = 11.sp, color = AppGoldColor, fontWeight = FontWeight.Medium)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(payment.amount, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppDarkGreen)
+                StatusChip(
+                    label = payment.status,
+                    containerColor = if (payment.status == "Reçu") Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
+                    textColor = if (payment.status == "Reçu") Color(0xFF2E7D32) else Color(0xFFE65100)
+                )
+            }
+        }
+    }
+}
+
 // ─── Clients Management Tab ──────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -409,7 +468,7 @@ private fun LawyerHomeTabContent(
     onNavigateToPayments: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
-    val today = remember { SimpleDateFormat("EEEE d MMMM yyyy", Locale("fr")).format(Date()).replaceFirstChar { it.uppercase() } }
+    val today = remember { SimpleDateFormat("EEEE d MMMM yyyy", Locale.FRENCH).format(Date()).replaceFirstChar { it.uppercase() } }
 
     val scheduleItems = listOf(
         ScheduleItem("Karim Bennani", "09:00", "Consultation"),

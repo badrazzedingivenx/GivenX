@@ -1,5 +1,6 @@
 package com.example.client_mobile.Screens
 
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -21,10 +22,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 // ─── User Profile Screen ──────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +37,7 @@ fun UserProfileScreen(
     userEmail: String = "karim.bennani@email.com",
     userPhone: String = "+212 6 12 34 56 78",
     userAddress: String = "12, Rue Hassan II, Casablanca",
+    profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
     onLogOut: () -> Unit = {},
     onNavigateToEdit: () -> Unit = {}
@@ -89,7 +93,7 @@ fun UserProfileScreen(
 
                 // ── Profile Header Card ───────────────────────────────────────
                 item {
-                    ProfileHeaderCard(userName = userName)
+                    ProfileHeaderCard(userName = userName, profileImageUri = profileImageUri)
                 }
 
                 // ── Account Information ───────────────────────────────────────
@@ -243,7 +247,7 @@ fun UserProfileScreen(
 
 // ─── Profile Header Card ──────────────────────────────────────────────────────
 @Composable
-private fun ProfileHeaderCard(userName: String) {
+private fun ProfileHeaderCard(userName: String, profileImageUri: Uri? = null) {
     val initials = userName
         .split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
@@ -281,39 +285,39 @@ private fun ProfileHeaderCard(userName: String) {
             ) {
                 // Avatar with edit overlay
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        AppGoldColor.copy(alpha = 0.25f),
-                                        AppGoldColor.copy(alpha = 0.08f)
-                                    )
-                                )
-                            )
-                            .then(
-                                Modifier.clip(CircleShape).run {
-                                    this
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Gold ring border
-                        Surface(
-                            modifier = Modifier.size(90.dp),
-                            shape = CircleShape,
-                            color = Color.Transparent,
-                            border = BorderStroke(2.dp, AppGoldColor)
-                        ) {}
-                        Text(
-                            text = initials,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 32.sp,
-                            color = AppGoldColor
+                    if (profileImageUri != null) {
+                        AsyncImage(
+                            model = profileImageUri,
+                            contentDescription = "Photo de profil",
+                            modifier = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.1f)),
+                            contentScale = ContentScale.Crop
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            AppGoldColor.copy(alpha = 0.25f),
+                                            AppGoldColor.copy(alpha = 0.08f)
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = initials,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 32.sp,
+                                color = AppGoldColor
+                            )
+                        }
                     }
 
                     // Edit badge
@@ -419,17 +423,6 @@ private fun ProfileInfoRow(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 color = AppDarkGreen
-            )
-        }
-        IconButton(
-            onClick = {},
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                Icons.Default.Edit,
-                contentDescription = "Modifier",
-                tint = AppDarkGreen.copy(alpha = 0.30f),
-                modifier = Modifier.size(15.dp)
             )
         }
     }

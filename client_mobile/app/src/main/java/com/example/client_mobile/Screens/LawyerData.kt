@@ -25,7 +25,7 @@ data class ClientItem(
     val id: String,
     val name: String,
     val lastAction: String,
-    val status: String, // e.g., "Actif", "Paiement en attente", "Clôturé"
+    val status: String, // e.g., "Actif", "En attente", "Clôturé"
     val imageUri: Uri? = null
 )
 
@@ -34,7 +34,7 @@ data class RequestItem(
     val clientName: String,
     val topic: String,
     val date: String,
-    var status: String, // e.g., "Nouveau", "Accepté (Attente Paiement)", "Payé", "Refusé"
+    var status: String, // e.g., "Nouveau", "Accepté", "Refusé"
     val description: String,
     val amount: String = "500 MAD"
 )
@@ -57,6 +57,23 @@ data class InboxMessage(
     val isRead: Boolean = false
 )
 
+// ─── User Session ─────────────────────────────────────────────────────────────
+object UserSession {
+    var name by mutableStateOf("Karim Bennani")
+    var email by mutableStateOf("karim.bennani@email.com")
+    var phone by mutableStateOf("+212 6 12 34 56 78")
+    var address by mutableStateOf("12, Rue Hassan II, Casablanca")
+    var profileImageUri by mutableStateOf<Uri?>(null)
+
+    fun updateProfile(newName: String, newEmail: String, newPhone: String, newAddress: String, newImageUri: Uri?) {
+        name = newName
+        email = newEmail
+        phone = newPhone
+        address = newAddress
+        profileImageUri = newImageUri
+    }
+}
+
 // ─── Lawyer Session / Repository ──────────────────────────────────────────────
 object LawyerSession {
     var fullName by mutableStateOf("Maître Yassine El Amrani")
@@ -64,14 +81,14 @@ object LawyerSession {
     var email by mutableStateOf("y.elamrani@cabinetyassine.ma")
     var phone by mutableStateOf("+212 6 61 23 45 67")
     var address by mutableStateOf("34, Bd Zerktouni, Casablanca")
-    var bio by mutableStateOf("Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation.")
+    var bio by mutableStateOf("Maître El Amrani est spécialisé en droit pénal with plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation.")
     var profileImageUri by mutableStateOf<Uri?>(null)
     val specializations = mutableStateListOf("Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Fiscal", "Contentieux Commercial")
 
     val clients = mutableStateListOf(
-        ClientItem("1", "Karim Bennani", "Consultation payée", "Actif"),
-        ClientItem("2", "Sara Alaoui", "Attente de paiement devis", "Paiement en attente"),
-        ClientItem("3", "Mohammed Fassi", "Appel téléphonique prévu", "Actif")
+        ClientItem("1", "Karim Bennani", "Dernier message il y a 5 min", "Actif"),
+        ClientItem("2", "Sara Alaoui", "RDV confirmé pour demain", "Actif"),
+        ClientItem("3", "Mohammed Fassi", "Appel téléphonique prévu", "En attente")
     )
 
     val requests = mutableStateListOf(
@@ -89,23 +106,15 @@ object LawyerSession {
     fun acceptRequest(requestId: String) {
         val request = requests.find { it.id == requestId }
         request?.let {
-            it.status = "Accepté (Attente Paiement)"
+            it.status = "Accepté"
             if (clients.none { c -> c.name == it.clientName }) {
                 clients.add(0, ClientItem(
                     id = System.currentTimeMillis().toString(),
                     name = it.clientName,
-                    lastAction = "Devis envoyé - Attente paiement",
-                    status = "Paiement en attente"
+                    lastAction = "Demande acceptée",
+                    status = "Actif"
                 ))
             }
-            payments.add(0, PaymentItem(
-                id = System.currentTimeMillis().toString(),
-                clientName = it.clientName,
-                amount = it.amount,
-                date = "À l'instant",
-                status = "En attente",
-                method = "Lien de paiement envoyé"
-            ))
         }
         val index = requests.indexOf(request)
         if (index != -1) requests[index] = requests[index].copy()
@@ -119,14 +128,8 @@ object LawyerSession {
     }
 
     fun updateProfile(
-        newName: String,
-        newTitle: String,
-        newEmail: String,
-        newPhone: String,
-        newAddress: String,
-        newBio: String,
-        newSpecs: List<String>,
-        newImageUri: Uri?
+        newName: String, newTitle: String, newEmail: String, newPhone: String, 
+        newAddress: String, newBio: String, newSpecs: List<String>, newImageUri: Uri?
     ) {
         fullName = newName
         title = newTitle
@@ -148,7 +151,7 @@ object MessageRepository {
     }
 }
 
-// ─── Sample Lawyers (For client view consistency) ─────────────────────────────
+// ─── Sample Lawyers (For consistency) ─────────────────────────────────────────
 val sampleLawyers = listOf(
     LawyerItem("1", "Maître Yassine El Amrani", "Droit Pénal", "Casablanca", 4.9f, 127, 12, "...", true, "Droit Pénal"),
     LawyerItem("2", "Maître Sara Benali", "Droit de la Famille", "Rabat", 4.8f, 94, 9, "...", true, "Droit Civil")
