@@ -1,6 +1,10 @@
 package com.example.client_mobile.Screens
 
+import android.net.Uri
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class LawyerItem(
@@ -13,7 +17,35 @@ data class LawyerItem(
     val yearsExp: Int,
     val bio: String,
     val isVerified: Boolean,
-    val domaine: String
+    val domaine: String,
+    val imageUri: Uri? = null
+)
+
+data class ClientItem(
+    val id: String,
+    val name: String,
+    val lastAction: String,
+    val status: String, // e.g., "Actif", "Paiement en attente", "Clôturé"
+    val imageUri: Uri? = null
+)
+
+data class RequestItem(
+    val id: String,
+    val clientName: String,
+    val topic: String,
+    val date: String,
+    var status: String, // e.g., "Nouveau", "Accepté (Attente Paiement)", "Payé", "Refusé"
+    val description: String,
+    val amount: String = "500 MAD"
+)
+
+data class PaymentItem(
+    val id: String,
+    val clientName: String,
+    val amount: String,
+    val date: String,
+    val status: String, // "Reçu", "En attente"
+    val method: String // "Carte Bancaire", "Virement"
 )
 
 data class InboxMessage(
@@ -25,105 +57,100 @@ data class InboxMessage(
     val isRead: Boolean = false
 )
 
-// ─── Shared Message Repository (simulated) ────────────────────────────────────
-object MessageRepository {
-    val messages = mutableStateListOf<InboxMessage>()
+// ─── Lawyer Session / Repository ──────────────────────────────────────────────
+object LawyerSession {
+    var fullName by mutableStateOf("Maître Yassine El Amrani")
+    var title by mutableStateOf("Avocat au Barreau de Casablanca")
+    var email by mutableStateOf("y.elamrani@cabinetyassine.ma")
+    var phone by mutableStateOf("+212 6 61 23 45 67")
+    var address by mutableStateOf("34, Bd Zerktouni, Casablanca")
+    var bio by mutableStateOf("Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation.")
+    var profileImageUri by mutableStateOf<Uri?>(null)
+    val specializations = mutableStateListOf("Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Fiscal", "Contentieux Commercial")
 
-    fun sendMessage(fromName: String, content: String, lawyerId: String) {
-        messages.add(
-            InboxMessage(
+    val clients = mutableStateListOf(
+        ClientItem("1", "Karim Bennani", "Consultation payée", "Actif"),
+        ClientItem("2", "Sara Alaoui", "Attente de paiement devis", "Paiement en attente"),
+        ClientItem("3", "Mohammed Fassi", "Appel téléphonique prévu", "Actif")
+    )
+
+    val requests = mutableStateListOf(
+        RequestItem("1", "Hassan Tazi", "Litige Immobilier", "Aujourd'hui", "Nouveau", "Besoin d'un conseil pour un bail commercial.", "600 MAD"),
+        RequestItem("2", "Nadia Mansouri", "Divorce", "Hier", "Nouveau", "Demande de renseignement sur la procédure de divorce.", "400 MAD"),
+        RequestItem("3", "Omar Zaki", "Droit du Travail", "2 jours", "Nouveau", "Licenciement abusif, demande de calcul d'indemnités.", "800 MAD")
+    )
+
+    val payments = mutableStateListOf(
+        PaymentItem("1", "Karim Bennani", "500 MAD", "Aujourd'hui", "Reçu", "Carte Bancaire"),
+        PaymentItem("2", "Nadia Mansouri", "400 MAD", "Hier", "Reçu", "Virement"),
+        PaymentItem("3", "Sara Alaoui", "500 MAD", "Il y a 2 jours", "En attente", "Lien de paiement envoyé")
+    )
+
+    fun acceptRequest(requestId: String) {
+        val request = requests.find { it.id == requestId }
+        request?.let {
+            it.status = "Accepté (Attente Paiement)"
+            if (clients.none { c -> c.name == it.clientName }) {
+                clients.add(0, ClientItem(
+                    id = System.currentTimeMillis().toString(),
+                    name = it.clientName,
+                    lastAction = "Devis envoyé - Attente paiement",
+                    status = "Paiement en attente"
+                ))
+            }
+            payments.add(0, PaymentItem(
                 id = System.currentTimeMillis().toString(),
-                fromName = fromName,
-                content = content,
-                timestamp = "À l'instant",
-                lawyerId = lawyerId
-            )
-        )
+                clientName = it.clientName,
+                amount = it.amount,
+                date = "À l'instant",
+                status = "En attente",
+                method = "Lien de paiement envoyé"
+            ))
+        }
+        val index = requests.indexOf(request)
+        if (index != -1) requests[index] = requests[index].copy()
+    }
+
+    fun declineRequest(requestId: String) {
+        val request = requests.find { it.id == requestId }
+        request?.let { it.status = "Refusé" }
+        val index = requests.indexOf(request)
+        if (index != -1) requests[index] = requests[index].copy()
+    }
+
+    fun updateProfile(
+        newName: String,
+        newTitle: String,
+        newEmail: String,
+        newPhone: String,
+        newAddress: String,
+        newBio: String,
+        newSpecs: List<String>,
+        newImageUri: Uri?
+    ) {
+        fullName = newName
+        title = newTitle
+        email = newEmail
+        phone = newPhone
+        address = newAddress
+        bio = newBio
+        profileImageUri = newImageUri
+        specializations.clear()
+        specializations.addAll(newSpecs)
     }
 }
 
-// ─── Sample Lawyers ───────────────────────────────────────────────────────────
-val sampleLawyers = listOf(
-    LawyerItem(
-        id = "1",
-        name = "Maître Yassine El Amrani",
-        specialty = "Droit Pénal",
-        city = "Casablanca",
-        rating = 4.9f,
-        reviewCount = 127,
-        yearsExp = 12,
-        bio = "Spécialiste en droit pénal, Maître El Amrani intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation. Reconnu pour son engagement total envers ses clients et ses résultats exceptionnels.",
-        isVerified = true,
-        domaine = "Droit Pénal"
-    ),
-    LawyerItem(
-        id = "2",
-        name = "Maître Sara Benali",
-        specialty = "Droit de la Famille",
-        city = "Rabat",
-        rating = 4.8f,
-        reviewCount = 94,
-        yearsExp = 9,
-        bio = "Avocate spécialisée en droit de la famille : divorce, garde d'enfants, succession et pension alimentaire. Approche humaine et professionnelle, reconnue pour sa bienveillance et son efficacité.",
-        isVerified = true,
-        domaine = "Droit Civil"
-    ),
-    LawyerItem(
-        id = "3",
-        name = "Maître Khalid Tazi",
-        specialty = "Droit des Affaires",
-        city = "Casablanca",
-        rating = 4.7f,
-        reviewCount = 203,
-        yearsExp = 15,
-        bio = "Expert en droit des sociétés, fusions-acquisitions et contrats commerciaux. Conseille PME, startups et grands groupes dans leurs opérations juridiques courantes et stratégiques.",
-        isVerified = true,
-        domaine = "Droit des Affaires"
-    ),
-    LawyerItem(
-        id = "4",
-        name = "Maître Nadia Ouali",
-        specialty = "Droit Immobilier",
-        city = "Marrakech",
-        rating = 4.6f,
-        reviewCount = 76,
-        yearsExp = 7,
-        bio = "Spécialiste en droit immobilier : transactions foncières, litiges locatifs, copropriété et urbanisme. Accompagne particuliers et promoteurs immobiliers avec rigueur et réactivité.",
-        isVerified = false,
-        domaine = "Droit Immobilier"
-    ),
-    LawyerItem(
-        id = "5",
-        name = "Maître Omar Hadri",
-        specialty = "Droit du Travail",
-        city = "Fès",
-        rating = 4.5f,
-        reviewCount = 58,
-        yearsExp = 6,
-        bio = "Défend salariés et employeurs dans les litiges professionnels : licenciement abusif, harcèlement moral, négociation de conventions collectives et gestion des conflits collectifs.",
-        isVerified = true,
-        domaine = "Droit du Travail"
-    ),
-    LawyerItem(
-        id = "6",
-        name = "Maître Amina El Fassi",
-        specialty = "Droit Fiscal",
-        city = "Rabat",
-        rating = 4.8f,
-        reviewCount = 112,
-        yearsExp = 11,
-        bio = "Experte en optimisation fiscale, contrôles fiscaux et contentieux avec l'administration. Accompagne entreprises et particuliers pour sécuriser leur situation fiscale et contester les redressements.",
-        isVerified = true,
-        domaine = "Droit Fiscal"
-    )
-)
+// ─── Shared Message Repository ────────────────────────────────────────────────
+object MessageRepository {
+    val messages = mutableStateListOf<InboxMessage>()
+    fun sendMessage(fromName: String, content: String, lawyerId: String) {
+        messages.add(InboxMessage(id = System.currentTimeMillis().toString(), fromName = fromName, content = content, timestamp = "À l'instant", lawyerId = lawyerId))
+    }
+}
 
-val lawyerFilterDomaines = listOf(
-    "Tous",
-    "Droit Pénal",
-    "Droit Civil",
-    "Droit des Affaires",
-    "Droit Immobilier",
-    "Droit du Travail",
-    "Droit Fiscal"
+// ─── Sample Lawyers (For client view consistency) ─────────────────────────────
+val sampleLawyers = listOf(
+    LawyerItem("1", "Maître Yassine El Amrani", "Droit Pénal", "Casablanca", 4.9f, 127, 12, "...", true, "Droit Pénal"),
+    LawyerItem("2", "Maître Sara Benali", "Droit de la Famille", "Rabat", 4.8f, 94, 9, "...", true, "Droit Civil")
 )
+val lawyerFilterDomaines = listOf("Tous", "Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Immobilier", "Droit du Travail", "Droit Fiscal")

@@ -1,5 +1,6 @@
 package com.example.client_mobile.Screens
 
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -7,12 +8,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,12 +41,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class ScheduleItem(val clientName: String, val time: String, val type: String)
-data class LeadItem(val name: String, val topic: String, val timeAgo: String)
 data class TaskItem(val label: String, val dueDate: String, val isDone: Boolean)
-data class ActivityItem(val clientName: String, val action: String, val timeAgo: String)
 
 // ─── Lawyer Dashboard Host ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,10 +53,13 @@ data class ActivityItem(val clientName: String, val action: String, val timeAgo:
 fun LawyerDashboardHost(
     fullName: String = "Yassine El Amrani",
     speciality: String = "Droit Pénal",
+    profileImageUri: Uri? = null,
     isMasculine: Boolean = true,
     onNavigateToProfile: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    onNavigateToRequests: () -> Unit = {},
+    onNavigateToPayments: () -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -88,11 +93,7 @@ fun LawyerDashboardHost(
                                 }
                             }
                         ) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AppDarkGreen
-                            )
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = AppDarkGreen)
                         }
                     }
                 },
@@ -124,7 +125,10 @@ fun LawyerDashboardHost(
                         paddingValues = paddingValues,
                         fullName = fullName,
                         speciality = speciality,
-                        isMasculine = isMasculine
+                        profileImageUri = profileImageUri,
+                        isMasculine = isMasculine,
+                        onNavigateToRequests = onNavigateToRequests,
+                        onNavigateToPayments = onNavigateToPayments
                     )
                 }
                 composable(LawyerTab.Messages.route) {
@@ -142,190 +146,270 @@ fun LawyerDashboardHost(
     }
 }
 
-// ─── Lawyer Messages Tab (inbox from MessageRepository) ──────────────────────
+// ─── Clients Management Tab ──────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LawyerMessagesTabContent(paddingValues: PaddingValues) {
-    val messages = MessageRepository.messages
+private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedFilter by remember { mutableStateOf("Tous") }
+    val filters = listOf("Tous", "Actif", "Paiement en attente", "Clôturé")
 
-    if (messages.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MarkEmailUnread,
-                    contentDescription = null,
-                    tint = AppDarkGreen.copy(alpha = 0.30f),
-                    modifier = Modifier.size(64.dp)
-                )
-                Text(
-                    text = "Aucun message reçu",
-                    fontSize = 16.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen
-                )
-                Text(
-                    text = "Les messages de vos clients apparaîtront ici.",
-                    fontSize = 13.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = Color.Gray
+    val filteredClients = LawyerSession.clients.filter {
+        (selectedFilter == "Tous" || it.status == selectedFilter) &&
+        (it.name.contains(searchQuery, ignoreCase = true))
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(horizontal = 20.dp)
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        SectionHeader(title = "Gestion des Clients")
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Rechercher un client…", fontSize = 14.sp, fontFamily = FontFamily.Serif) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = AppDarkGreen.copy(alpha = 0.4f)) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White.copy(alpha = 0.9f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
+                focusedBorderColor = AppDarkGreen,
+                unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.1f)
+            )
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Filter Row
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(filters) { filter ->
+                FilterChip(
+                    selected = selectedFilter == filter,
+                    onClick = { selectedFilter = filter },
+                    label = { Text(filter, fontFamily = FontFamily.Serif, fontSize = 12.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = AppDarkGreen,
+                        selectedLabelColor = Color.White,
+                        containerColor = Color.White.copy(alpha = 0.6f)
+                    ),
+                    border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.1f))
                 )
             }
         }
-    } else {
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(4.dp))
-                SectionHeader(title = "Messages Reçus (${messages.size})")
+            if (filteredClients.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                        Text("Aucun client trouvé.", color = Color.Gray, fontFamily = FontFamily.Serif)
+                    }
+                }
+            } else {
+                items(filteredClients) { client ->
+                    ClientCard(client)
+                }
             }
-            items(messages.reversed()) { msg ->
-                InboxMessageCard(msg)
-            }
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
 
 @Composable
-private fun InboxMessageCard(msg: InboxMessage) {
-    val initials = msg.fromName
-        .split(" ")
-        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-        .take(2)
-        .joinToString("")
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = if (!msg.isRead) Color.White else Color.White.copy(alpha = 0.75f),
-        border = BorderStroke(
-            width = if (!msg.isRead) 1.dp else 0.5.dp,
-            color = if (!msg.isRead) AppGoldColor.copy(alpha = 0.50f) else AppDarkGreen.copy(alpha = 0.10f)
-        ),
-        shadowElevation = if (!msg.isRead) 4.dp else 1.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+fun ClientCard(client: ClientItem) {
+    DashCard(onClick = { /* Detail client */ }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .background(AppDarkGreen),
+                    .background(AppDarkGreen.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    initials,
+                    text = client.name.first().toString(),
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = AppDarkGreen
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = client.name,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = AppGoldColor
+                    color = AppDarkGreen
                 )
-            }
-
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        msg.fromName,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = if (!msg.isRead) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 14.sp,
-                        color = AppDarkGreen,
-                        maxLines = 1
-                    )
-                    Text(
-                        msg.timestamp,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 10.sp,
-                        color = AppDarkGreen.copy(alpha = 0.40f)
-                    )
-                }
                 Text(
-                    msg.content,
+                    text = client.lastAction,
                     fontFamily = FontFamily.Serif,
                     fontSize = 12.sp,
-                    color = AppDarkGreen.copy(alpha = 0.60f),
-                    maxLines = 2,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    color = Color.Gray
                 )
-                if (!msg.isRead) {
-                    Text(
-                        "Nouveau",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AppGoldColor
-                    )
+            }
+            StatusChip(
+                label = client.status,
+                containerColor = when(client.status) {
+                    "Actif" -> Color(0xFFE8F5E9)
+                    "Paiement en attente" -> Color(0xFFFFF3E0)
+                    else -> Color(0xFFF5F5F5)
+                },
+                textColor = when(client.status) {
+                    "Actif" -> Color(0xFF2E7D32)
+                    "Paiement en attente" -> Color(0xFFE65100)
+                    else -> Color(0xFF616161)
                 }
+            )
+        }
+    }
+}
+
+// ─── Requests Management Screen ──────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LawyerRequestsScreen(onBack: () -> Unit) {
+    val requests = LawyerSession.requests
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Nouvelles Demandes", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AppDarkGreen) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        containerColor = Color.Transparent
+    ) { paddingValues ->
+        DashBoardBackground {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(4.dp)) }
+                
+                val newRequests = requests.filter { it.status == "Nouveau" }
+                val processedRequests = requests.filter { it.status != "Nouveau" }
+
+                if (newRequests.isNotEmpty()) {
+                    item { Text("À traiter (${newRequests.size})", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) }
+                    items(newRequests) { request ->
+                        RequestCard(
+                            request = request,
+                            onAccept = { LawyerSession.acceptRequest(request.id) },
+                            onDecline = { LawyerSession.declineRequest(request.id) }
+                        )
+                    }
+                }
+
+                if (processedRequests.isNotEmpty()) {
+                    item { Text("Historique", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen.copy(alpha = 0.5f)) }
+                    items(processedRequests) { request ->
+                        RequestCard(
+                            request = request,
+                            onAccept = {},
+                            onDecline = {}
+                        )
+                    }
+                }
+                
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
         }
     }
 }
 
 @Composable
-private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(paddingValues),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Groups,
-                contentDescription = null,
-                tint = AppDarkGreen.copy(alpha = 0.35f),
-                modifier = Modifier.size(64.dp)
-            )
-            Text(
-                text = "Clients",
-                fontSize = 20.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppDarkGreen
-            )
-            Text(
-                text = "Bientôt disponible",
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.Gray
-            )
+fun RequestCard(request: RequestItem, onAccept: () -> Unit, onDecline: () -> Unit) {
+    DashCard {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(request.clientName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppDarkGreen)
+                StatusChip(
+                    label = request.status,
+                    containerColor = when(request.status) {
+                        "Nouveau" -> Color(0xFFE3F2FD)
+                        "Accepté (Attente Paiement)" -> Color(0xFFFFF3E0)
+                        "Payé" -> Color(0xFFE8F5E9)
+                        "Refusé" -> Color(0xFFFFF1F1)
+                        else -> Color(0xFFF5F5F5)
+                    },
+                    textColor = when(request.status) {
+                        "Nouveau" -> Color(0xFF1976D2)
+                        "Accepté (Attente Paiement)" -> Color(0xFFE65100)
+                        "Payé" -> Color(0xFF2E7D32)
+                        "Refusé" -> Color(0xFFD32F2F)
+                        else -> Color(0xFF616161)
+                    }
+                )
+            }
+            Text(request.topic, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = AppGoldColor)
+            Text(request.description, fontSize = 13.sp, color = Color.Gray, lineHeight = 18.sp)
+            Text("Honoraires proposés: ${request.amount}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppDarkGreen)
+            
+            if (request.status == "Nouveau") {
+                HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.05f))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = onAccept,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Accepter & Devis", fontSize = 11.sp, color = Color.White)
+                    }
+                    OutlinedButton(
+                        onClick = onDecline,
+                        modifier = Modifier.weight(0.5f),
+                        border = BorderStroke(1.dp, Color(0xFFD32F2F).copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("Refuser", fontSize = 11.sp, color = Color(0xFFD32F2F))
+                    }
+                }
+            } else {
+                Text("Date: ${request.date}", fontSize = 11.sp, color = Color.Gray)
+            }
         }
     }
 }
 
-// ─── Lawyer Dashboard Screen ──────────────────────────────────────────────────
+// ─── Lawyer Home Tab Content ──────────────────────────────────────────────────
 @Composable
 private fun LawyerHomeTabContent(
     paddingValues: PaddingValues,
     fullName: String = "Yassine El Amrani",
     speciality: String = "Droit Pénal",
+    profileImageUri: Uri? = null,
     isMasculine: Boolean = true,
+    onNavigateToRequests: () -> Unit = {},
+    onNavigateToPayments: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
-
-    val today = remember {
-        SimpleDateFormat("EEEE d MMMM yyyy", Locale("fr")).format(Date())
-            .replaceFirstChar { it.uppercase() }
-    }
+    val today = remember { SimpleDateFormat("EEEE d MMMM yyyy", Locale("fr")).format(Date()).replaceFirstChar { it.uppercase() } }
 
     val scheduleItems = listOf(
         ScheduleItem("Karim Bennani", "09:00", "Consultation"),
@@ -333,30 +417,16 @@ private fun LawyerHomeTabContent(
         ScheduleItem("Mohammed Fassi", "14:00", "Réunion")
     )
 
-    val leads = listOf(
-        LeadItem("Aya Berrada", "Droit de la Famille", "Il y a 10 min"),
-        LeadItem("Omar Tazi", "Droit Immobilier", "Il y a 45 min"),
-        LeadItem("Nour Chraibi", "Droit du Travail", "Il y a 2h")
-    )
-
     val tasks = remember {
         mutableStateListOf(
             TaskItem("Préparer le dossier Bennani", "Aujourd'hui", false),
             TaskItem("Soumettre l'appel Alaoui", "Demain", false),
-            TaskItem("Relire contrat Fassi & Associés", "4 Avr", false),
-            TaskItem("Archiver dossier clôturé N°087", "5 Avr", true)
+            TaskItem("Relire contrat Fassi & Associés", "4 Avr", false)
         )
     }
 
     val revenueData = listOf(18f, 25f, 32f, 22f, 40f, 35f, 48f, 30f, 42f, 38f, 55f, 60f)
     val monthLabels = listOf("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
-
-    val activityFeed = listOf(
-        ActivityItem("Karim Bennani", "a téléchargé un document", "Il y a 5 min"),
-        ActivityItem("Sara Alaoui", "a confirmé son RDV", "Il y a 1h"),
-        ActivityItem("Mohammed Fassi", "a envoyé un message", "Il y a 3h"),
-        ActivityItem("Aya Berrada", "a soumis une nouvelle demande", "Hier")
-    )
 
     Column(
         modifier = Modifier
@@ -368,414 +438,147 @@ private fun LawyerHomeTabContent(
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
-        // ── Greeting Banner ───────────────────────────────────────────
+        // Banner Hero
         DarkDashCard {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (isMasculine) "Bonjour, Maître" else "Bonjour, Maîtresse",
-                        fontSize = 13.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = AppGoldColor
-                    )
-                    Text(
-                        text = fullName,
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                                text = speciality,
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = Color.White.copy(alpha = 0.60f)
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = today,
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppGoldColor.copy(alpha = 0.75f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Surface(
-                            modifier = Modifier.size(60.dp),
-                            shape = CircleShape,
-                            color = Color.Transparent,
-                            border = BorderStroke(2.dp, AppGoldColor)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo_user),
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    // ── Key Stats Row ─────────────────────────────────────────
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        CompactStatTile(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.Folder,
-                            count = "12",
-                            label = "Actifs"
-                        )
-                        CompactStatTile(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.HourglassEmpty,
-                            count = "5",
-                            label = "En attente"
-                        )
-                        CompactStatTile(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.CheckCircle,
-                            count = "47",
-                            label = "Clôturés"
-                        )
+                    Text(text = if (isMasculine) "Bonjour, Maître" else "Bonjour, Maîtresse", fontSize = 13.sp, fontFamily = FontFamily.Serif, color = AppGoldColor)
+                    Text(text = fullName, fontSize = 22.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = speciality, fontSize = 13.sp, fontFamily = FontFamily.Serif, color = Color.White.copy(alpha = 0.60f))
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(text = today, fontSize = 11.sp, fontFamily = FontFamily.Serif, color = AppGoldColor.copy(alpha = 0.75f))
+                }
+                Surface(
+                    modifier = Modifier.size(60.dp),
+                    shape = CircleShape,
+                    color = Color.Transparent,
+                    border = BorderStroke(2.dp, AppGoldColor)
+                ) {
+                    if (profileImageUri != null) {
+                        AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                    } else {
+                        Image(painter = painterResource(id = R.drawable.logo_user), contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
                     }
                 }
+            }
 
-                // ── Daily Schedule ────────────────────────────────────────────
-                SectionHeader(title = "Agenda du Jour", actionLabel = "Calendrier complet") {}
-                DashCard {
-                    scheduleItems.forEachIndexed { index, item ->
-                        LawyerScheduleRow(item = item)
-                        if (index < scheduleItems.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                color = AppDarkGreen.copy(alpha = 0.07f)
-                            )
-                        }
-                    }
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                CompactStatTile(modifier = Modifier.weight(1f), icon = Icons.Default.Groups, count = LawyerSession.clients.size.toString(), label = "Clients")
+                CompactStatTile(modifier = Modifier.weight(1f).clickable { onNavigateToRequests() }, icon = Icons.Default.Description, count = LawyerSession.requests.count { it.status == "Nouveau" }.toString(), label = "Demandes")
+                CompactStatTile(modifier = Modifier.weight(1f), icon = Icons.Default.CheckCircle, count = "47", label = "Clôturés")
+            }
+        }
+
+        // Agenda Section
+        SectionHeader(title = "Agenda du Jour", actionLabel = "Calendrier") {}
+        DashCard {
+            scheduleItems.forEachIndexed { index, item ->
+                LawyerScheduleRow(item = item)
+                if (index < scheduleItems.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = AppDarkGreen.copy(alpha = 0.07f))
+            }
+        }
+
+        // Nouvelles Demandes (Management Quick view)
+        SectionHeader(title = "Dernières Demandes", actionLabel = "Voir tout", onAction = onNavigateToRequests)
+        DashCard {
+            val pending = LawyerSession.requests.filter { it.status == "Nouveau" }.take(2)
+            if (pending.isEmpty()) {
+                Text("Aucune nouvelle demande.", fontSize = 13.sp, color = Color.Gray, fontFamily = FontFamily.Serif)
+            } else {
+                pending.forEachIndexed { index, lead ->
+                    NewLeadRow(lead = lead)
+                    if (index < pending.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = AppDarkGreen.copy(alpha = 0.07f))
                 }
+            }
+        }
 
-                // ── New Leads / Inquiries ─────────────────────────────────────
-                SectionHeader(title = "Nouvelles Demandes", actionLabel = "Voir tout") {}
-                DashCard {
-                    leads.forEachIndexed { index, lead ->
-                        NewLeadRow(lead = lead)
-                        if (index < leads.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                color = AppDarkGreen.copy(alpha = 0.07f)
-                            )
-                        }
-                    }
-                }
+        // Revenue Section
+        SectionHeader(title = "Activité Financière", actionLabel = "Détails", onAction = onNavigateToPayments)
+        DashCard {
+            val total = LawyerSession.payments.filter { it.status == "Reçu" }.sumOf { it.amount.replace(" MAD", "").toInt() }
+            Text(text = "$total MAD", fontSize = 24.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+            Text(text = "Total encaissé ce mois", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+            Spacer(modifier = Modifier.height(18.dp))
+            RevenueBarChart(data = revenueData, labels = monthLabels, highlightIndex = 11)
+        }
 
-                // ── Task Manager ──────────────────────────────────────────────
-                SectionHeader(title = "Tâches Juridiques")
-                DashCard {
-                    tasks.forEachIndexed { index, task ->
-                        TaskRow(
-                            task = task,
-                            onToggle = {
-                                tasks[index] = tasks[index].copy(isDone = !tasks[index].isDone)
-                            }
-                        )
-                        if (index < tasks.lastIndex) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                        }
-                    }
-                }
+        // Tasks Section
+        SectionHeader(title = "Tâches Juridiques")
+        DashCard {
+            tasks.forEachIndexed { index, task ->
+                TaskRow(task = task, onToggle = { tasks[index] = tasks[index].copy(isDone = !tasks[index].isDone) })
+            }
+        }
 
-                // ── Revenue Analytics ─────────────────────────────────────────
-                SectionHeader(title = "Revenus Mensuels")
-                DashCard {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Column {
-                            Text(
-                                "60 000 MAD",
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                color = AppDarkGreen
-                            )
-                            Text(
-                                "Total annuel 2025",
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = Color.Gray
-                            )
-                        }
-                        StatusChip(
-                            label = "+12% vs 2024",
-                            containerColor = Color(0xFFE8F5E9),
-                            textColor = Color(0xFF2E7D32)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(18.dp))
-                    RevenueBarChart(data = revenueData, labels = monthLabels, highlightIndex = 11)
-                }
-
-                // ── Recent Client Activity ────────────────────────────────────
-                SectionHeader(title = "Activité Récente")
-                DashCard {
-                    activityFeed.forEachIndexed { index, activity ->
-                        ActivityFeedRow(activity = activity)
-                        if (index < activityFeed.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                color = AppDarkGreen.copy(alpha = 0.07f)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
-// ─── Lawyer Schedule Row ──────────────────────────────────────────────────────
 @Composable
-fun LawyerScheduleRow(item: ScheduleItem) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = AppDarkGreen
-        ) {
-            Text(
-                text = item.time,
-                fontSize = 13.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppGoldColor,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                item.clientName,
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppDarkGreen
-            )
-            Text(
-                item.type,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.Gray
-            )
-        }
-        StatusChip(
-            label = item.type,
-            containerColor = AppGoldColor.copy(alpha = 0.12f),
-            textColor = AppDarkGreen
-        )
-    }
-}
-
-// ─── New Lead Row ─────────────────────────────────────────────────────────────
-@Composable
-fun NewLeadRow(lead: LeadItem) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            modifier = Modifier.size(44.dp),
-            shape = CircleShape,
-            color = AppDarkGreen.copy(alpha = 0.09f)
-        ) {
+fun NewLeadRow(lead: RequestItem) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = AppDarkGreen.copy(alpha = 0.09f)) {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = lead.name.first().toString(),
-                    fontSize = 18.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen
-                )
+                Text(text = lead.clientName.first().toString(), fontSize = 16.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                lead.name,
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppDarkGreen
-            )
-            Text(
-                lead.topic,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.Gray
-            )
+            Text(lead.clientName, fontSize = 14.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+            Text(lead.topic, fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
         }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                lead.timeAgo,
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.Gray
-            )
-            Spacer(modifier = Modifier.height(5.dp))
-            Surface(
-                modifier = Modifier.size(8.dp),
-                shape = CircleShape,
-                color = AppGoldColor
-            ) {}
-        }
+        Text(lead.date, fontSize = 10.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
     }
 }
 
-// ─── Task Row ─────────────────────────────────────────────────────────────────
+@Composable
+fun LawyerScheduleRow(item: ScheduleItem) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Surface(shape = RoundedCornerShape(10.dp), color = AppDarkGreen) {
+            Text(text = item.time, fontSize = 12.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppGoldColor, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(item.clientName, fontSize = 14.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+            Text(item.type, fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+        }
+        StatusChip(label = "RDV", containerColor = AppGoldColor.copy(alpha = 0.12f), textColor = AppDarkGreen)
+    }
+}
+
 @Composable
 fun TaskRow(task: TaskItem, onToggle: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (task.isDone) Color(0xFFF5F8F5) else Color.Transparent)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = task.isDone,
-            onCheckedChange = { onToggle() },
-            colors = CheckboxDefaults.colors(
-                checkedColor = AppDarkGreen,
-                checkmarkColor = AppGoldColor,
-                uncheckedColor = AppDarkGreen.copy(alpha = 0.40f)
-            )
-        )
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(checked = task.isDone, onCheckedChange = { onToggle() }, colors = CheckboxDefaults.colors(checkedColor = AppDarkGreen, checkmarkColor = AppGoldColor))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = task.label,
-                fontSize = 13.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = if (task.isDone) FontWeight.Normal else FontWeight.Bold,
-                color = if (task.isDone) Color.Gray else AppDarkGreen,
-                textDecoration = if (task.isDone) TextDecoration.LineThrough else TextDecoration.None
-            )
-            Text(
-                text = task.dueDate,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Serif,
-                color = if (task.isDone) Color.LightGray else AppGoldColor
-            )
+            Text(text = task.label, fontSize = 13.sp, fontFamily = FontFamily.Serif, color = if (task.isDone) Color.Gray else AppDarkGreen, textDecoration = if (task.isDone) TextDecoration.LineThrough else TextDecoration.None)
+            Text(text = task.dueDate, fontSize = 11.sp, fontFamily = FontFamily.Serif, color = AppGoldColor)
         }
     }
 }
 
-// ─── Revenue Bar Chart ────────────────────────────────────────────────────────
 @Composable
 fun RevenueBarChart(data: List<Float>, labels: List<String>, highlightIndex: Int) {
     val maxVal = data.max()
     Column {
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp)
-        ) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(100.dp)) {
             val totalBars = data.size
             val spacing = 5.dp.toPx()
             val barWidth = (size.width - spacing * (totalBars - 1)) / totalBars
-            val maxBarHeight = size.height - 16f
-
             data.forEachIndexed { index, value ->
-                val barHeight = (value / maxVal) * maxBarHeight
-                val left = index * (barWidth + spacing)
-                val top = size.height - barHeight
+                val barHeight = (value / maxVal) * size.height
                 drawRoundRect(
-                    color = if (index == highlightIndex) {
-                        AppGoldColor
-                    } else {
-                        AppDarkGreen.copy(alpha = 0.22f)
-                    },
-                    topLeft = Offset(left, top),
+                    color = if (index == highlightIndex) AppGoldColor else AppDarkGreen.copy(alpha = 0.2f),
+                    topLeft = Offset(index * (barWidth + spacing), size.height - barHeight),
                     size = Size(barWidth, barHeight),
-                    cornerRadius = CornerRadius(5.dp.toPx())
+                    cornerRadius = CornerRadius(4.dp.toPx())
                 )
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            labels.forEach { label ->
-                Text(
-                    text = label,
-                    fontSize = 9.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = Color.Gray
-                )
-            }
-        }
-    }
-}
-
-// ─── Activity Feed Row ────────────────────────────────────────────────────────
-@Composable
-fun ActivityFeedRow(activity: ActivityItem) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            color = AppGoldColor.copy(alpha = 0.14f),
-            border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.35f))
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = activity.clientName.first().toString(),
-                    fontSize = 16.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen
-                )
-            }
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Row {
-                Text(
-                    activity.clientName,
-                    fontSize = 13.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen
-                )
-                Text(
-                    " ${activity.action}",
-                    fontSize = 13.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = Color.Gray
-                )
-            }
-            Text(
-                activity.timeAgo,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.LightGray
-            )
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceAround) {
+            labels.forEach { Text(it, fontSize = 9.sp, color = Color.Gray) }
         }
     }
 }

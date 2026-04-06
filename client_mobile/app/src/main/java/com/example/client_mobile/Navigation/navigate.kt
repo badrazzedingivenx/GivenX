@@ -11,27 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.client_mobile.Screens.AppointmentsScreen
-import com.example.client_mobile.Screens.AvocatProfile
-import com.example.client_mobile.Screens.BillingScreen
-import com.example.client_mobile.Screens.ChatScreen
-import com.example.client_mobile.Screens.ConversationRepository
-import com.example.client_mobile.Screens.CreeAvocatScreen
-import com.example.client_mobile.Screens.DocumentVaultScreen
-import com.example.client_mobile.Screens.CreeUserScreen
-import com.example.client_mobile.Screens.AboutScreen
-import com.example.client_mobile.Screens.EditLawyerProfileScreen
-import com.example.client_mobile.Screens.EditUserProfileScreen
-import com.example.client_mobile.Screens.LawyerChatScreen
-import com.example.client_mobile.Screens.LawyerDetailScreen
-import com.example.client_mobile.Screens.LawyerListScreen
-import com.example.client_mobile.Screens.LawyerDashboardHost
-import com.example.client_mobile.Screens.NotificationScreen
-import com.example.client_mobile.Screens.UserDashboardHost
-import com.example.client_mobile.Screens.UserProfileScreen
-import com.example.client_mobile.Screens.LoginScreen
-import com.example.client_mobile.Screens.ScreenSwipeInfo
-import com.example.client_mobile.Screens.TypeCompteScreen
+import com.example.client_mobile.Screens.*
 
 @Composable
 fun AppNavigation() {
@@ -127,6 +107,9 @@ fun AppNavigation() {
         // 5. Home / Profile Screens
         composable("LawyerHome") {
             LawyerDashboardHost(
+                fullName = LawyerSession.fullName,
+                speciality = LawyerSession.title,
+                profileImageUri = LawyerSession.profileImageUri,
                 onNavigateToProfile = { navController.navigate("AvocatProfile") },
                 onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
@@ -135,6 +118,13 @@ fun AppNavigation() {
 
         composable("AvocatProfile") {
             AvocatProfile(
+                fullName = LawyerSession.fullName,
+                title = LawyerSession.title,
+                email = LawyerSession.email,
+                phone = LawyerSession.phone,
+                address = LawyerSession.address,
+                bio = LawyerSession.bio,
+                profileImageUri = LawyerSession.profileImageUri,
                 onBack = { navController.popBackStack() },
                 onNavigateToEdit = { navController.navigate("EditLawyerProfile") }
             )
@@ -142,7 +132,18 @@ fun AppNavigation() {
 
         composable("EditLawyerProfile") {
             EditLawyerProfileScreen(
-                onBack = { navController.popBackStack() }
+                initialName = LawyerSession.fullName,
+                initialTitle = LawyerSession.title,
+                initialEmail = LawyerSession.email,
+                initialPhone = LawyerSession.phone,
+                initialAddress = LawyerSession.address,
+                initialBio = LawyerSession.bio,
+                initialSpecs = LawyerSession.specializations,
+                initialImageUri = LawyerSession.profileImageUri,
+                onBack = { navController.popBackStack() },
+                onSave = { name, title, email, phone, address, bio, specs, imageUri ->
+                    LawyerSession.updateProfile(name, title, email, phone, address, bio, specs, imageUri)
+                }
             )
         }
 
