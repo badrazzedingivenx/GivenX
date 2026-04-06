@@ -1,5 +1,10 @@
 package com.example.client_mobile.Navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -31,7 +36,26 @@ import com.example.client_mobile.Screens.TypeCompteScreen
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "Onboarding") {
+    NavHost(
+        navController = navController,
+        startDestination = "Onboarding",
+        enterTransition = {
+            fadeIn(animationSpec = tween(300)) +
+                slideInHorizontally(animationSpec = tween(300)) { it / 4 }
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(200)) +
+                slideOutHorizontally(animationSpec = tween(200)) { -it / 4 }
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(300)) +
+                slideInHorizontally(animationSpec = tween(300)) { -it / 4 }
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(200)) +
+                slideOutHorizontally(animationSpec = tween(200)) { it / 4 }
+        }
+    ) {
         
         // 1. Initial Onboarding Swipe
         composable("Onboarding") {
