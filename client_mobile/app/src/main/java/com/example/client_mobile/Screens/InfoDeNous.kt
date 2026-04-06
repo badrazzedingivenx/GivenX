@@ -1,7 +1,17 @@
 package com.example.client_mobile.Screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -12,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -107,11 +118,19 @@ fun ScreenSwipeInfo(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         repeat(4) { index ->
                             val isSelected = pagerState.currentPage == index
+                            val dotWidth by animateDpAsState(
+                                targetValue = if (isSelected) 24.dp else 6.dp,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "dotWidth_$index"
+                            )
                             Box(
                                 modifier = Modifier
                                     .padding(horizontal = 4.dp)
                                     .height(6.dp)
-                                    .width(if (isSelected) 24.dp else 6.dp)
+                                    .width(dotWidth)
                                     .clip(CircleShape)
                                     .background(if (isSelected) goldColor else Color.White.copy(alpha = 0.3f))
                             )
@@ -119,12 +138,24 @@ fun ScreenSwipeInfo(
                     }
 
                     // Next / Start Button
+                    val nextInteractionSource = remember { MutableInteractionSource() }
+                    val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+                    val nextScale by animateFloatAsState(
+                        targetValue = if (isNextPressed) 0.92f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessHigh
+                        ),
+                        label = "nextButtonScale"
+                    )
                     Button(
                         onClick = {
-                            scope.launch { 
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1) 
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
                             }
                         },
+                        interactionSource = nextInteractionSource,
+                        modifier = Modifier.scale(nextScale),
                         colors = ButtonDefaults.buttonColors(containerColor = goldColor),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
@@ -146,6 +177,8 @@ fun ScreenSwipeInfo(
 @Composable
 fun OnboardingPageContent(page: OnboardingPage) {
     val goldColor = Color(0xFFD4AF37)
+    var contentVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { contentVisible = true }
 
     Column(
         modifier = Modifier
@@ -170,31 +203,37 @@ fun OnboardingPageContent(page: OnboardingPage) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Text Content Area
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 40.dp),
-            horizontalAlignment = Alignment.Start // Modern left alignment
+        // Text Content Area — animates in with fade + slide
+        AnimatedVisibility(
+            visible = contentVisible,
+            enter = fadeIn(animationSpec = tween(500)) +
+                slideInVertically(animationSpec = tween(500)) { it / 3 }
         ) {
-            Text(
-                text = page.title,
-                fontSize = 34.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.ExtraBold,
-                color = goldColor,
-                lineHeight = 40.sp
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 40.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = page.title,
+                    fontSize = 34.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = goldColor,
+                    lineHeight = 40.sp
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = page.description,
-                fontSize = 17.sp,
-                fontFamily = FontFamily.Serif,
-                color = Color.White.copy(alpha = 0.8f),
-                lineHeight = 26.sp
-            )
+                Text(
+                    text = page.description,
+                    fontSize = 17.sp,
+                    fontFamily = FontFamily.Serif,
+                    color = Color.White.copy(alpha = 0.8f),
+                    lineHeight = 26.sp
+                )
+            }
         }
     }
 }
