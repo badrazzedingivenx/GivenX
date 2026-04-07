@@ -340,7 +340,7 @@ sealed class LawyerTab(val route: String, val icon: ImageVector, val label: Stri
     data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,   "Messages")
     data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups, "Clients")
     data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person, "Profil")
-    companion object { val all = listOf(Home, Messages, Clients, Profile) }
+    companion object { val all get() = listOf(Home, Messages, Clients, Profile) }
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
@@ -351,7 +351,7 @@ sealed class UserTab(val route: String, val icon: ImageVector, val label: String
     data object Live     : UserTab("user_live",      Icons.Default.LiveTv,        "Live")
     data object Messages : UserTab("user_messages",  Icons.Default.Chat,          "Messages")
     data object Profile  : UserTab("user_profile",   Icons.Default.Person,        "Profil")
-    companion object { val all = listOf(Home, Cases, Matching, Reels, Live) }
+    companion object { val all get() = listOf(Home, Cases, Matching, Reels, Live) }
 }
 
 // ─── Lawyer Nav Bottom Bar ─────────────────────────────────────────────────────
