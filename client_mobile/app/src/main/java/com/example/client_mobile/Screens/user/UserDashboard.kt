@@ -7,6 +7,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +44,21 @@ data class AppointmentItem(
     val speciality: String,
     val date: String,
     val time: String
+)
+
+data class LegalStory(
+    val id: Int,
+    val lawyerName: String,
+    val specialty: String,
+    val hasNewStory: Boolean = true
+)
+
+private val sampleStories = listOf(
+    LegalStory(1, "M. Amina C.",   "Pénal",    hasNewStory = true),
+    LegalStory(2, "M. Khalid T.",  "Affaires", hasNewStory = true),
+    LegalStory(3, "M. Sara B.",    "Famille",  hasNewStory = false),
+    LegalStory(4, "M. Nadia M.",   "Travail",  hasNewStory = true),
+    LegalStory(5, "M. Yassine R.", "Pénal",    hasNewStory = false),
 )
 
 // ─── User Dashboard Screen ────────────────────────────────────────────────────
@@ -113,6 +130,16 @@ internal fun UserCasesTabContent(
                         fontFamily = FontFamily.Serif,
                         color = AppDarkGreen.copy(alpha = 0.60f)
                     )
+                }
+
+                // ── Stories ───────────────────────────────────────────────
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 2.dp)
+                ) {
+                    items(sampleStories) { story ->
+                        StoriesItem(story = story)
+                    }
                 }
 
                 // ── Quick Actions ──────────────────────────────────────────────
@@ -526,5 +553,59 @@ fun BillingSummaryCard(paid: Float, pending: Float, total: Float) {
                 )
             }
         }
+    }
+}
+
+// ─── Stories Item ─────────────────────────────────────────────────────────────
+@Composable
+fun StoriesItem(story: LegalStory) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(68.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(60.dp),
+            shape    = CircleShape,
+            border   = BorderStroke(
+                width = 2.5.dp,
+                color = if (story.hasNewStory) AppGoldColor else Color.Gray.copy(alpha = 0.35f)
+            ),
+            color = AppDarkGreen.copy(alpha = 0.07f)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = null,
+                    tint = if (story.hasNewStory) AppGoldColor else Color.Gray.copy(alpha = 0.55f),
+                    modifier = Modifier.size(26.dp)
+                )
+                if (story.hasNewStory) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .align(Alignment.BottomEnd)
+                            .background(AppGoldColor, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = AppDarkGreen,
+                            modifier = Modifier.size(8.dp)
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = story.lawyerName,
+            fontFamily = FontFamily.Serif,
+            fontSize = 10.sp,
+            fontWeight = if (story.hasNewStory) FontWeight.Bold else FontWeight.Normal,
+            color = if (story.hasNewStory) AppDarkGreen else Color.Gray,
+            textAlign = TextAlign.Center,
+            maxLines = 2
+        )
     }
 }

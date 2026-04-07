@@ -151,6 +151,15 @@ fun UserDashboardHost(
                         onNavigateToChat = onNavigateToChat
                     )
                 }
+                composable(UserTab.Matching.route) {
+                    LegalMatchingScreen(paddingValues = paddingValues)
+                }
+                composable(UserTab.Reels.route) {
+                    LegalReelsScreen(paddingValues = paddingValues)
+                }
+                composable(UserTab.Live.route) {
+                    LiveSessionsScreen(paddingValues = paddingValues)
+                }
             }
         }
     }
