@@ -48,19 +48,16 @@ data class AppointmentItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDashboard(
-    userName: String = "Karim Bennani",
     onNavigateToProfile: () -> Unit = {}
 ) {
     UserCasesTabContent(
-        paddingValues = PaddingValues(0.dp),
-        userName = userName
+        paddingValues = PaddingValues(0.dp)
     )
 }
 
 @Composable
 internal fun UserCasesTabContent(
     paddingValues: PaddingValues,
-    userName: String = "Karim Bennani",
     onNavigateToConsulter: () -> Unit = {},
     onNavigateToMessages: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
@@ -100,8 +97,11 @@ internal fun UserCasesTabContent(
 
                 // ── Greeting ──────────────────────────────────────────────────
                 Column {
+                    // UserSession.name is mutableStateOf — recompose on profile update
+                    val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
+                    val greeting = if (displayName.isNotEmpty()) "Bonjour, $displayName 👋" else "Bonjour 👋"
                     Text(
-                        text = "Bonjour, ${userName.split(" ").first()} 👋",
+                        text = greeting,
                         fontSize = 26.sp,
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
