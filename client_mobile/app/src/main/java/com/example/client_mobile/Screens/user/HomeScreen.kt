@@ -215,7 +215,7 @@ fun UserDashboardHost(
                 }
                 composable(UserTab.Live.route) {
                     LiveSessionsScreen(paddingValues = paddingValues)
-                }
+                 }
             }
         }
     }
