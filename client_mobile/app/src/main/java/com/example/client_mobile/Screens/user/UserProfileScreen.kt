@@ -42,7 +42,8 @@ fun UserProfileScreen(
     profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
     onLogOut: () -> Unit = {},
-    onNavigateToEdit: () -> Unit = {}
+    onNavigateToEdit: () -> Unit = {},
+    onNavigateToDocuments: () -> Unit = {}
 ) {
     var biometricEnabled by remember { mutableStateOf(false) }
     var showLogOutDialog by remember { mutableStateOf(false) }
@@ -150,7 +151,7 @@ fun UserProfileScreen(
                             icon = Icons.Default.Folder,
                             title = "Coffre-fort Numérique",
                             subtitle = "Mes documents & pièces",
-                            onClick = {}
+                            onClick = onNavigateToDocuments
                         )
                         ProfileDivider()
                         LegalFeatureRow(

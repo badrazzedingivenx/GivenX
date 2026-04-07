@@ -187,7 +187,8 @@ fun AppNavigation() {
                 onLogOut = {
                     navController.navigate("Login/user") { popUpTo(0) { inclusive = true } }
                 },
-                onNavigateToEdit = { navController.navigate("EditUserProfile") }
+                onNavigateToEdit = { navController.navigate("EditUserProfile") },
+                onNavigateToDocuments = { navController.navigate("DocumentVault") }
             )
         }
 
