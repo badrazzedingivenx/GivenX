@@ -37,11 +37,6 @@ data class CaseStep(
     val isActive: Boolean
 )
 
-data class DocumentItem(
-    val name: String,
-    val uploadDate: String
-)
-
 data class AppointmentItem(
     val lawyerName: String,
     val speciality: String,
@@ -87,11 +82,7 @@ internal fun UserCasesTabContent(
         time = "10:30"
     )
 
-    val documents = listOf(
-        DocumentItem("Contrat de Bail.pdf", "Ajouté le 20 Fév"),
-        DocumentItem("Pièce d'Identité.jpg", "Ajouté le 15 Jan"),
-        DocumentItem("Attestation Travail.pdf", "Ajouté le 10 Jan")
-    )
+    val documents = DocumentRepository.documents.take(3)
 
     val paidAmount = 2400f
     val pendingAmount = 800f
@@ -179,7 +170,7 @@ internal fun UserCasesTabContent(
                 UpcomingAppointmentCard(appointment = appointment)
 
                 // ── Document Vault ─────────────────────────────────────────────
-                SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter") {}
+                SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
                 DashCard {
                     documents.forEachIndexed { index, doc ->
                         DocumentVaultItem(doc = doc)
@@ -403,7 +394,7 @@ fun UpcomingAppointmentCard(appointment: AppointmentItem) {
 
 // ─── Document Vault Item ──────────────────────────────────────────────────────
 @Composable
-fun DocumentVaultItem(doc: DocumentItem) {
+fun DocumentVaultItem(doc: VaultDocument) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -415,8 +406,7 @@ fun DocumentVaultItem(doc: DocumentItem) {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = if (doc.name.endsWith(".pdf")) Icons.Default.Description
-                    else Icons.Default.Image,
+                    imageVector = doc.icon,
                     contentDescription = null,
                     tint = AppGoldColor,
                     modifier = Modifier.size(22.dp)
@@ -433,7 +423,7 @@ fun DocumentVaultItem(doc: DocumentItem) {
                 color = AppDarkGreen
             )
             Text(
-                doc.uploadDate,
+                "Ajouté le ${doc.addedDate}",
                 fontSize = 11.sp,
                 fontFamily = FontFamily.Serif,
                 color = Color.Gray

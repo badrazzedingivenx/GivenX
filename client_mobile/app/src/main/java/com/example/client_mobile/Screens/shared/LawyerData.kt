@@ -1,10 +1,13 @@
 package com.example.client_mobile.screens.shared
 
 import android.net.Uri
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class LawyerItem(
@@ -148,6 +151,43 @@ object MessageRepository {
     val messages = mutableStateListOf<InboxMessage>()
     fun sendMessage(fromName: String, content: String, lawyerId: String) {
         messages.add(InboxMessage(id = System.currentTimeMillis().toString(), fromName = fromName, content = content, timestamp = "À l'instant", lawyerId = lawyerId))
+    }
+}
+
+// ─── Document Vault (Global Shared State) ───────────────────────────────────
+
+data class VaultDocument(
+    val id: Long,
+    val name: String,
+    val addedDate: String,
+    val icon: ImageVector
+)
+
+object DocumentRepository {
+    val documents = mutableStateListOf(
+        VaultDocument(1L, "Contrat de Bail.pdf",     "20 Fev 2025", Icons.Default.Description),
+        VaultDocument(2L, "Piece d'Identite.jpg",    "15 Jan 2025", Icons.Default.Badge),
+        VaultDocument(3L, "Attestation Travail.pdf", "10 Jan 2025", Icons.Default.Work),
+        VaultDocument(4L, "Jugement Tribunal.pdf",   "03 Dec 2024", Icons.Default.Gavel)
+    )
+
+    fun add(name: String) {
+        val ext  = name.substringAfterLast('.', "").lowercase()
+        val icon = when (ext) {
+            "jpg", "jpeg", "png" -> Icons.Default.Image
+            "pdf"                -> Icons.Default.PictureAsPdf
+            else                 -> Icons.Default.InsertDriveFile
+        }
+        documents.add(VaultDocument(id = System.currentTimeMillis(), name = name.trim(), addedDate = "Aujourd'hui", icon = icon))
+    }
+
+    fun rename(id: Long, newName: String) {
+        val idx = documents.indexOfFirst { it.id == id }
+        if (idx != -1) documents[idx] = documents[idx].copy(name = newName.trim())
+    }
+
+    fun delete(id: Long) {
+        documents.removeAll { it.id == id }
     }
 }
 
