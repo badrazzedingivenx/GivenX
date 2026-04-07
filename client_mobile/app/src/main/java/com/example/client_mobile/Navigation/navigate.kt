@@ -11,7 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.client_mobile.Screens.*
+import com.example.client_mobile.screens.shared.*
+import com.example.client_mobile.screens.user.*
+import com.example.client_mobile.screens.lawyer.*
 
 @Composable
 fun AppNavigation() {

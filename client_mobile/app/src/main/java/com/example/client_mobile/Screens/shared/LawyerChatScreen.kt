@@ -1,4 +1,4 @@
-﻿package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.shared
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// ─── Chat Screen (bidirectional) ──────────────────────────────────────────────
+// --- Chat Screen (bidirectional) ----------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
@@ -40,7 +40,7 @@ fun ChatScreen(
     val otherSubtitle = if (isLawyer) "Client" else conversation?.lawyerSpecialty ?: ""
 
     val initials = otherName
-        .removePrefix("Maître ")
+        .removePrefix("Ma�tre ")
         .split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
         .take(2)
@@ -165,7 +165,7 @@ fun ChatScreen(
                                         textAlign = TextAlign.Center
                                     )
                                     Text(
-                                        "Écrivez à $otherName pour commencer.",
+                                        "�crivez � $otherName pour commencer.",
                                         fontFamily = FontFamily.Serif,
                                         fontSize = 12.sp,
                                         color = AppDarkGreen.copy(alpha = 0.35f),
@@ -198,7 +198,7 @@ fun ChatScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         IconButton(
-                            onClick = { /* attach document — future feature */ },
+                            onClick = { /* attach document � future feature */ },
                             modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
@@ -215,7 +215,7 @@ fun ChatScreen(
                             modifier = Modifier.weight(1f),
                             placeholder = {
                                 Text(
-                                    "Écrivez votre message…",
+                                    "�crivez votre message�",
                                     fontFamily = FontFamily.Serif,
                                     fontSize = 13.sp,
                                     color = AppDarkGreen.copy(alpha = 0.40f)
@@ -279,7 +279,7 @@ fun ChatScreen(
     }
 }
 
-// ─── Chat Message Bubble ──────────────────────────────────────────────────────
+// --- Chat Message Bubble ------------------------------------------------------
 @Composable
 private fun ChatMessageBubble(message: ChatMessage, fromMe: Boolean) {
     Row(
@@ -322,7 +322,7 @@ private fun ChatMessageBubble(message: ChatMessage, fromMe: Boolean) {
     }
 }
 
-// ─── Legacy alias — kept so old navigation references compile ─────────────────
+// --- Legacy alias � kept so old navigation references compile -----------------
 @Composable
 fun LawyerChatScreen(
     lawyerId: String = "1",

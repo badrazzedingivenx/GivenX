@@ -1,4 +1,4 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.shared
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState

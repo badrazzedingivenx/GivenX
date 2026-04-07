@@ -1,4 +1,4 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.shared
 
 import androidx.compose.runtime.mutableStateListOf
 import java.text.SimpleDateFormat

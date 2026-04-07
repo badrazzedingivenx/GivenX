@@ -1,4 +1,6 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.lawyer
+
+import com.example.client_mobile.screens.shared.*
 
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
