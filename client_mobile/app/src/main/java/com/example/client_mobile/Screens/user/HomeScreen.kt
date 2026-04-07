@@ -65,19 +65,18 @@ fun UserDashboardHost(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(330.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_app),
+                        contentDescription = "Logo",
+                        modifier = Modifier.height(126.dp),
+                        contentScale = ContentScale.Fit
+                    )
                 },
                 actions = {
                     val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
+                    // ── Notification bell ──────────────────────────────────
                     IconButton(onClick = onNavigateToNotifications) {
                         BadgedBox(
                             badge = {
@@ -98,8 +97,42 @@ fun UserDashboardHost(
                             )
                         }
                     }
+                    // ── Profile avatar ─────────────────────────────────────
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .clickable { onNavigateToProfile() }
+                    ) {
+                        // Gold-bordered avatar circle
+                        Surface(
+                            modifier    = Modifier.fillMaxSize(),
+                            shape       = CircleShape,
+                            color       = AppDarkGreen.copy(alpha = 0.10f),
+                            border      = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Profil",
+                                    tint       = AppGoldColor,
+                                    modifier   = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        // Online green dot
+                        Box(
+                            modifier = Modifier
+                                .size(11.dp)
+                                .align(Alignment.BottomEnd)
+                                .background(Color.White, CircleShape)   // white ring
+                                .padding(2.dp)
+                                .background(Color(0xFF34A853), CircleShape) // green dot
+                        )
+                    }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
         },
         bottomBar = {
