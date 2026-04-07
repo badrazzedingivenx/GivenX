@@ -1,4 +1,6 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.lawyer
+
+import com.example.client_mobile.screens.shared.*
 
 import android.Manifest
 import android.net.Uri
@@ -40,8 +42,9 @@ import com.example.client_mobile.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenAvocat(
-    fullName: String = "Yassine El Amrani",
-    speciality: String = "Droit Pénal",
+    fullName: String = LawyerSession.fullName,
+    speciality: String = LawyerSession.title,
+    profileImageUri: Uri? = LawyerSession.profileImageUri,
     isMasculine: Boolean = true,
     clientCount: String = "28",
     messageCount: String = "12",
@@ -53,11 +56,14 @@ fun ScreenAvocat(
     val darkGreen = Color(0xFF1B3124)
     
     var showPermissionDialog by remember { mutableStateOf(false) }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> imageUri = uri }
+    ) { uri: Uri? -> 
+        if (uri != null) {
+            LawyerSession.profileImageUri = uri
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -171,9 +177,9 @@ fun ScreenAvocat(
                             modifier = Modifier.clickable { onProfileImageClick() },
                             contentAlignment = Alignment.BottomEnd
                         ) {
-                            if (imageUri != null) {
+                            if (profileImageUri != null) {
                                 AsyncImage(
-                                    model = imageUri,
+                                    model = profileImageUri,
                                     contentDescription = "Profile",
                                     modifier = Modifier
                                         .size(80.dp)
@@ -262,7 +268,7 @@ fun PermissionRequestDialog(onDismiss: () -> Unit, onConfirm: () -> Unit, darkGr
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { onDismiss() }) {
                 Text("Plus tard", color = Color.Gray)
             }
         },

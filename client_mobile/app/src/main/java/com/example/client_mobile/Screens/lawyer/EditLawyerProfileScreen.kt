@@ -1,11 +1,15 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.lawyer
 
+import com.example.client_mobile.screens.shared.*
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,14 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 // ─── Edit Lawyer Profile Screen ───────────────────────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditLawyerProfileScreen(
     initialName: String = "Maître Yassine El Amrani",
@@ -35,8 +41,9 @@ fun EditLawyerProfileScreen(
     initialAddress: String = "34, Bd Zerktouni, Casablanca",
     initialBio: String = "Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation.",
     initialSpecs: List<String> = listOf("Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Fiscal", "Contentieux Commercial"),
+    initialImageUri: Uri? = null,
     onBack: () -> Unit = {},
-    onSave: (name: String, title: String, email: String, phone: String, address: String, bio: String, specs: List<String>) -> Unit = { _, _, _, _, _, _, _ -> }
+    onSave: (name: String, title: String, email: String, phone: String, address: String, bio: String, specs: List<String>, imageUri: Uri?) -> Unit = { _, _, _, _, _, _, _, _ -> }
 ) {
     // ── Editable state ────────────────────────────────────────────────────────
     var name    by remember { mutableStateOf(initialName) }
@@ -45,9 +52,17 @@ fun EditLawyerProfileScreen(
     var phone   by remember { mutableStateOf(initialPhone) }
     var address by remember { mutableStateOf(initialAddress) }
     var bio     by remember { mutableStateOf(initialBio) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(initialImageUri) }
 
     val specs = remember { mutableStateListOf(*initialSpecs.toTypedArray()) }
     var newSpec by remember { mutableStateOf("") }
+
+    // ── Image Picker Launcher ─────────────────────────────────────────────────
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri
+    }
 
     // ── Validation errors ─────────────────────────────────────────────────────
     var nameError  by remember { mutableStateOf("") }
@@ -130,34 +145,49 @@ fun EditLawyerProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.BottomEnd) {
-                            val initials = name
-                                .removePrefix("Maître ")
-                                .split(" ")
-                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-                                .take(2)
-                                .joinToString("")
-                            Box(
-                                modifier = Modifier
-                                    .size(88.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.radialGradient(
-                                            colors = listOf(
-                                                AppGoldColor.copy(alpha = 0.20f),
-                                                AppGoldColor.copy(alpha = 0.06f)
-                                            )
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = initials.ifEmpty { "?" },
-                                    fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 30.sp,
-                                    color = AppDarkGreen
+                        Box(
+                            contentAlignment = Alignment.BottomEnd,
+                            modifier = Modifier.clickable { launcher.launch("image/*") }
+                        ) {
+                            if (selectedImageUri != null) {
+                                AsyncImage(
+                                    model = selectedImageUri,
+                                    contentDescription = "Photo de profil",
+                                    modifier = Modifier
+                                        .size(88.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.LightGray),
+                                    contentScale = ContentScale.Crop
                                 )
+                            } else {
+                                val initials = name
+                                    .removePrefix("Maître ")
+                                    .split(" ")
+                                    .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                    .take(2)
+                                    .joinToString("")
+                                Box(
+                                    modifier = Modifier
+                                        .size(88.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.radialGradient(
+                                                colors = listOf(
+                                                    AppGoldColor.copy(alpha = 0.20f),
+                                                    AppGoldColor.copy(alpha = 0.06f)
+                                                )
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = initials.ifEmpty { "?" },
+                                        fontFamily = FontFamily.Serif,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 30.sp,
+                                        color = AppDarkGreen
+                                    )
+                                }
                             }
                             Surface(
                                 modifier = Modifier.size(28.dp),
@@ -168,7 +198,7 @@ fun EditLawyerProfileScreen(
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.CameraAlt,
-                                        contentDescription = null,
+                                        contentDescription = "Changer la photo",
                                         tint = AppDarkGreen,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -438,7 +468,7 @@ fun EditLawyerProfileScreen(
                 Button(
                     onClick = {
                         showSaveDialog = false
-                        onSave(name, title, email, phone, address, bio, specs.toList())
+                        onSave(name, title, email, phone, address, bio, specs.toList(), selectedImageUri)
                         onBack()
                     },
                     shape = RoundedCornerShape(12.dp),
@@ -457,30 +487,19 @@ fun EditLawyerProfileScreen(
 }
 
 // ─── Specialization Chips with Remove ────────────────────────────────────────
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FlowRowSpecChips(
     specs: List<String>,
     onRemove: (String) -> Unit
 ) {
-    // Manual flow layout — wrap chips across rows
-    val rows = mutableListOf<List<String>>()
-    var currentRow = mutableListOf<String>()
-    specs.forEach { spec ->
-        currentRow.add(spec)
-        if (currentRow.size == 2) {
-            rows.add(currentRow.toList())
-            currentRow = mutableListOf()
-        }
-    }
-    if (currentRow.isNotEmpty()) rows.add(currentRow.toList())
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        rows.forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { spec ->
-                    SpecEditChip(label = spec, onRemove = { onRemove(spec) })
-                }
-            }
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        specs.forEach { spec ->
+            SpecEditChip(label = spec, onRemove = { onRemove(spec) })
         }
     }
 }

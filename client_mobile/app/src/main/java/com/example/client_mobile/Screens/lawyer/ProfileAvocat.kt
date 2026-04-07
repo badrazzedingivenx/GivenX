@@ -1,5 +1,8 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.lawyer
 
+import com.example.client_mobile.screens.shared.*
+
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -25,12 +28,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 // ─── Lawyer Profile Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +47,7 @@ fun AvocatProfile(
     phone: String = "+212 6 61 23 45 67",
     address: String = "34, Bd Zerktouni, Casablanca",
     bio: String = "Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation. Reconnu pour son engagement envers ses clients et ses résultats probants.",
+    profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
     onNavigateToEdit: () -> Unit = {}
 ) {
@@ -104,6 +110,7 @@ fun AvocatProfile(
                     LawyerHeaderCard(
                         fullName = fullName,
                         title = title,
+                        profileImageUri = profileImageUri,
                         yearsExp = 12,
                         casesWon = 340,
                         rating = 4.9f
@@ -308,17 +315,11 @@ fun AvocatProfile(
 private fun LawyerHeaderCard(
     fullName: String,
     title: String,
+    profileImageUri: Uri?,
     yearsExp: Int,
     casesWon: Int,
     rating: Float
 ) {
-    val initials = fullName
-        .removePrefix("Maître ")
-        .split(" ")
-        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-        .take(2)
-        .joinToString("")
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
@@ -350,29 +351,47 @@ private fun LawyerHeaderCard(
             ) {
                 // Avatar + verified badge
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    // Initials avatar
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        AppGoldColor.copy(alpha = 0.22f),
-                                        AppGoldColor.copy(alpha = 0.06f)
+                    if (profileImageUri != null) {
+                        AsyncImage(
+                            model = profileImageUri,
+                            contentDescription = "Photo de profil",
+                            modifier = Modifier
+                                .size(96.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, AppGoldColor, CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        val initials = fullName
+                            .removePrefix("Maître ")
+                            .split(" ")
+                            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                            .take(2)
+                            .joinToString("")
+                        // Initials avatar
+                        Box(
+                            modifier = Modifier
+                                .size(96.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            AppGoldColor.copy(alpha = 0.22f),
+                                            AppGoldColor.copy(alpha = 0.06f)
+                                        )
                                     )
                                 )
+                                .border(2.dp, AppGoldColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = initials,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 34.sp,
+                                color = AppGoldColor
                             )
-                            .border(2.dp, AppGoldColor, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = initials,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 34.sp,
-                            color = AppGoldColor
-                        )
+                        }
                     }
                     // Verified badge
                     Surface(
@@ -679,4 +698,3 @@ private fun LawyerDivider() {
         color = AppDarkGreen.copy(alpha = 0.07f)
     )
 }
-

@@ -1,7 +1,14 @@
-package com.example.client_mobile.Screens
+package com.example.client_mobile.screens.user
 
+import com.example.client_mobile.screens.shared.*
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -16,11 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 // ─── Edit User Profile Screen ─────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,14 +39,25 @@ fun EditUserProfileScreen(
     initialEmail: String = "karim.bennani@email.com",
     initialPhone: String = "+212 6 12 34 56 78",
     initialAddress: String = "12, Rue Hassan II, Casablanca",
+    initialImageUri: Uri? = null,
     onBack: () -> Unit = {},
-    onSave: (name: String, email: String, phone: String, address: String) -> Unit = { _, _, _, _ -> }
+    onSave: (name: String, email: String, phone: String, address: String, imageUri: Uri?) -> Unit = { _, _, _, _, _ -> }
 ) {
     // ── Editable state ────────────────────────────────────────────────────────
     var name    by remember { mutableStateOf(initialName) }
     var email   by remember { mutableStateOf(initialEmail) }
     var phone   by remember { mutableStateOf(initialPhone) }
     var address by remember { mutableStateOf(initialAddress) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(initialImageUri) }
+
+    // ── Image Picker Launcher ─────────────────────────────────────────────────
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedImageUri = uri
+        }
+    }
 
     // ── Validation errors ─────────────────────────────────────────────────────
     var nameError    by remember { mutableStateOf("") }
@@ -117,33 +137,48 @@ fun EditUserProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(contentAlignment = Alignment.BottomEnd) {
-                            val initials = name
-                                .split(" ")
-                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-                                .take(2)
-                                .joinToString("")
-                            Box(
-                                modifier = Modifier
-                                    .size(88.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.radialGradient(
-                                            colors = listOf(
-                                                AppDarkGreen.copy(alpha = 0.18f),
-                                                AppDarkGreen.copy(alpha = 0.07f)
-                                            )
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = initials.ifEmpty { "?" },
-                                    fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 30.sp,
-                                    color = AppDarkGreen
+                        Box(
+                            contentAlignment = Alignment.BottomEnd,
+                            modifier = Modifier.clickable { galleryLauncher.launch("image/*") }
+                        ) {
+                            if (selectedImageUri != null) {
+                                AsyncImage(
+                                    model = selectedImageUri,
+                                    contentDescription = "Photo de profil",
+                                    modifier = Modifier
+                                        .size(88.dp)
+                                        .clip(CircleShape)
+                                        .border(2.dp, AppGoldColor, CircleShape),
+                                    contentScale = ContentScale.Crop
                                 )
+                            } else {
+                                val initials = name
+                                    .split(" ")
+                                    .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                    .take(2)
+                                    .joinToString("")
+                                Box(
+                                    modifier = Modifier
+                                        .size(88.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.radialGradient(
+                                                colors = listOf(
+                                                    AppDarkGreen.copy(alpha = 0.18f),
+                                                    AppDarkGreen.copy(alpha = 0.07f)
+                                                )
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = initials.ifEmpty { "?" },
+                                        fontFamily = FontFamily.Serif,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 30.sp,
+                                        color = AppDarkGreen
+                                    )
+                                }
                             }
                             Surface(
                                 modifier = Modifier.size(28.dp),
@@ -154,7 +189,7 @@ fun EditUserProfileScreen(
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.CameraAlt,
-                                        contentDescription = null,
+                                        contentDescription = "Changer la photo",
                                         tint = AppDarkGreen,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -328,7 +363,7 @@ fun EditUserProfileScreen(
                 Button(
                     onClick = {
                         showSaveDialog = false
-                        onSave(name, email, phone, address)
+                        onSave(name, email, phone, address, selectedImageUri)
                         onBack()
                     },
                     shape = RoundedCornerShape(12.dp),
