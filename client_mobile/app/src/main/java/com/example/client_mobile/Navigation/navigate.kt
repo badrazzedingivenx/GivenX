@@ -172,7 +172,8 @@ fun AppNavigation() {
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToAppointments = { navController.navigate("Appointments") },
                 onNavigateToDocuments = { navController.navigate("DocumentVault") },
-                onNavigateToFacturation = { navController.navigate("Billing") }
+                onNavigateToFacturation = { navController.navigate("Billing") },
+                onNavigateToDossier = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
 
@@ -203,6 +204,18 @@ fun AppNavigation() {
                 onSave = { name, email, phone, address, imageUri ->
                     UserSession.updateProfile(name, email, phone, address, imageUri)
                 }
+            )
+        }
+
+        composable(
+            route = "DossierDetail/{caseId}",
+            arguments = listOf(navArgument("caseId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val caseId = backStackEntry.arguments?.getString("caseId") ?: "HAQ-2024-0312"
+            DossierDetailScreen(
+                caseId = caseId,
+                onBack = { navController.popBackStack() },
+                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
             )
         }
 

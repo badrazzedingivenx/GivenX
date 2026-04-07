@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -74,7 +75,8 @@ internal fun UserCasesTabContent(
     onNavigateToConsulter: () -> Unit = {},
     onNavigateToMessages: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
-    onNavigateToFacturation: () -> Unit = {}
+    onNavigateToFacturation: () -> Unit = {},
+    onNavigateToDossier: (String) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -223,7 +225,79 @@ internal fun UserCasesTabContent(
         SectionHeader(title = "Résumé de Facturation")
         BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
 
-        Spacer(modifier = Modifier.height(20.dp))
+                // ── Quick Actions ──────────────────────────────────────────────
+                DashCard {
+                    SectionHeader(title = "Actions rapides")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Event,
+                            label = "Consulter",
+                            onClick = onNavigateToConsulter
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.AutoMirrored.Filled.Chat,
+                            label = "Messagerie",
+                            onClick = onNavigateToMessages
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.CloudUpload,
+                            label = "Documents",
+                            onClick = onNavigateToDocuments
+                        )
+                        QuickActionButton(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.MonetizationOn,
+                            label = "Facturation",
+                            onClick = onNavigateToFacturation
+                        )
+                    }
+                }
+
+                // ── Case Status Timeline ───────────────────────────────────────
+                DashCard {
+                    SectionHeader(title = "État du Dossier", actionLabel = "Voir tout", onAction = { onNavigateToDossier("HAQ-2024-0312") })
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Affaire N° HAQ-2024-0312",
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppGoldColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    CaseStatusTimeline(steps = caseSteps)
+                }
+
+                // ── Upcoming Appointment ───────────────────────────────────────
+                SectionHeader(title = "Prochain Rendez-vous")
+                UpcomingAppointmentCard(appointment = appointment)
+
+                // ── Document Vault ─────────────────────────────────────────────
+                SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
+                DashCard {
+                    documents.forEachIndexed { index, doc ->
+                        DocumentVaultItem(doc = doc)
+                        if (index < documents.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 10.dp),
+                                color = AppDarkGreen.copy(alpha = 0.07f)
+                            )
+                        }
+                    }
+                }
+
+                // ── Billing Summary ────────────────────────────────────────────
+                SectionHeader(title = "Résumé de Facturation")
+                BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
+
+                Spacer(modifier = Modifier.height(20.dp))
     }
 
     if (viewingStoryIndex >= 0) {
