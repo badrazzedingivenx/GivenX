@@ -51,19 +51,35 @@ private val sampleReels = listOf(
 
 @Composable
 fun LegalReelsScreen(paddingValues: PaddingValues = PaddingValues()) {
-    val reels = remember { mutableStateListOf(*sampleReels.toTypedArray()) }
+    val staticReels = remember { mutableStateListOf(*sampleReels.toTypedArray()) }
+
+    // Merge lawyer-created reels at the top (live from CreatorRepository)
+    val creatorReels = CreatorRepository.reels.map { cr ->
+        LegalReel(
+            id         = cr.id.toInt(),
+            lawyerName = cr.lawyerName,
+            specialty  = cr.specialty,
+            title      = cr.title,
+            likes      = cr.likes,
+            views      = "${cr.views}",
+            isLiked    = cr.isLiked
+        )
+    }
+    val allReels = remember(creatorReels.size) {
+        mutableStateListOf(*(creatorReels + staticReels).toTypedArray())
+    }
 
     LazyColumn(
         modifier            = Modifier.fillMaxSize().padding(paddingValues),
         contentPadding      = PaddingValues(bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        itemsIndexed(reels, key = { _, r -> r.id }) { index, reel ->
+        itemsIndexed(allReels, key = { _, r -> r.id }) { index, reel ->
             ReelCard(
                 reel    = reel,
                 onLike  = {
                     val delta = if (reel.isLiked) -1 else 1
-                    reels[index] = reel.copy(isLiked = !reel.isLiked, likes = reel.likes + delta)
+                    allReels[index] = reel.copy(isLiked = !reel.isLiked, likes = reel.likes + delta)
                 }
             )
         }

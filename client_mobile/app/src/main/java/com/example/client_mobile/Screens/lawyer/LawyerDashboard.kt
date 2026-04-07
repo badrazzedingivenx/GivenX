@@ -3,6 +3,7 @@ package com.example.client_mobile.screens.lawyer
 import com.example.client_mobile.screens.shared.*
 
 import android.net.Uri
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -24,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -67,18 +69,73 @@ fun LawyerDashboardHost(
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // ── Create bottom sheet state ─────────────────────────────────────────────
+    var showCreateSheet   by remember { mutableStateOf(false) }
+    var activeLiveId      by remember { mutableStateOf<Long?>(null) }
+    var showReelDialog    by remember { mutableStateOf(false) }
+    var reelTitle         by remember { mutableStateOf("") }
+
+    // Live Studio full-screen overlay
+    if (activeLiveId != null) {
+        LawyerLiveStudioScreen(
+            liveId   = activeLiveId!!,
+            topic    = "Q&A en direct",
+            onEndLive = { activeLiveId = null }
+        )
+        return
+    }
+
+    // Reel upload dialog
+    if (showReelDialog) {
+        AlertDialog(
+            onDismissRequest = { showReelDialog = false; reelTitle = "" },
+            title = { Text("Titre du Reel", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) },
+            text = {
+                OutlinedTextField(
+                    value = reelTitle,
+                    onValueChange = { reelTitle = it },
+                    placeholder = { Text("Ex: Les droits lors d'une garde à vue", fontFamily = FontFamily.Serif, fontSize = 13.sp) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AppDarkGreen,
+                        unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.3f)
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (reelTitle.isNotBlank()) {
+                        CreatorRepository.uploadReel(
+                            lawyerName = LawyerSession.fullName,
+                            specialty  = LawyerSession.title,
+                            title      = reelTitle.trim()
+                        )
+                        reelTitle = ""
+                        showReelDialog = false
+                    }
+                }) { Text("Publier", fontWeight = FontWeight.Bold, color = AppDarkGreen) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReelDialog = false; reelTitle = "" }) {
+                    Text("Annuler", color = AppDarkGreen.copy(alpha = 0.6f))
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(330.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_app),
+                        contentDescription = "Logo",
+                        modifier = Modifier.height(56.dp),
+                        contentScale = ContentScale.Fit
+                    )
                 },
                 actions = {
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
@@ -98,9 +155,40 @@ fun LawyerDashboardHost(
                             Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = AppDarkGreen)
                         }
                     }
+                    // Profile avatar
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .clickable { onNavigateToProfile() }
+                    ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            shape    = CircleShape,
+                            color    = AppDarkGreen.copy(alpha = 0.10f),
+                            border   = BorderStroke(2.dp, AppGoldColor)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Person, contentDescription = "Profil",
+                                    tint = AppGoldColor, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(11.dp)
+                                .align(Alignment.BottomEnd)
+                                .background(Color.White, CircleShape)
+                                .padding(2.dp)
+                                .background(Color(0xFF34A853), CircleShape)
+                        )
+                    }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
+        },
+        floatingActionButton = {
+            CreateContentFab(onClick = { showCreateSheet = true })
         },
         bottomBar = {
             LawyerNavBottomBar(currentRoute = currentRoute) { tab ->
@@ -144,6 +232,37 @@ fun LawyerDashboardHost(
                     LawyerClientsTabContent(paddingValues = paddingValues)
                 }
             }
+        }
+    }
+
+    // ── Create Content Bottom Sheet ───────────────────────────────────────────
+    if (showCreateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showCreateSheet = false },
+            containerColor   = Color.White,
+            shape            = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            CreateContentSheet(
+                onPostStory = {
+                    CreatorRepository.postStory(
+                        lawyerName = LawyerSession.fullName,
+                        specialty  = LawyerSession.title
+                    )
+                    showCreateSheet = false
+                },
+                onUploadReel = {
+                    showCreateSheet = false
+                    showReelDialog  = true
+                },
+                onGoLive = {
+                    showCreateSheet = false
+                    activeLiveId = CreatorRepository.goLive(
+                        lawyerName = LawyerSession.fullName,
+                        specialty  = LawyerSession.title,
+                        topic      = "Q&A en direct"
+                    )
+                }
+            )
         }
     }
 }
@@ -641,5 +760,150 @@ fun RevenueBarChart(data: List<Float>, labels: List<String>, highlightIndex: Int
         Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceAround) {
             labels.forEach { Text(it, fontSize = 9.sp, color = Color.Gray) }
         }
+    }
+}
+
+// ─── Create Content FAB (Gold pulsing '+' button) ─────────────────────────────
+@Composable
+fun CreateContentFab(onClick: () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "fabPulse")
+    val fabScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue  = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(900, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "fabScale"
+    )
+
+    FloatingActionButton(
+        onClick           = onClick,
+        containerColor    = AppGoldColor,
+        contentColor      = AppDarkGreen,
+        shape             = CircleShape,
+        modifier          = Modifier.scale(fabScale).size(58.dp)
+    ) {
+        Icon(Icons.Default.Add, contentDescription = "Créer du contenu",
+            modifier = Modifier.size(28.dp))
+    }
+}
+
+// ─── Create Content Bottom Sheet ──────────────────────────────────────────────
+@Composable
+fun CreateContentSheet(
+    onPostStory:   () -> Unit,
+    onUploadReel:  () -> Unit,
+    onGoLive:      () -> Unit
+) {
+    // Pulse for Go Live row
+    val infiniteTransition = rememberInfiniteTransition(label = "goLivePulse")
+    val liveAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue  = 0.35f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(600),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "liveAlpha"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            "Créer du contenu",
+            fontFamily    = FontFamily.Serif,
+            fontWeight    = FontWeight.Bold,
+            fontSize      = 20.sp,
+            color         = AppDarkGreen,
+            modifier      = Modifier.padding(bottom = 8.dp)
+        )
+
+        CreateOptionRow(
+            icon     = Icons.Default.AutoStories,
+            title    = "Publier une Story",
+            subtitle = "Image ou conseil rapide visible 24h",
+            tint     = AppDarkGreen,
+            onClick  = onPostStory
+        )
+        HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.07f))
+
+        CreateOptionRow(
+            icon     = Icons.Default.VideoLibrary,
+            title    = "Uploader un Reel",
+            subtitle = "Conseil juridique en vidéo courte",
+            tint     = AppDarkGreen,
+            onClick  = onUploadReel
+        )
+        HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.07f))
+
+        // Go Live — with pulsing red dot
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onGoLive() }
+                .padding(vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Surface(modifier = Modifier.size(48.dp), shape = CircleShape,
+                    color = Color(0xFFD32F2F).copy(alpha = 0.12f)) {}
+                Icon(Icons.Default.LiveTv, contentDescription = null,
+                    tint = Color(0xFFD32F2F), modifier = Modifier.size(24.dp))
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .align(Alignment.TopEnd)
+                        .background(Color(0xFFD32F2F).copy(alpha = liveAlpha), CircleShape)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Aller en Live", fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFFD32F2F))
+                Text("Démarrer une session Q&A en direct",
+                    fontFamily = FontFamily.Serif, fontSize = 12.sp,
+                    color = Color.Gray)
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null,
+                tint = Color(0xFFD32F2F).copy(alpha = 0.50f))
+        }
+    }
+}
+
+@Composable
+private fun CreateOptionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    tint: Color,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Surface(modifier = Modifier.size(48.dp), shape = CircleShape,
+            color = AppDarkGreen.copy(alpha = 0.08f)) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AppDarkGreen)
+            Text(subtitle, fontFamily = FontFamily.Serif, fontSize = 12.sp, color = Color.Gray)
+        }
+        Icon(Icons.Default.ChevronRight, contentDescription = null,
+            tint = AppDarkGreen.copy(alpha = 0.35f))
     }
 }

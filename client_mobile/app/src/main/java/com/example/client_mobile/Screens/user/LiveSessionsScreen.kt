@@ -55,6 +55,20 @@ private val sampleLiveSessions = listOf(
 fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
     var activeSession by remember { mutableStateOf<LiveSession?>(null) }
 
+    // Merge lawyer-created live sessions from CreatorRepository into the feed
+    val creatorLive = CreatorRepository.liveSessions.map { cl ->
+        LiveSession(
+            id      = cl.id.toInt(),
+            lawyerName = cl.lawyerName,
+            specialty  = cl.specialty,
+            topic      = cl.topic,
+            viewers    = cl.viewers,
+            isLive     = cl.isLive
+        )
+    }
+    val allLive    = creatorLive + sampleLiveSessions.filter { it.isLive }
+    val allReplays = sampleLiveSessions.filter { !it.isLive }
+
     if (activeSession != null) {
         LiveRoomView(
             session  = activeSession!!,
@@ -79,13 +93,13 @@ fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
 
             // ── Live now section ──────────────────────────────────────────
             item { SectionHeader(title = "🔴 En direct") }
-            items(sampleLiveSessions.filter { it.isLive }) { session ->
+            items(allLive) { session ->
                 LiveSessionCard(session = session, onClick = { activeSession = session })
             }
 
             // ── Replays ───────────────────────────────────────────────────
             item { SectionHeader(title = "Rediffusions") }
-            items(sampleLiveSessions.filter { !it.isLive }) { session ->
+            items(allReplays) { session ->
                 LiveSessionCard(session = session, onClick = { activeSession = session })
             }
 

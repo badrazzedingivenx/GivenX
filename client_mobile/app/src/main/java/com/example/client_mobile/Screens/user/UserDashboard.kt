@@ -137,6 +137,15 @@ internal fun UserCasesTabContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(horizontal = 2.dp)
                 ) {
+                    // Lawyer-posted stories appear first (live from CreatorRepository)
+                    items(CreatorRepository.stories) { cs ->
+                        StoriesItem(story = LegalStory(
+                            id           = cs.id.toInt(),
+                            lawyerName   = cs.lawyerName.split(" ").lastOrNull() ?: cs.lawyerName,
+                            specialty    = cs.specialty,
+                            hasNewStory  = cs.hasNewStory
+                        ))
+                    }
                     items(sampleStories) { story ->
                         StoriesItem(story = story)
                     }
