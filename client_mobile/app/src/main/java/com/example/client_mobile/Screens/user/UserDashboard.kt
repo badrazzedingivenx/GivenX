@@ -6,9 +6,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -102,6 +104,16 @@ internal fun UserCasesTabContent(
     val pendingAmount = 800f
     val total = paidAmount + pendingAmount
 
+    var viewingStoryIndex by remember { mutableIntStateOf(-1) }
+    val allStories = CreatorRepository.stories.map { cs ->
+        LegalStory(
+            id          = cs.id.toInt(),
+            lawyerName  = cs.lawyerName,
+            specialty   = cs.specialty,
+            hasNewStory = cs.hasNewStory
+        )
+    } + sampleStories
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -137,17 +149,11 @@ internal fun UserCasesTabContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(horizontal = 2.dp)
                 ) {
-                    // Lawyer-posted stories appear first (live from CreatorRepository)
-                    items(CreatorRepository.stories) { cs ->
-                        StoriesItem(story = LegalStory(
-                            id           = cs.id.toInt(),
-                            lawyerName   = cs.lawyerName.split(" ").lastOrNull() ?: cs.lawyerName,
-                            specialty    = cs.specialty,
-                            hasNewStory  = cs.hasNewStory
-                        ))
-                    }
-                    items(sampleStories) { story ->
-                        StoriesItem(story = story)
+                    itemsIndexed(allStories) { index, story ->
+                        StoriesItem(
+                            story   = story,
+                            onClick = { viewingStoryIndex = index }
+                        )
                     }
                 }
 
@@ -224,6 +230,14 @@ internal fun UserCasesTabContent(
                 BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
 
                 Spacer(modifier = Modifier.height(20.dp))
+    }
+
+    if (viewingStoryIndex >= 0) {
+        StoryViewerModal(
+            stories    = allStories,
+            startIndex = viewingStoryIndex,
+            onDismiss  = { viewingStoryIndex = -1 }
+        )
     }
 }
 
@@ -567,10 +581,12 @@ fun BillingSummaryCard(paid: Float, pending: Float, total: Float) {
 
 // ─── Stories Item ─────────────────────────────────────────────────────────────
 @Composable
-fun StoriesItem(story: LegalStory) {
+fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(68.dp)
+        modifier = Modifier
+            .width(68.dp)
+            .clickable(onClick = onClick)
     ) {
         Surface(
             modifier = Modifier.size(60.dp),

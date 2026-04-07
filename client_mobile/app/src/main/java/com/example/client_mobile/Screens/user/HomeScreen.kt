@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -65,14 +66,36 @@ fun UserDashboardHost(
 
     Scaffold(
         topBar = {
+            val onMessagesRoute = currentRoute == UserTab.Messages.route
             CenterAlignedTopAppBar(
+                navigationIcon = {
+                    if (onMessagesRoute) {
+                        IconButton(onClick = { innerNavController.popBackStack() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Retour",
+                                tint = AppDarkGreen
+                            )
+                        }
+                    }
+                },
                 title = {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_app),
-                        contentDescription = "Logo",
-                        modifier = Modifier.height(126.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                    if (onMessagesRoute) {
+                        Text(
+                            "Messages",
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = AppDarkGreen
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_app),
+                            contentDescription = "Logo",
+                            modifier = Modifier.height(126.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                 },
                 actions = {
                     val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }

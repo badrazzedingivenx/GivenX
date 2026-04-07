@@ -30,7 +30,24 @@ fun MessagesInboxScreen(
     onNavigateToChat: (String) -> Unit = {}
 ) {
     val conversations = ConversationRepository.conversations
+    DashBoardBackground {
+        MessagesInboxContent(
+            conversations    = conversations,
+            isLawyer         = isLawyer,
+            paddingValues    = paddingValues,
+            onNavigateToChat = onNavigateToChat
+        )
+    }
+}
 
+// ─── Inner content (list + empty state) ──────────────────────────────────
+@Composable
+private fun MessagesInboxContent(
+    conversations: List<Conversation>,
+    isLawyer: Boolean,
+    paddingValues: PaddingValues,
+    onNavigateToChat: (String) -> Unit
+) {
     if (conversations.isEmpty()) {
         Box(
             modifier = Modifier

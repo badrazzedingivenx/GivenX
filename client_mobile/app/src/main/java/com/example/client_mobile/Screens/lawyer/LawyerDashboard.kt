@@ -70,72 +70,62 @@ fun LawyerDashboardHost(
     val currentRoute = navBackStackEntry?.destination?.route
 
     // ── Create bottom sheet state ─────────────────────────────────────────────
-    var showCreateSheet   by remember { mutableStateOf(false) }
-    var activeLiveId      by remember { mutableStateOf<Long?>(null) }
-    var showReelDialog    by remember { mutableStateOf(false) }
-    var reelTitle         by remember { mutableStateOf("") }
+    var showCreateSheet       by remember { mutableStateOf(false) }
+    var activeLiveId          by remember { mutableStateOf<Long?>(null) }
+    var mediaPickerType       by remember { mutableStateOf<MediaPostType?>(null) }
 
-    // Live Studio full-screen overlay
+    // ── Live Studio overlay ───────────────────────────────────────────────────
     if (activeLiveId != null) {
         LawyerLiveStudioScreen(
-            liveId   = activeLiveId!!,
-            topic    = "Q&A en direct",
+            liveId    = activeLiveId!!,
+            topic     = "Q&A en direct",
             onEndLive = { activeLiveId = null }
         )
         return
     }
 
-    // Reel upload dialog
-    if (showReelDialog) {
-        AlertDialog(
-            onDismissRequest = { showReelDialog = false; reelTitle = "" },
-            title = { Text("Titre du Reel", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) },
-            text = {
-                OutlinedTextField(
-                    value = reelTitle,
-                    onValueChange = { reelTitle = it },
-                    placeholder = { Text("Ex: Les droits lors d'une garde à vue", fontFamily = FontFamily.Serif, fontSize = 13.sp) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AppDarkGreen,
-                        unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.3f)
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (reelTitle.isNotBlank()) {
-                        CreatorRepository.uploadReel(
-                            lawyerName = LawyerSession.fullName,
-                            specialty  = LawyerSession.title,
-                            title      = reelTitle.trim()
-                        )
-                        reelTitle = ""
-                        showReelDialog = false
-                    }
-                }) { Text("Publier", fontWeight = FontWeight.Bold, color = AppDarkGreen) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showReelDialog = false; reelTitle = "" }) {
-                    Text("Annuler", color = AppDarkGreen.copy(alpha = 0.6f))
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(20.dp)
+    // ── Media picker overlay (Story or Reel) ──────────────────────────────────
+    if (mediaPickerType != null) {
+        MediaPickerFlow(
+            postType    = mediaPickerType!!,
+            onPublished = { mediaPickerType = null },
+            onCancel    = { mediaPickerType = null }
         )
+        return
     }
 
     Scaffold(
         topBar = {
+            val onMessagesRoute = currentRoute == LawyerTab.Messages.route
             CenterAlignedTopAppBar(
+                navigationIcon = {
+                    if (onMessagesRoute) {
+                        IconButton(onClick = { innerNavController.popBackStack() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Retour",
+                                tint = AppDarkGreen
+                            )
+                        }
+                    }
+                },
                 title = {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_app),
-                        contentDescription = "Logo",
-                        modifier = Modifier.height(56.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                    if (onMessagesRoute) {
+                        Text(
+                            "Messages",
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = AppDarkGreen
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_app),
+                            contentDescription = "Logo",
+                            modifier = Modifier.height(56.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                 },
                 actions = {
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
@@ -244,15 +234,12 @@ fun LawyerDashboardHost(
         ) {
             CreateContentSheet(
                 onPostStory = {
-                    CreatorRepository.postStory(
-                        lawyerName = LawyerSession.fullName,
-                        specialty  = LawyerSession.title
-                    )
                     showCreateSheet = false
+                    mediaPickerType = MediaPostType.Story
                 },
                 onUploadReel = {
                     showCreateSheet = false
-                    showReelDialog  = true
+                    mediaPickerType = MediaPostType.Reel
                 },
                 onGoLive = {
                     showCreateSheet = false
