@@ -58,7 +58,8 @@ fun UserDashboardHost(
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToAppointments: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
-    onNavigateToFacturation: () -> Unit = {}
+    onNavigateToFacturation: () -> Unit = {},
+    onNavigateToDossier: (String) -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -197,7 +198,8 @@ fun UserDashboardHost(
                             }
                         },
                         onNavigateToDocuments = onNavigateToDocuments,
-                        onNavigateToFacturation = onNavigateToFacturation
+                        onNavigateToFacturation = onNavigateToFacturation,
+                        onNavigateToDossier = onNavigateToDossier
                     )
                 }
                 composable(UserTab.Messages.route) {

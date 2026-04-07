@@ -81,7 +81,8 @@ internal fun UserCasesTabContent(
     onNavigateToConsulter: () -> Unit = {},
     onNavigateToMessages: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
-    onNavigateToFacturation: () -> Unit = {}
+    onNavigateToFacturation: () -> Unit = {},
+    onNavigateToDossier: (String) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -195,7 +196,7 @@ internal fun UserCasesTabContent(
 
                 // ── Case Status Timeline ───────────────────────────────────────
                 DashCard {
-                    SectionHeader(title = "État du Dossier", actionLabel = "Voir tout") {}
+                    SectionHeader(title = "État du Dossier", actionLabel = "Voir tout", onAction = { onNavigateToDossier("HAQ-2024-0312") })
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Affaire N° HAQ-2024-0312",
