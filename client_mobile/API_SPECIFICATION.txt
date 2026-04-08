@@ -1,0 +1,2347 @@
+================================================================================
+  HAQ LEGAL SERVICES — COMPLETE API SPECIFICATION
+  Version: 1.0.0
+  Base URL: https://api.haq.ma/v1
+  Auth: Bearer JWT (unless stated otherwise)
+  Content-Type: application/json (unless multipart/form-data)
+================================================================================
+
+================================================================================
+=== AUTH APIs ===
+================================================================================
+
+POST /api/auth/register-user
+  Description : Register a new client/user account
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "full_name"  : "string (required)",
+      "email"      : "string (required, unique)",
+      "phone"      : "string (required)",
+      "password"   : "string (required, min 8 chars)",
+      "address"    : "string (optional)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "user": {
+          "id"        : "uuid",
+          "full_name" : "string",
+          "email"     : "string",
+          "phone"     : "string",
+          "role"      : "user",
+          "created_at": "ISO8601"
+        },
+        "token"        : "JWT string",
+        "refresh_token": "JWT string"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR", "details": { "field": "message" } }
+    409 { "success": false, "error": "EMAIL_ALREADY_EXISTS" }
+    500 { "success": false, "error": "INTERNAL_SERVER_ERROR" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/register-lawyer
+  Description : Register a new lawyer account (pending admin approval)
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "full_name"         : "string (required)",
+      "email"             : "string (required, unique)",
+      "phone"             : "string (required)",
+      "password"          : "string (required, min 8 chars)",
+      "address"           : "string (required)",
+      "speciality"        : "string (required)",
+      "bar_association"   : "string (required)",
+      "bar_number"        : "string (required)",
+      "years_experience"  : "integer (required)",
+      "bio"               : "string (optional)",
+      "specializations"   : ["string"] (optional)
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "lawyer": {
+          "id"               : "uuid",
+          "full_name"        : "string",
+          "email"            : "string",
+          "role"             : "lawyer",
+          "status"           : "pending_verification",
+          "created_at"       : "ISO8601"
+        },
+        "token"        : "JWT string",
+        "refresh_token": "JWT string"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR", "details": {} }
+    409 { "success": false, "error": "EMAIL_ALREADY_EXISTS" }
+    500 { "success": false, "error": "INTERNAL_SERVER_ERROR" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/login
+  Description : Authenticate user or lawyer
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "email"    : "string (required)",
+      "password" : "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "profile": {
+          "id"              : "uuid",
+          "full_name"       : "string",
+          "email"           : "string",
+          "phone"           : "string",
+          "role"            : "user | lawyer",
+          "avatar_url"      : "string | null",
+          "status"          : "active | pending_verification | suspended",
+          "created_at"      : "ISO8601"
+        },
+        "token"        : "JWT string (expires: 1h)",
+        "refresh_token": "JWT string (expires: 30d)"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    401 { "success": false, "error": "INVALID_CREDENTIALS" }
+    403 { "success": false, "error": "ACCOUNT_SUSPENDED" }
+    403 { "success": false, "error": "ACCOUNT_PENDING_VERIFICATION" }
+    500 { "success": false, "error": "INTERNAL_SERVER_ERROR" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/logout
+  Description : Invalidate current session tokens
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "refresh_token": "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Logged out successfully"
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/refresh-token
+  Description : Get a new access token using refresh token
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "refresh_token": "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "token"        : "JWT string",
+        "refresh_token": "JWT string"
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "INVALID_REFRESH_TOKEN" }
+    401 { "success": false, "error": "REFRESH_TOKEN_EXPIRED" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/forgot-password
+  Description : Send password reset email
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "email": "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Reset link sent if account exists"
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/reset-password
+  Description : Reset password using token from email
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "token"            : "string (required)",
+      "new_password"     : "string (required, min 8 chars)",
+      "confirm_password" : "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Password updated successfully"
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    400 { "success": false, "error": "PASSWORDS_DO_NOT_MATCH" }
+    400 { "success": false, "error": "INVALID_OR_EXPIRED_TOKEN" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/change-password
+  Description : Change password while authenticated
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "current_password" : "string (required)",
+      "new_password"     : "string (required, min 8 chars)",
+      "confirm_password" : "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Password changed successfully"
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    401 { "success": false, "error": "WRONG_CURRENT_PASSWORD" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/verify-email
+  Description : Verify email address with OTP or token
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "email": "string (required)",
+      "code" : "string (required, 6-digit OTP)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Email verified successfully"
+    }
+  Errors:
+    400 { "success": false, "error": "INVALID_CODE" }
+    400 { "success": false, "error": "CODE_EXPIRED" }
+
+--------------------------------------------------------------------------------
+
+POST /api/auth/resend-verification
+  Description : Resend email verification OTP
+  Auth        : None
+  Role        : Public
+  Request Body:
+    {
+      "email": "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Verification code resent"
+    }
+  Errors:
+    429 { "success": false, "error": "TOO_MANY_REQUESTS", "retry_after": 60 }
+
+
+================================================================================
+=== USER PROFILE APIs ===
+================================================================================
+
+GET /api/users/me
+  Description : Get authenticated user's profile
+  Auth        : Required
+  Role        : User
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "id"               : "uuid",
+        "full_name"        : "string",
+        "email"            : "string",
+        "phone"            : "string",
+        "address"          : "string",
+        "avatar_url"       : "string | null",
+        "role"             : "user",
+        "status"           : "active",
+        "created_at"       : "ISO8601",
+        "updated_at"       : "ISO8601"
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+PUT /api/users/me
+  Description : Update authenticated user's profile
+  Auth        : Required
+  Role        : User
+  Request Body:
+    {
+      "full_name" : "string (optional)",
+      "phone"     : "string (optional)",
+      "address"   : "string (optional)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated user object */ }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+POST /api/users/me/avatar
+  Description : Upload or replace user profile photo
+  Auth        : Required
+  Role        : User
+  Content-Type: multipart/form-data
+  Request Body (form-data):
+    avatar: File (jpg|png|webp, max 5MB)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "avatar_url": "string (CDN URL)"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "INVALID_FILE_TYPE" }
+    400 { "success": false, "error": "FILE_TOO_LARGE" }
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/users/me/account
+  Description : Permanently delete user account and all data
+  Auth        : Required
+  Role        : User
+  Request Body:
+    {
+      "password": "string (required, confirmation)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "message": "Account deleted successfully"
+    }
+  Errors:
+    400 { "success": false, "error": "WRONG_PASSWORD" }
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+
+================================================================================
+=== LAWYER PROFILE APIs ===
+================================================================================
+
+GET /api/lawyers/me
+  Description : Get authenticated lawyer's full profile
+  Auth        : Required
+  Role        : Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "id"               : "uuid",
+        "full_name"        : "string",
+        "email"            : "string",
+        "phone"            : "string",
+        "address"          : "string",
+        "avatar_url"       : "string | null",
+        "bio"              : "string",
+        "speciality"       : "string",
+        "bar_association"  : "string",
+        "bar_number"       : "string",
+        "years_experience" : "integer",
+        "specializations"  : ["string"],
+        "is_verified"      : "boolean",
+        "is_available"     : "boolean",
+        "rating"           : "float",
+        "review_count"     : "integer",
+        "client_count"     : "integer",
+        "status"           : "active | pending_verification | suspended",
+        "created_at"       : "ISO8601",
+        "updated_at"       : "ISO8601"
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+PUT /api/lawyers/me
+  Description : Update authenticated lawyer's profile
+  Auth        : Required
+  Role        : Lawyer
+  Request Body:
+    {
+      "full_name"        : "string (optional)",
+      "phone"            : "string (optional)",
+      "address"          : "string (optional)",
+      "bio"              : "string (optional)",
+      "speciality"       : "string (optional)",
+      "years_experience" : "integer (optional)",
+      "specializations"  : ["string"] (optional),
+      "is_available"     : "boolean (optional)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated lawyer object */ }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+POST /api/lawyers/me/avatar
+  Description : Upload or replace lawyer profile photo
+  Auth        : Required
+  Role        : Lawyer
+  Content-Type: multipart/form-data
+  Request Body (form-data):
+    avatar: File (jpg|png|webp, max 5MB)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "avatar_url": "string (CDN URL)"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "INVALID_FILE_TYPE" }
+    400 { "success": false, "error": "FILE_TOO_LARGE" }
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+GET /api/lawyers/me/stats
+  Description : Get lawyer dashboard stats (clients, revenue, requests)
+  Auth        : Required
+  Role        : Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "total_clients"       : "integer",
+        "active_clients"      : "integer",
+        "new_requests"        : "integer",
+        "closed_cases"        : "integer",
+        "total_revenue_month" : "float",
+        "total_revenue_year"  : "float",
+        "average_rating"      : "float",
+        "monthly_revenue"     : [
+          { "month": "Jan", "amount": 1800.0 },
+          ...
+        ]
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+
+================================================================================
+=== LAWYER DISCOVERY APIs ===
+================================================================================
+
+GET /api/lawyers
+  Description : Browse/search all active verified lawyers
+  Auth        : Required
+  Role        : User
+  Query Params:
+    page        : integer (default: 1)
+    limit       : integer (default: 20, max: 100)
+    search      : string (optional, searches name & speciality)
+    domaine     : string (optional, filter by legal domain)
+    city        : string (optional)
+    min_rating  : float (optional, e.g. 4.0)
+    min_years   : integer (optional)
+    is_available: boolean (optional)
+    sort_by     : "rating" | "reviews" | "experience" | "name" (default: rating)
+    sort_order  : "asc" | "desc" (default: desc)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "lawyers": [
+          {
+            "id"               : "uuid",
+            "full_name"        : "string",
+            "speciality"       : "string",
+            "city"             : "string",
+            "avatar_url"       : "string | null",
+            "rating"           : "float",
+            "review_count"     : "integer",
+            "years_experience" : "integer",
+            "is_verified"      : "boolean",
+            "is_available"     : "boolean",
+            "domaine"          : "string"
+          }
+        ],
+        "pagination": {
+          "page"        : 1,
+          "limit"       : 20,
+          "total"       : 240,
+          "total_pages" : 12
+        }
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+GET /api/lawyers/{id}
+  Description : Get full public profile of a specific lawyer
+  Auth        : Required
+  Role        : User
+  Path Params:
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "id"               : "uuid",
+        "full_name"        : "string",
+        "email"            : "string (masked: y***@domain.com)",
+        "phone"            : "string (masked)",
+        "address"          : "string",
+        "avatar_url"       : "string | null",
+        "bio"              : "string",
+        "speciality"       : "string",
+        "bar_association"  : "string",
+        "years_experience" : "integer",
+        "specializations"  : ["string"],
+        "is_verified"      : "boolean",
+        "is_available"     : "boolean",
+        "rating"           : "float",
+        "review_count"     : "integer",
+        "client_count"     : "integer",
+        "reviews"          : [
+          {
+            "id"          : "uuid",
+            "reviewer_name": "string",
+            "rating"      : "integer (1-5)",
+            "comment"     : "string",
+            "date"        : "ISO8601"
+          }
+        ]
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+    404 { "success": false, "error": "LAWYER_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+POST /api/lawyers/{id}/reviews
+  Description : Submit a review for a lawyer (only after completed appointment)
+  Auth        : Required
+  Role        : User
+  Path Params:
+    id: uuid (lawyer id)
+  Request Body:
+    {
+      "rating"         : "integer (1-5, required)",
+      "comment"        : "string (optional, max 500 chars)",
+      "appointment_id" : "uuid (required, must be completed)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "id"     : "uuid",
+        "rating" : "integer",
+        "comment": "string",
+        "date"   : "ISO8601"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    403 { "success": false, "error": "APPOINTMENT_NOT_COMPLETED" }
+    409 { "success": false, "error": "REVIEW_ALREADY_SUBMITTED" }
+
+--------------------------------------------------------------------------------
+
+GET /api/lawyers/domains
+  Description : Get all available legal domains/categories
+  Auth        : Required
+  Role        : User
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "domains": [
+          { "id": "uuid", "name": "Droit Pénal",      "lawyer_count": 42 },
+          { "id": "uuid", "name": "Droit Civil",       "lawyer_count": 35 },
+          { "id": "uuid", "name": "Droit des Affaires","lawyer_count": 28 },
+          { "id": "uuid", "name": "Droit Immobilier",  "lawyer_count": 19 },
+          { "id": "uuid", "name": "Droit du Travail",  "lawyer_count": 31 },
+          { "id": "uuid", "name": "Droit Fiscal",      "lawyer_count": 15 }
+        ]
+      }
+    }
+
+
+================================================================================
+=== LEGAL MATCHING APIs ===
+================================================================================
+
+POST /api/matching/request
+  Description : Submit legal situation and get matched lawyers
+  Auth        : Required
+  Role        : User
+  Request Body:
+    {
+      "legal_domain"  : "string (required)",
+      "description"   : "string (required, min 50 chars)",
+      "urgency"       : "low | medium | high (required)",
+      "budget_range"  : "string (optional, e.g. '300-600 MAD')",
+      "preferred_city": "string (optional)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "match_id"  : "uuid",
+        "matches"   : [
+          {
+            "lawyer"           : { /* lawyer profile object */ },
+            "match_score"      : "float (0-100)",
+            "match_reasons"    : ["string"],
+            "estimated_cost"   : "string",
+            "availability_slots": [
+              {
+                "date"     : "YYYY-MM-DD",
+                "times"    : ["09:00", "11:00", "14:00"]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+GET /api/matching/history
+  Description : Get user's previous matching requests
+  Auth        : Required
+  Role        : User
+  Query Params:
+    page  : integer (default: 1)
+    limit : integer (default: 10)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "matches": [
+          {
+            "id"          : "uuid",
+            "legal_domain": "string",
+            "description" : "string",
+            "status"      : "pending | matched | closed",
+            "created_at"  : "ISO8601",
+            "match_count" : "integer"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+
+================================================================================
+=== APPOINTMENTS APIs ===
+================================================================================
+
+GET /api/appointments
+  Description : Get authenticated user or lawyer's appointments list
+  Auth        : Required
+  Role        : User | Lawyer
+  Query Params:
+    page          : integer (default: 1)
+    limit         : integer (default: 20)
+    status        : "pending | confirmed | completed | cancelled | all" (default: all)
+    from_date     : "YYYY-MM-DD (optional)"
+    to_date       : "YYYY-MM-DD (optional)"
+    sort_by       : "date" | "status" (default: date)
+    sort_order    : "asc" | "desc" (default: asc)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "appointments": [
+          {
+            "id"          : "uuid",
+            "lawyer"      : {
+              "id"       : "uuid",
+              "full_name": "string",
+              "speciality":"string",
+              "avatar_url": "string | null"
+            },
+            "client"      : {
+              "id"       : "uuid",
+              "full_name": "string",
+              "avatar_url": "string | null"
+            },
+            "date"        : "YYYY-MM-DD",
+            "time"        : "HH:MM",
+            "duration_min": "integer",
+            "type"        : "consultation | suivi | reunion",
+            "status"      : "pending | confirmed | completed | cancelled",
+            "notes"       : "string | null",
+            "price"       : "float",
+            "created_at"  : "ISO8601"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+  Errors:
+    401 { "success": false, "error": "UNAUTHORIZED" }
+
+--------------------------------------------------------------------------------
+
+POST /api/appointments
+  Description : Book a new appointment with a lawyer
+  Auth        : Required
+  Role        : User
+  Request Body:
+    {
+      "lawyer_id"   : "uuid (required)",
+      "date"        : "YYYY-MM-DD (required)",
+      "time"        : "HH:MM (required)",
+      "type"        : "consultation | suivi | reunion (required)",
+      "notes"       : "string (optional)",
+      "duration_min": "integer (default: 60)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": { /* appointment object */ }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    409 { "success": false, "error": "SLOT_NOT_AVAILABLE" }
+    403 { "success": false, "error": "LAWYER_NOT_AVAILABLE" }
+
+--------------------------------------------------------------------------------
+
+GET /api/appointments/{id}
+  Description : Get details of a specific appointment
+  Auth        : Required
+  Role        : User | Lawyer
+  Path Params:
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": { /* full appointment object */ }
+    }
+  Errors:
+    403 { "success": false, "error": "FORBIDDEN" }
+    404 { "success": false, "error": "APPOINTMENT_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+PUT /api/appointments/{id}
+  Description : Update appointment (reschedule or add notes)
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "date"  : "YYYY-MM-DD (optional)",
+      "time"  : "HH:MM (optional)",
+      "notes" : "string (optional)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated appointment object */ }
+    }
+  Errors:
+    400 { "success": false, "error": "VALIDATION_ERROR" }
+    403 { "success": false, "error": "CANNOT_RESCHEDULE_PAST_APPOINTMENT" }
+    409 { "success": false, "error": "SLOT_NOT_AVAILABLE" }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/appointments/{id}/status
+  Description : Update appointment status (confirm, complete, cancel)
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "status"            : "confirmed | completed | cancelled (required)",
+      "cancellation_reason": "string (required if status=cancelled)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated appointment object */ }
+    }
+  Errors:
+    400 { "success": false, "error": "INVALID_STATUS_TRANSITION" }
+    403 { "success": false, "error": "FORBIDDEN" }
+
+--------------------------------------------------------------------------------
+
+GET /api/appointments/lawyer/{lawyer_id}/availability
+  Description : Get available time slots for a lawyer
+  Auth        : Required
+  Role        : User
+  Path Params :
+    lawyer_id: uuid
+  Query Params:
+    from_date : "YYYY-MM-DD (required)"
+    to_date   : "YYYY-MM-DD (required, max 30 days ahead)"
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "slots": [
+          {
+            "date" : "YYYY-MM-DD",
+            "times": ["09:00", "10:00", "11:30", "14:00", "15:30"]
+          }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+PUT /api/lawyers/me/availability
+  Description : Set lawyer's available working hours
+  Auth        : Required
+  Role        : Lawyer
+  Request Body:
+    {
+      "schedule": [
+        {
+          "day"       : "monday | tuesday | wednesday | thursday | friday | saturday | sunday",
+          "is_working": "boolean",
+          "start_time": "HH:MM",
+          "end_time"  : "HH:MM",
+          "break_start": "HH:MM | null",
+          "break_end"  : "HH:MM | null"
+        }
+      ],
+      "slot_duration_min"  : "integer (default: 60)",
+      "buffer_between_min" : "integer (default: 15)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { "schedule": [ /* schedule array */ ] }
+    }
+
+
+================================================================================
+=== PAYMENTS & BILLING APIs ===
+================================================================================
+
+GET /api/payments
+  Description : Get payment history for authenticated user or lawyer
+  Auth        : Required
+  Role        : User | Lawyer
+  Query Params:
+    page       : integer (default: 1)
+    limit      : integer (default: 20)
+    status     : "paid | pending | failed | refunded | all" (default: all)
+    from_date  : "YYYY-MM-DD (optional)"
+    to_date    : "YYYY-MM-DD (optional)"
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "payments": [
+          {
+            "id"             : "uuid",
+            "appointment_id" : "uuid",
+            "amount"         : "float",
+            "currency"       : "MAD",
+            "method"         : "card | bank_transfer | payment_link",
+            "status"         : "paid | pending | failed | refunded",
+            "paid_at"        : "ISO8601 | null",
+            "invoice_url"    : "string | null",
+            "payer"          : { "id": "uuid", "full_name": "string" },
+            "recipient"      : { "id": "uuid", "full_name": "string" },
+            "created_at"     : "ISO8601"
+          }
+        ],
+        "summary": {
+          "total_paid"   : "float",
+          "total_pending": "float",
+          "currency"     : "MAD"
+        },
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/payments/initiate
+  Description : Initiate a payment for an appointment
+  Auth        : Required
+  Role        : User
+  Request Body:
+    {
+      "appointment_id" : "uuid (required)",
+      "method"         : "card | bank_transfer | payment_link (required)",
+      "return_url"     : "string (required for card, deep-link)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "payment_id"   : "uuid",
+        "checkout_url" : "string (redirect URL for card payment | null)",
+        "payment_link" : "string | null",
+        "bank_details" : {
+          "rib"         : "string",
+          "bank_name"   : "string",
+          "account_name": "string",
+          "reference"   : "string"
+        }
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "APPOINTMENT_ALREADY_PAID" }
+    404 { "success": false, "error": "APPOINTMENT_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+GET /api/payments/{id}
+  Description : Get detail of a specific payment
+  Auth        : Required
+  Role        : User | Lawyer
+  Path Params :
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": { /* full payment object */ }
+    }
+  Errors:
+    403 { "success": false, "error": "FORBIDDEN" }
+    404 { "success": false, "error": "PAYMENT_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+POST /api/payments/{id}/refund
+  Description : Request a refund (admin-reviewed)
+  Auth        : Required
+  Role        : User
+  Path Params :
+    id: uuid
+  Request Body:
+    {
+      "reason": "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "refund_request_id": "uuid",
+        "status"           : "pending_review",
+        "message"          : "Refund request submitted"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "NOT_ELIGIBLE_FOR_REFUND" }
+
+--------------------------------------------------------------------------------
+
+GET /api/payments/{id}/invoice
+  Description : Download PDF invoice for a payment
+  Auth        : Required
+  Role        : User | Lawyer
+  Response    : PDF file (Content-Type: application/pdf)
+  Errors:
+    403 { "success": false, "error": "FORBIDDEN" }
+    404 { "success": false, "error": "INVOICE_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+POST /api/payments/webhook
+  Description : Payment gateway webhook (CMI, PayZone, Stripe, etc.)
+  Auth        : Signature-based (X-Webhook-Signature header)
+  Role        : System
+  Request Body: (gateway-specific payload)
+  Response 200:
+    { "received": true }
+
+
+================================================================================
+=== CHAT APIs ===
+================================================================================
+
+GET /api/conversations
+  Description : Get all conversations for authenticated user or lawyer
+  Auth        : Required
+  Role        : User | Lawyer
+  Query Params:
+    page  : integer (default: 1)
+    limit : integer (default: 20)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "conversations": [
+          {
+            "id"                   : "uuid",
+            "lawyer"               : {
+              "id"        : "uuid",
+              "full_name" : "string",
+              "speciality": "string",
+              "avatar_url": "string | null"
+            },
+            "client"               : {
+              "id"        : "uuid",
+              "full_name" : "string",
+              "avatar_url": "string | null"
+            },
+            "last_message"         : {
+              "content"   : "string",
+              "sent_at"   : "ISO8601",
+              "sender_id" : "uuid"
+            },
+            "unread_count_user"    : "integer",
+            "unread_count_lawyer"  : "integer",
+            "created_at"           : "ISO8601"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/conversations
+  Description : Start a new conversation between user and lawyer
+  Auth        : Required
+  Role        : User
+  Request Body:
+    {
+      "lawyer_id": "uuid (required)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": { /* conversation object */ }
+    }
+  Errors:
+    409 { "success": false, "error": "CONVERSATION_ALREADY_EXISTS", "data": { "conversation_id": "uuid" } }
+
+--------------------------------------------------------------------------------
+
+GET /api/conversations/{id}
+  Description : Get a specific conversation details
+  Auth        : Required
+  Role        : User | Lawyer
+  Path Params :
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": { /* full conversation object */ }
+    }
+  Errors:
+    403 { "success": false, "error": "FORBIDDEN" }
+    404 { "success": false, "error": "CONVERSATION_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+GET /api/conversations/{id}/messages
+  Description : Get paginated messages for a conversation
+  Auth        : Required
+  Role        : User | Lawyer
+  Path Params :
+    id: uuid
+  Query Params:
+    page         : integer (default: 1)
+    limit        : integer (default: 50)
+    before_cursor: "ISO8601 (optional, for cursor-based pagination)"
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "messages": [
+          {
+            "id"          : "uuid",
+            "content"     : "string",
+            "sender_id"   : "uuid",
+            "sender_name" : "string",
+            "sender_role" : "user | lawyer",
+            "is_from_user": "boolean",
+            "type"        : "text | image | file",
+            "file_url"    : "string | null",
+            "file_name"   : "string | null",
+            "is_read"     : "boolean",
+            "sent_at"     : "ISO8601"
+          }
+        ],
+        "pagination": {
+          "page"       : 1,
+          "limit"      : 50,
+          "total"      : 320,
+          "has_more"   : true,
+          "next_cursor": "ISO8601"
+        }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/conversations/{id}/messages
+  Description : Send a text message in a conversation
+  Auth        : Required
+  Role        : User | Lawyer
+  Path Params :
+    id: uuid
+  Request Body:
+    {
+      "content": "string (required, max 4000 chars)",
+      "type"   : "text (default)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": { /* message object */ }
+    }
+  Errors:
+    400 { "success": false, "error": "MESSAGE_TOO_LONG" }
+    403 { "success": false, "error": "FORBIDDEN" }
+
+--------------------------------------------------------------------------------
+
+POST /api/conversations/{id}/messages/file
+  Description : Send a file/image in a conversation
+  Auth        : Required
+  Role        : User | Lawyer
+  Content-Type: multipart/form-data
+  Path Params :
+    id: uuid
+  Request Body (form-data):
+    file    : File (jpg|png|pdf|docx, max 20MB)
+    caption : string (optional)
+  Response 201:
+    {
+      "success": true,
+      "data": { /* message object with file_url */ }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/conversations/{id}/read
+  Description : Mark all messages in a conversation as read
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    {
+      "success": true,
+      "message": "Messages marked as read"
+    }
+
+
+================================================================================
+=== NOTIFICATIONS APIs ===
+================================================================================
+
+GET /api/notifications
+  Description : Get notifications for authenticated user or lawyer
+  Auth        : Required
+  Role        : User | Lawyer
+  Query Params:
+    page    : integer (default: 1)
+    limit   : integer (default: 30)
+    is_read : boolean (optional filter)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "notifications": [
+          {
+            "id"        : "uuid",
+            "type"      : "appointment_confirmed | message_received | payment_received | new_request | live_started | review_received | system",
+            "title"     : "string",
+            "body"      : "string",
+            "data"      : {
+              "entity_type": "appointment | conversation | payment | live_session",
+              "entity_id"  : "uuid"
+            },
+            "is_read"   : "boolean",
+            "created_at": "ISO8601"
+          }
+        ],
+        "unread_count": "integer",
+        "pagination"  : { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/notifications/{id}/read
+  Description : Mark a single notification as read
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    { "success": true }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/notifications/read-all
+  Description : Mark all notifications as read
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": { "marked_count": "integer" }
+    }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/notifications/{id}
+  Description : Delete a single notification
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    { "success": true }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/notifications/all
+  Description : Delete all notifications
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": { "deleted_count": "integer" }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/notifications/device-token
+  Description : Register FCM/APNS device token for push notifications
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "token"   : "string (required)",
+      "platform": "android | ios (required)"
+    }
+  Response 200:
+    { "success": true }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/notifications/device-token
+  Description : Unregister device token on logout
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "token": "string (required)"
+    }
+  Response 200:
+    { "success": true }
+
+
+================================================================================
+=== LIVE SESSION APIs ===
+================================================================================
+
+GET /api/live-sessions
+  Description : Get all active or upcoming live sessions
+  Auth        : Required
+  Role        : User
+  Query Params:
+    page   : integer (default: 1)
+    limit  : integer (default: 20)
+    status : "live | upcoming | ended | all" (default: live)
+    domain : string (optional)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "sessions": [
+          {
+            "id"          : "uuid",
+            "lawyer"      : {
+              "id"        : "uuid",
+              "full_name" : "string",
+              "speciality": "string",
+              "avatar_url": "string | null"
+            },
+            "topic"        : "string",
+            "status"       : "live | upcoming | ended",
+            "viewer_count" : "integer",
+            "started_at"   : "ISO8601 | null",
+            "scheduled_at" : "ISO8601 | null",
+            "stream_url"   : "string | null (HLS stream URL, only for live/joined)",
+            "thumbnail_url": "string | null",
+            "duration_sec" : "integer | null"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/live-sessions
+  Description : Lawyer starts a new live session
+  Auth        : Required
+  Role        : Lawyer
+  Request Body:
+    {
+      "topic"        : "string (required)",
+      "description"  : "string (optional)",
+      "domain"       : "string (optional)",
+      "scheduled_at" : "ISO8601 (optional, null = start immediately)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "session_id" : "uuid",
+        "stream_key" : "string (RTMP ingest key, lawyer uses to stream)",
+        "rtmp_url"   : "string (e.g. rtmp://live.haq.ma/live)",
+        "playback_url": "string (HLS URL for viewers)"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+GET /api/live-sessions/{id}
+  Description : Get details & join info for a live session
+  Auth        : Required
+  Role        : User | Lawyer
+  Path Params :
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "session"     : { /* full session object */ },
+        "stream_url"  : "string (HLS playback URL)",
+        "chat_token"  : "string (WebSocket auth token for this session's chat)"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/live-sessions/{id}/end
+  Description : Lawyer ends a live session
+  Auth        : Required
+  Role        : Lawyer
+  Path Params :
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "session_id"  : "uuid",
+        "status"      : "ended",
+        "duration_sec": "integer",
+        "total_viewers": "integer"
+      }
+    }
+  Errors:
+    403 { "success": false, "error": "NOT_SESSION_OWNER" }
+
+--------------------------------------------------------------------------------
+
+GET /api/live-sessions/{id}/comments
+  Description : Get chat comments for a live session (for replay)
+  Auth        : Required
+  Role        : User | Lawyer
+  Query Params:
+    page  : integer (default: 1)
+    limit : integer (default: 50)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "comments": [
+          {
+            "id"         : "uuid",
+            "author_name": "string",
+            "content"    : "string",
+            "sent_at"    : "ISO8601"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+
+================================================================================
+=== STORIES & REELS APIs ===
+================================================================================
+
+GET /api/stories
+  Description : Get active stories feed (expires after 24h)
+  Auth        : Required
+  Role        : User
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "stories": [
+          {
+            "id"          : "uuid",
+            "lawyer"      : {
+              "id"        : "uuid",
+              "full_name" : "string",
+              "speciality": "string",
+              "avatar_url": "string | null"
+            },
+            "media_url"   : "string (image CDN URL)",
+            "caption"     : "string | null",
+            "is_seen"     : "boolean",
+            "expires_at"  : "ISO8601",
+            "created_at"  : "ISO8601"
+          }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/stories
+  Description : Lawyer publishes a new story
+  Auth        : Required
+  Role        : Lawyer
+  Content-Type: multipart/form-data
+  Request Body (form-data):
+    media  : File (jpg|png|webp, max 10MB)
+    caption: string (optional, max 200 chars)
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "id"        : "uuid",
+        "media_url" : "string",
+        "expires_at": "ISO8601 (24h from now)"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/stories/{id}
+  Description : Delete a story (lawyer only, own story)
+  Auth        : Required
+  Role        : Lawyer
+  Response 200:
+    { "success": true }
+  Errors:
+    403 { "success": false, "error": "NOT_STORY_OWNER" }
+
+--------------------------------------------------------------------------------
+
+POST /api/stories/{id}/view
+  Description : Mark a story as viewed by user
+  Auth        : Required
+  Role        : User
+  Response 200:
+    { "success": true }
+
+--------------------------------------------------------------------------------
+
+GET /api/reels
+  Description : Get reels feed (short legal videos)
+  Auth        : Required
+  Role        : User
+  Query Params:
+    page   : integer (default: 1)
+    limit  : integer (default: 20)
+    domain : string (optional)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "reels": [
+          {
+            "id"          : "uuid",
+            "lawyer"      : { /* lawyer summary object */ },
+            "title"       : "string",
+            "video_url"   : "string (CDN HLS URL)",
+            "thumbnail_url": "string | null",
+            "likes_count" : "integer",
+            "views_count" : "integer",
+            "is_liked"    : "boolean",
+            "duration_sec": "integer",
+            "created_at"  : "ISO8601"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/reels
+  Description : Lawyer uploads a new reel
+  Auth        : Required
+  Role        : Lawyer
+  Content-Type: multipart/form-data
+  Request Body (form-data):
+    video    : File (mp4, max 100MB, max 60s)
+    thumbnail: File (jpg|png, optional)
+    title    : string (required, max 100 chars)
+    domain   : string (optional)
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "id"           : "uuid",
+        "status"       : "processing | ready",
+        "video_url"    : "string | null (null while processing)",
+        "thumbnail_url": "string | null"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/reels/{id}
+  Description : Delete a reel (lawyer only, own reel)
+  Auth        : Required
+  Role        : Lawyer
+  Response 200:
+    { "success": true }
+  Errors:
+    403 { "success": false, "error": "NOT_REEL_OWNER" }
+
+--------------------------------------------------------------------------------
+
+POST /api/reels/{id}/like
+  Description : Like or unlike a reel (toggle)
+  Auth        : Required
+  Role        : User
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "is_liked"   : "boolean",
+        "likes_count": "integer"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/reels/{id}/view
+  Description : Increment view count for a reel
+  Auth        : Required
+  Role        : User
+  Response 200:
+    { "success": true }
+
+
+================================================================================
+=== DOCUMENT VAULT APIs ===
+================================================================================
+
+GET /api/documents
+  Description : Get authenticated user's document vault
+  Auth        : Required
+  Role        : User
+  Query Params:
+    page   : integer (default: 1)
+    limit  : integer (default: 20)
+    search : string (optional, searches name)
+    type   : "pdf | image | docx | all" (default: all)
+    sort_by: "name | date | size" (default: date)
+    sort_order: "asc | desc" (default: desc)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "documents": [
+          {
+            "id"          : "uuid",
+            "name"        : "string",
+            "file_url"    : "string (signed CDN URL, expires 1h)",
+            "file_type"   : "pdf | image | docx | other",
+            "file_size_kb": "integer",
+            "added_at"    : "ISO8601",
+            "is_shared_with_lawyer": "boolean",
+            "shared_with_lawyer_id": "uuid | null"
+          }
+        ],
+        "storage_used_mb" : "float",
+        "storage_limit_mb": "float (e.g. 200)",
+        "pagination"      : { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/documents
+  Description : Upload a document to the vault
+  Auth        : Required
+  Role        : User
+  Content-Type: multipart/form-data
+  Request Body (form-data):
+    file: File (pdf|jpg|png|docx|xlsx, max 50MB)
+    name: string (optional, defaults to filename)
+  Response 201:
+    {
+      "success": true,
+      "data": {
+        "id"          : "uuid",
+        "name"        : "string",
+        "file_url"    : "string",
+        "file_type"   : "string",
+        "file_size_kb": "integer",
+        "added_at"    : "ISO8601"
+      }
+    }
+  Errors:
+    400 { "success": false, "error": "INVALID_FILE_TYPE" }
+    400 { "success": false, "error": "FILE_TOO_LARGE" }
+    403 { "success": false, "error": "STORAGE_LIMIT_EXCEEDED" }
+
+--------------------------------------------------------------------------------
+
+GET /api/documents/{id}
+  Description : Get document details and a fresh signed download URL
+  Auth        : Required
+  Role        : User
+  Path Params :
+    id: uuid
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "id"         : "uuid",
+        "name"       : "string",
+        "download_url": "string (signed URL, expires 15min)",
+        "file_type"  : "string",
+        "file_size_kb": "integer",
+        "added_at"   : "ISO8601"
+      }
+    }
+  Errors:
+    403 { "success": false, "error": "FORBIDDEN" }
+    404 { "success": false, "error": "DOCUMENT_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/documents/{id}
+  Description : Rename a document
+  Auth        : Required
+  Role        : User
+  Path Params :
+    id: uuid
+  Request Body:
+    {
+      "name": "string (required)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated document object */ }
+    }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/documents/{id}
+  Description : Delete a document from the vault
+  Auth        : Required
+  Role        : User
+  Path Params :
+    id: uuid
+  Response 200:
+    { "success": true }
+  Errors:
+    403 { "success": false, "error": "FORBIDDEN" }
+    404 { "success": false, "error": "DOCUMENT_NOT_FOUND" }
+
+--------------------------------------------------------------------------------
+
+POST /api/documents/{id}/share
+  Description : Share a document with a specific lawyer
+  Auth        : Required
+  Role        : User
+  Path Params :
+    id: uuid
+  Request Body:
+    {
+      "lawyer_id"  : "uuid (required)",
+      "expires_at" : "ISO8601 (optional, default: 7 days)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "share_id"  : "uuid",
+        "lawyer_id" : "uuid",
+        "expires_at": "ISO8601"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+GET /api/lawyers/me/shared-documents
+  Description : Get documents shared with the authenticated lawyer by clients
+  Auth        : Required
+  Role        : Lawyer
+  Query Params:
+    page : integer (default: 1)
+    limit: integer (default: 20)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "documents": [
+          {
+            "id"           : "uuid",
+            "name"         : "string",
+            "download_url" : "string (signed, expires 15min)",
+            "file_type"    : "string",
+            "file_size_kb" : "integer",
+            "shared_by"    : { "id": "uuid", "full_name": "string" },
+            "expires_at"   : "ISO8601"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+
+================================================================================
+=== LAWYER CLIENT MANAGEMENT APIs ===
+================================================================================
+
+GET /api/lawyers/me/clients
+  Description : Get lawyer's client list
+  Auth        : Required
+  Role        : Lawyer
+  Query Params:
+    page   : integer (default: 1)
+    limit  : integer (default: 20)
+    search : string (optional)
+    status : "active | pending | closed | all" (default: all)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "clients": [
+          {
+            "id"          : "uuid",
+            "full_name"   : "string",
+            "avatar_url"  : "string | null",
+            "last_action" : "string",
+            "status"      : "active | pending | closed",
+            "joined_at"   : "ISO8601"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+GET /api/lawyers/me/requests
+  Description : Get incoming case requests for the lawyer
+  Auth        : Required
+  Role        : Lawyer
+  Query Params:
+    page   : integer (default: 1)
+    limit  : integer (default: 20)
+    status : "new | accepted | declined | all" (default: new)
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "requests": [
+          {
+            "id"          : "uuid",
+            "client"      : { "id": "uuid", "full_name": "string", "avatar_url": "string | null" },
+            "topic"       : "string",
+            "description" : "string",
+            "date"        : "ISO8601",
+            "status"      : "new | accepted | declined",
+            "amount"      : "float",
+            "currency"    : "MAD"
+          }
+        ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/lawyers/me/requests/{id}
+  Description : Accept or decline a case request
+  Auth        : Required
+  Role        : Lawyer
+  Path Params :
+    id: uuid
+  Request Body:
+    {
+      "action"          : "accept | decline (required)",
+      "decline_reason"  : "string (required if action=decline)",
+      "proposed_amount" : "float (optional, for accept)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "request_id": "uuid",
+        "status"    : "accepted | declined"
+      }
+    }
+
+
+================================================================================
+=== DASHBOARD APIs ===
+================================================================================
+
+GET /api/dashboard/user
+  Description : Get aggregated data for the user home dashboard
+  Auth        : Required
+  Role        : User
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "next_appointment"   : { /* appointment object | null */ },
+        "active_cases_count" : "integer",
+        "unread_messages"    : "integer",
+        "unread_notifications": "integer",
+        "recent_lawyers"     : [ { /* lawyer summary */ } ],
+        "featured_reels"     : [ { /* reel summary */ } ],
+        "active_stories"     : [ { /* story summary */ } ],
+        "live_sessions"      : [ { /* live session summary */ } ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+GET /api/dashboard/lawyer
+  Description : Get aggregated data for the lawyer home dashboard
+  Auth        : Required
+  Role        : Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "today_schedule"        : [ { /* appointment object */ } ],
+        "pending_requests_count": "integer",
+        "active_clients_count"  : "integer",
+        "unread_messages"       : "integer",
+        "unread_notifications"  : "integer",
+        "revenue_this_month"    : "float",
+        "monthly_revenue_chart" : [
+          { "month": "string", "amount": "float" }
+        ],
+        "pending_tasks"         : [
+          { "id": "uuid", "label": "string", "due_date": "string", "is_done": "boolean" }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+GET /api/dashboard/lawyer/schedule
+  Description : Get lawyer's today & week agenda with appointments
+  Auth        : Required
+  Role        : Lawyer
+  Query Params:
+    from_date: "YYYY-MM-DD (optional, default: today)"
+    to_date  : "YYYY-MM-DD (optional, default: +7 days)"
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "schedule": [
+          {
+            "date"        : "YYYY-MM-DD",
+            "appointments": [ { /* appointment object */ } ]
+          }
+        ]
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+POST /api/dashboard/lawyer/tasks
+  Description : Add a task to the lawyer's task list
+  Auth        : Required
+  Role        : Lawyer
+  Request Body:
+    {
+      "label"   : "string (required)",
+      "due_date": "YYYY-MM-DD (optional)"
+    }
+  Response 201:
+    {
+      "success": true,
+      "data": { "id": "uuid", "label": "string", "due_date": "string", "is_done": false }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/dashboard/lawyer/tasks/{id}
+  Description : Toggle task done/undone or update label
+  Auth        : Required
+  Role        : Lawyer
+  Path Params :
+    id: uuid
+  Request Body:
+    {
+      "is_done": "boolean (optional)",
+      "label"  : "string (optional)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated task */ }
+    }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/dashboard/lawyer/tasks/{id}
+  Description : Delete a task
+  Auth        : Required
+  Role        : Lawyer
+  Response 200:
+    { "success": true }
+
+
+================================================================================
+=== SETTINGS & ACCOUNT MANAGEMENT APIs ===
+================================================================================
+
+GET /api/settings
+  Description : Get account settings for authenticated user or lawyer
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "notifications": {
+          "push_enabled"         : "boolean",
+          "email_enabled"        : "boolean",
+          "sms_enabled"          : "boolean",
+          "new_message"          : "boolean",
+          "appointment_reminder" : "boolean",
+          "payment_received"     : "boolean",
+          "marketing"            : "boolean"
+        },
+        "privacy": {
+          "profile_visible"      : "boolean",
+          "show_online_status"   : "boolean"
+        },
+        "language": "fr | ar | en",
+        "theme"   : "light | dark | system"
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+PUT /api/settings
+  Description : Update account settings
+  Auth        : Required
+  Role        : User | Lawyer
+  Request Body:
+    {
+      "notifications": { /* partial notification settings */ },
+      "privacy"      : { /* partial privacy settings */ },
+      "language"     : "fr | ar | en (optional)",
+      "theme"        : "light | dark | system (optional)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { /* updated settings */ }
+    }
+
+--------------------------------------------------------------------------------
+
+DELETE /api/settings/sessions
+  Description : Revoke all active sessions except current
+  Auth        : Required
+  Role        : User | Lawyer
+  Response 200:
+    {
+      "success": true,
+      "data": { "revoked_count": "integer" }
+    }
+
+
+================================================================================
+=== ADMIN APIs ===
+================================================================================
+
+GET /api/admin/lawyers/pending
+  Description : List lawyers pending verification
+  Auth        : Required
+  Role        : Admin
+  Query Params:
+    page : integer
+    limit: integer
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "lawyers"   : [ { /* lawyer profile */ } ],
+        "pagination": { /* pagination object */ }
+      }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/admin/lawyers/{id}/verify
+  Description : Approve or reject a lawyer account
+  Auth        : Required
+  Role        : Admin
+  Request Body:
+    {
+      "action"       : "approve | reject (required)",
+      "reject_reason": "string (required if action=reject)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { "lawyer_id": "uuid", "status": "active | rejected" }
+    }
+
+--------------------------------------------------------------------------------
+
+PATCH /api/admin/users/{id}/suspend
+  Description : Suspend or unsuspend a user or lawyer
+  Auth        : Required
+  Role        : Admin
+  Request Body:
+    {
+      "action": "suspend | unsuspend (required)",
+      "reason": "string (required if action=suspend)"
+    }
+  Response 200:
+    {
+      "success": true,
+      "data": { "user_id": "uuid", "status": "suspended | active" }
+    }
+
+--------------------------------------------------------------------------------
+
+GET /api/admin/stats
+  Description : Get platform-level analytics
+  Auth        : Required
+  Role        : Admin
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "total_users"          : "integer",
+        "total_lawyers"        : "integer",
+        "total_appointments"   : "integer",
+        "total_revenue"        : "float",
+        "active_live_sessions" : "integer",
+        "monthly_signups"      : [ { "month": "string", "count": "integer" } ]
+      }
+    }
+
+
+================================================================================
+=== WEBSOCKET EVENTS ===
+================================================================================
+
+  WebSocket Server URL : wss://api.haq.ma/v1/ws
+  Authentication       : Connect with header: Authorization: Bearer <JWT>
+                         or query param: ?token=<JWT>
+  Protocol             : JSON messages over WebSocket
+  Heartbeat            : Client sends { "type": "ping" } every 30s
+                         Server responds { "type": "pong" }
+
+--------------------------------------------------------------------------------
+
+--- CLIENT → SERVER EVENTS ---
+
+event: ping
+  Payload: { "type": "ping" }
+
+event: join_conversation
+  Description : Join a conversation room to receive real-time messages
+  Payload:
+    {
+      "type"           : "join_conversation",
+      "conversation_id": "uuid"
+    }
+
+event: leave_conversation
+  Description : Leave a conversation room
+  Payload:
+    {
+      "type"           : "leave_conversation",
+      "conversation_id": "uuid"
+    }
+
+event: join_live
+  Description : Join a live session room for real-time comments
+  Payload:
+    {
+      "type"      : "join_live",
+      "session_id": "uuid"
+    }
+
+event: leave_live
+  Payload:
+    {
+      "type"      : "leave_live",
+      "session_id": "uuid"
+    }
+
+event: live.comment
+  Description : Send a comment during a live session
+  Payload:
+    {
+      "type"      : "live.comment",
+      "session_id": "uuid",
+      "content"   : "string (max 300 chars)"
+    }
+
+event: typing
+  Description : User is typing in a conversation
+  Payload:
+    {
+      "type"           : "typing",
+      "conversation_id": "uuid",
+      "is_typing"      : "boolean"
+    }
+
+--------------------------------------------------------------------------------
+
+--- SERVER → CLIENT EVENTS ---
+
+event: message.sent
+  Description : New message received in a conversation
+  Payload:
+    {
+      "type"           : "message.sent",
+      "conversation_id": "uuid",
+      "message": {
+        "id"          : "uuid",
+        "content"     : "string",
+        "sender_id"   : "uuid",
+        "sender_name" : "string",
+        "sender_role" : "user | lawyer",
+        "is_from_user": "boolean",
+        "type"        : "text | image | file",
+        "file_url"    : "string | null",
+        "sent_at"     : "ISO8601"
+      }
+    }
+
+event: message.read
+  Description : Messages in a conversation were read by the other party
+  Payload:
+    {
+      "type"           : "message.read",
+      "conversation_id": "uuid",
+      "read_by"        : "uuid",
+      "read_at"        : "ISO8601"
+    }
+
+event: typing
+  Description : Notify that the other party is typing
+  Payload:
+    {
+      "type"           : "typing",
+      "conversation_id": "uuid",
+      "sender_id"      : "uuid",
+      "is_typing"      : "boolean"
+    }
+
+event: notification.received
+  Description : Real-time push notification
+  Payload:
+    {
+      "type": "notification.received",
+      "notification": {
+        "id"        : "uuid",
+        "type"      : "appointment_confirmed | message_received | payment_received | new_request | live_started | review_received | system",
+        "title"     : "string",
+        "body"      : "string",
+        "data"      : {
+          "entity_type": "string",
+          "entity_id"  : "uuid"
+        },
+        "created_at": "ISO8601"
+      }
+    }
+
+event: live.started
+  Description : Notify users that a lawyer they follow just went live
+  Payload:
+    {
+      "type": "live.started",
+      "session": {
+        "id"           : "uuid",
+        "lawyer_name"  : "string",
+        "topic"        : "string",
+        "playback_url" : "string",
+        "viewer_count" : "integer"
+      }
+    }
+
+event: live.ended
+  Description : Notify that a live session ended
+  Payload:
+    {
+      "type"      : "live.ended",
+      "session_id": "uuid"
+    }
+
+event: live.viewer_count
+  Description : Broadcast viewer count updates during live session
+  Payload:
+    {
+      "type"         : "live.viewer_count",
+      "session_id"   : "uuid",
+      "viewer_count" : "integer"
+    }
+
+event: live.comment
+  Description : Broadcast a new comment during a live session
+  Payload:
+    {
+      "type"       : "live.comment",
+      "session_id" : "uuid",
+      "comment": {
+        "id"         : "uuid",
+        "author_name": "string",
+        "content"    : "string",
+        "sent_at"    : "ISO8601"
+      }
+    }
+
+event: appointment.updated
+  Description : Real-time appointment status change (confirmed, cancelled)
+  Payload:
+    {
+      "type": "appointment.updated",
+      "appointment": {
+        "id"    : "uuid",
+        "status": "confirmed | completed | cancelled",
+        "date"  : "YYYY-MM-DD",
+        "time"  : "HH:MM"
+      }
+    }
+
+event: payment.received
+  Description : Lawyer notified of a new payment
+  Payload:
+    {
+      "type": "payment.received",
+      "payment": {
+        "id"           : "uuid",
+        "amount"       : "float",
+        "currency"     : "MAD",
+        "payer_name"   : "string",
+        "paid_at"      : "ISO8601"
+      }
+    }
+
+event: error
+  Description : WebSocket-level error (authentication, invalid payload, etc.)
+  Payload:
+    {
+      "type"   : "error",
+      "code"   : "UNAUTHORIZED | INVALID_PAYLOAD | ROOM_NOT_FOUND | RATE_LIMITED",
+      "message": "string"
+    }
+
+
+================================================================================
+=== GENERAL CONVENTIONS ===
+================================================================================
+
+PAGINATION OBJECT (standard across all list endpoints):
+  {
+    "page"       : 1,
+    "limit"      : 20,
+    "total"      : 240,
+    "total_pages": 12,
+    "has_next"   : true,
+    "has_prev"   : false
+  }
+
+STANDARD ERROR ENVELOPE:
+  {
+    "success": false,
+    "error"  : "ERROR_CODE_CONSTANT",
+    "message": "Human-readable message (optional)",
+    "details": { "field": "error message" }  // for validation errors only
+  }
+
+STANDARD SUCCESS ENVELOPE:
+  {
+    "success": true,
+    "data"   : { /* response data */ }
+  }
+
+AUTHENTICATION HEADER:
+  Authorization: Bearer <access_token>
+
+RATE LIMITING HEADERS (returned on every response):
+  X-RateLimit-Limit    : 100
+  X-RateLimit-Remaining: 87
+  X-RateLimit-Reset    : 1712501234 (Unix timestamp)
+
+HTTP STATUS CODES USED:
+  200 - OK
+  201 - Created
+  204 - No Content
+  400 - Bad Request (validation errors)
+  401 - Unauthorized (missing or invalid token)
+  403 - Forbidden (valid token, insufficient permissions)
+  404 - Not Found
+  409 - Conflict (duplicate resource)
+  422 - Unprocessable Entity
+  429 - Too Many Requests (rate limit hit)
+  500 - Internal Server Error
+
+FILE UPLOAD LIMITS:
+  Profile images   : 5MB  (jpg, png, webp)
+  Story images     : 10MB (jpg, png, webp)
+  Reel videos      : 100MB (mp4), max 60 seconds
+  Chat files       : 20MB (jpg, png, pdf, docx)
+  Vault documents  : 50MB (pdf, jpg, png, docx, xlsx)
+
+CDN SIGNED URLS:
+  - All media served from CDN (e.g. cdn.haq.ma)
+  - Sensitive documents use signed URLs (15min expiry)
+  - Public media (avatars, thumbnails) use permanent CDN URLs
+
+================================================================================
+  END OF API SPECIFICATION — HAQ Legal Services v1.0.0
+================================================================================

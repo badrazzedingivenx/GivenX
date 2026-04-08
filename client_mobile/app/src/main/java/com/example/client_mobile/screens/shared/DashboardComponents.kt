@@ -340,15 +340,18 @@ sealed class LawyerTab(val route: String, val icon: ImageVector, val label: Stri
     data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,   "Messages")
     data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups, "Clients")
     data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person, "Profil")
-    companion object { val all = listOf(Home, Messages, Clients, Profile) }
+    companion object { val all get() = listOf(Home, Messages, Clients, Profile) }
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home     : UserTab("user_home",     Icons.Default.Home,       "Accueil")
-    data object Cases    : UserTab("user_cases",    Icons.Default.Assignment, "Dossiers")
-    data object Messages : UserTab("user_messages", Icons.Default.Chat,       "Messages")
-    data object Profile  : UserTab("user_profile",  Icons.Default.Person,     "Profil")
-    companion object { val all = listOf(Home, Cases, Messages, Profile) }
+    data object Home     : UserTab("user_home",      Icons.Default.Home,          "Accueil")
+    data object Cases    : UserTab("user_cases",     Icons.Default.Assignment,    "Dossiers")
+    data object Matching : UserTab("user_matching",  Icons.Default.Favorite,      "Matching")
+    data object Reels    : UserTab("user_reels",     Icons.Default.PlayCircle,    "Reels")
+    data object Live     : UserTab("user_live",      Icons.Default.LiveTv,        "Live")
+    data object Messages : UserTab("user_messages",  Icons.Default.Chat,          "Messages")
+    data object Profile  : UserTab("user_profile",   Icons.Default.Person,        "Profil")
+    companion object { val all get() = listOf(Home, Cases, Matching, Reels, Live) }
 }
 
 // ─── Lawyer Nav Bottom Bar ─────────────────────────────────────────────────────
@@ -434,7 +437,7 @@ fun UserNavBottomBar(
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceAround,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             UserTab.all.forEach { tab ->
@@ -451,10 +454,13 @@ fun UserNavBottomBar(
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .clip(CircleShape)
+                        .weight(1f)             // each tab claims exactly 1/5 of the bar width
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(20.dp))
                         .clickable { onNavigateTo(tab) }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                        .padding(vertical = 6.dp)
                 ) {
                     Icon(
                         imageVector = tab.icon,
@@ -467,7 +473,8 @@ fun UserNavBottomBar(
                         color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Serif,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Box(

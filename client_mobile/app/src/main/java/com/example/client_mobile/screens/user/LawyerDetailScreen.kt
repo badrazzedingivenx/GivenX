@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -62,7 +63,7 @@ fun LawyerDetailScreen(
                 actions = {
                     IconButton(onClick = { onNavigateToChat(lawyerId) }) {
                         Icon(
-                            Icons.Default.Chat,
+                            Icons.AutoMirrored.Filled.Chat,
                             contentDescription = "Message",
                             tint = AppGoldColor
                         )
@@ -173,7 +174,7 @@ fun LawyerDetailScreen(
                             border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
                         ) {
                             Icon(
-                                Icons.Default.Chat,
+                                Icons.AutoMirrored.Filled.Chat,
                                 contentDescription = null,
                                 tint = AppGoldColor,
                                 modifier = Modifier.size(20.dp)

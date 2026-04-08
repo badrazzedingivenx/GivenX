@@ -197,3 +197,78 @@ val sampleLawyers = listOf(
     LawyerItem("2", "Maître Sara Benali", "Droit de la Famille", "Rabat", 4.8f, 94, 9, "...", true, "Droit Civil")
 )
 val lawyerFilterDomaines = listOf("Tous", "Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Immobilier", "Droit du Travail", "Droit Fiscal")
+
+// ─── Creator Data Models (Lawyer → Social Content) ────────────────────────────
+
+data class CreatorStory(
+    val id: Long,
+    val lawyerName: String,
+    val specialty: String,
+    val hasNewStory: Boolean = true
+)
+
+data class CreatorReel(
+    val id: Long,
+    val lawyerName: String,
+    val specialty: String,
+    val title: String,
+    var likes: Int = 0,
+    val views: Int = 0,
+    var isLiked: Boolean = false,
+    val isLive: Boolean = false
+)
+
+data class CreatorLiveSession(
+    val id: Long,
+    val lawyerName: String,
+    val specialty: String,
+    val topic: String,
+    val viewers: Int = 1,
+    val isLive: Boolean = true
+)
+
+data class LiveStudioChatMessage(val author: String, val text: String)
+
+// ─── Creator Repository (Global shared state lawyer → user feed) ──────────────
+
+object CreatorRepository {
+    val stories        = mutableStateListOf<CreatorStory>()
+    val reels          = mutableStateListOf<CreatorReel>()
+    val liveSessions   = mutableStateListOf<CreatorLiveSession>()
+
+    fun postStory(lawyerName: String, specialty: String) {
+        stories.add(0, CreatorStory(
+            id          = System.currentTimeMillis(),
+            lawyerName  = lawyerName,
+            specialty   = specialty
+        ))
+    }
+
+    fun uploadReel(lawyerName: String, specialty: String, title: String) {
+        reels.add(0, CreatorReel(
+            id         = System.currentTimeMillis(),
+            lawyerName = lawyerName,
+            specialty  = specialty,
+            title      = title
+        ))
+    }
+
+    fun goLive(lawyerName: String, specialty: String, topic: String): Long {
+        val id = System.currentTimeMillis()
+        liveSessions.add(0, CreatorLiveSession(
+            id         = id,
+            lawyerName = lawyerName,
+            specialty  = specialty,
+            topic      = topic
+        ))
+        return id
+    }
+
+    fun endLive(id: Long) {
+        val idx = liveSessions.indexOfFirst { it.id == id }
+        if (idx != -1) liveSessions[idx] = liveSessions[idx].copy(isLive = false)
+    }
+
+    fun deleteReel(id: Long)  { reels.removeAll  { it.id == id } }
+    fun deleteStory(id: Long) { stories.removeAll { it.id == id } }
+}

@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,7 +59,8 @@ fun UserDashboardHost(
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToAppointments: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
-    onNavigateToFacturation: () -> Unit = {}
+    onNavigateToFacturation: () -> Unit = {},
+    onNavigateToDossier: (String) -> Unit = {}
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
@@ -65,19 +68,56 @@ fun UserDashboardHost(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            val onMessagesRoute = currentRoute == UserTab.Messages.route
+            val onMatchingRoute = currentRoute == UserTab.Matching.route
+            val showTitleBar    = onMessagesRoute || onMatchingRoute
+            val titleBarText    = when {
+                onMessagesRoute -> "Messages"
+                onMatchingRoute -> "Matching"
+                else            -> ""
+            }
+            CenterAlignedTopAppBar(
+                navigationIcon = {
+                    if (showTitleBar) {
+                        IconButton(onClick = {
+                            if (onMatchingRoute) {
+                                innerNavController.navigate(UserTab.Home.route) {
+                                    popUpTo(innerNavController.graph.startDestinationId)
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                innerNavController.popBackStack()
+                            }
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Retour",
+                                tint = AppDarkGreen
+                            )
+                        }
+                    }
+                },
                 title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    if (showTitleBar) {
+                        Text(
+                            titleBarText,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = AppDarkGreen
+                        )
+                    } else {
                         Image(
                             painter = painterResource(id = R.drawable.logo_app),
                             contentDescription = "Logo",
-                            modifier = Modifier.size(330.dp),
+                            modifier = Modifier.height(126.dp),
                             contentScale = ContentScale.Fit
                         )
                     }
                 },
                 actions = {
                     val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
+                    // ── Notification bell ──────────────────────────────────
                     IconButton(onClick = onNavigateToNotifications) {
                         BadgedBox(
                             badge = {
@@ -98,8 +138,42 @@ fun UserDashboardHost(
                             )
                         }
                     }
+                    // ── Profile avatar ─────────────────────────────────────
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .clickable { onNavigateToProfile() }
+                    ) {
+                        // Gold-bordered avatar circle
+                        Surface(
+                            modifier    = Modifier.fillMaxSize(),
+                            shape       = CircleShape,
+                            color       = AppDarkGreen.copy(alpha = 0.10f),
+                            border      = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Profil",
+                                    tint       = AppGoldColor,
+                                    modifier   = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        // Online green dot
+                        Box(
+                            modifier = Modifier
+                                .size(11.dp)
+                                .align(Alignment.BottomEnd)
+                                .background(Color.White, CircleShape)   // white ring
+                                .padding(2.dp)
+                                .background(Color(0xFF34A853), CircleShape) // green dot
+                        )
+                    }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
         },
         bottomBar = {
@@ -141,7 +215,8 @@ fun UserDashboardHost(
                             }
                         },
                         onNavigateToDocuments = onNavigateToDocuments,
-                        onNavigateToFacturation = onNavigateToFacturation
+                        onNavigateToFacturation = onNavigateToFacturation,
+                        onNavigateToDossier = onNavigateToDossier
                     )
                 }
                 composable(UserTab.Messages.route) {
@@ -151,6 +226,15 @@ fun UserDashboardHost(
                         onNavigateToChat = onNavigateToChat
                     )
                 }
+                composable(UserTab.Matching.route) {
+                    LegalMatchingScreen(paddingValues = paddingValues)
+                }
+                composable(UserTab.Reels.route) {
+                    LegalReelsScreen(paddingValues = paddingValues)
+                }
+                composable(UserTab.Live.route) {
+                    LiveSessionsScreen(paddingValues = paddingValues)
+                 }
             }
         }
     }
@@ -237,11 +321,11 @@ internal fun UserMessagesTabContent(paddingValues: PaddingValues) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Chat,
-                contentDescription = null,
-                tint = AppDarkGreen.copy(alpha = 0.35f),
-                modifier = Modifier.size(64.dp)
-            )
+                                imageVector = Icons.AutoMirrored.Filled.Chat,
+                                contentDescription = null,
+                                tint = AppDarkGreen.copy(alpha = 0.35f),
+                                modifier = Modifier.size(64.dp)
+                            )
             Text(
                 text = "Messages",
                 fontSize = 20.sp,
