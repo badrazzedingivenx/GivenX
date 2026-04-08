@@ -126,61 +126,48 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // ── Header ────────────────────────────────────────────────────
-            Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
-                val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
-                Text(
-                    text = if (displayName.isNotEmpty()) "Bonjour, $displayName" else "Bonjour",
-                    fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp, color = AppDarkGreen
-                )
-                Text(
-                    text = "Trouvez l'avocat idéal pour votre dossier",
-                    fontFamily = FontFamily.Serif, fontSize = 13.sp,
-                    color = AppDarkGreen.copy(alpha = 0.50f)
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(2.dp)
-                        .background(AppGoldColor, RoundedCornerShape(1.dp))
-                )
-            }
+        if (currentIndex >= sampleMatchCards.size) {
+            EmptyMatchState(onReload = { currentIndex = 0 })
+        } else {
 
-            if (currentIndex >= sampleMatchCards.size) {
-                EmptyMatchState(onReload = { currentIndex = 0 })
-            } else {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Small top gap so the card doesn't hug the top bar
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // ── Card stack — takes all remaining space above the button row ──
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // 3rd card — interpolates toward depth-1 style as the top card moves
+                    // 3rd card (furthest back) — blurred tinted shell
                     sampleMatchCards.getOrNull(currentIndex + 2)?.let { card ->
                         PeekCardLayer(
-                            card   = card,
-                            scale  = lerp(0.86f, 0.93f, swipeProgress),
-                            yOffDp = lerp(34f,   18f,   swipeProgress),
-                            alpha  = lerp(0.30f, 0.52f, swipeProgress)
+                            card       = card,
+                            scale      = lerp(0.86f, 0.93f, swipeProgress),
+                            translateY = lerp(-36f, -20f,   swipeProgress),
+                            alpha      = lerp(0.28f, 0.48f, swipeProgress),
+                            blur       = 4.dp
                         )
                     }
-                    // 2nd card — scales up to full size as the top card is swiped away
+                    // 2nd card — scales up as the top card leaves
                     sampleMatchCards.getOrNull(currentIndex + 1)?.let { card ->
                         PeekCardLayer(
-                            card   = card,
-                            scale  = lerp(0.93f, 1.00f, swipeProgress),
-                            yOffDp = lerp(18f,   2f,    swipeProgress),
-                            alpha  = lerp(0.62f, 1.00f, swipeProgress)
+                            card       = card,
+                            scale      = lerp(0.93f, 1.00f, swipeProgress),
+                            translateY = lerp(-20f,  0f,    swipeProgress),
+                            alpha      = lerp(0.60f, 1.00f, swipeProgress),
+                            blur       = 1.dp
                         )
                     }
                     // Top swipeable card
@@ -196,10 +183,12 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
                     )
                 }
 
+                // ── Buttons in their own fixed slot — can never overlap the card ──
                 ActionButtonRow(
-                    onPass  = ::doPass,
-                    onInfo  = {},
-                    onMatch = ::doMatch
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    onPass   = ::doPass,
+                    onInfo   = {},
+                    onMatch  = ::doMatch
                 )
             }
         }
@@ -219,30 +208,66 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
 
 @Composable
 private fun PeekCardLayer(
-    card   : MatchCard,
-    scale  : Float,
-    yOffDp : Float,
-    alpha  : Float
+    card      : MatchCard,
+    scale     : Float,
+    translateY: Float,
+    alpha     : Float,
+    blur      : androidx.compose.ui.unit.Dp = 0.dp
 ) {
-    Surface(
+    Box(
         modifier = Modifier
-            .offset(y = yOffDp.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(0.96f)
+            .fillMaxHeight(0.76f)  // match active card height
             .graphicsLayer {
-                scaleX     = scale
-                scaleY     = scale
-                this.alpha = alpha
-            },
-        shape           = RoundedCornerShape(32.dp),
-        color           = Color.White,
-        shadowElevation = 2.dp
+                scaleX          = scale
+                scaleY          = scale
+                translationY    = translateY
+                this.alpha      = alpha
+                shadowElevation = 6.dp.toPx()
+                shape           = RoundedCornerShape(32.dp)
+                clip            = true
+            }
+            .then(if (blur.value > 0f) Modifier.blur(blur) else Modifier)
     ) {
+        // Show the actual card design so the peek looks like a real card
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(520.dp)
-                .background(Brush.verticalGradient(specialtyGradient(card.specialty)))
-        )
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(specialtyGradient(card.specialty)),
+                    RoundedCornerShape(32.dp)
+                )
+        ) {
+            // Subtle name text so it reads as a real card peeking behind
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 22.dp, bottom = 24.dp, end = 22.dp)
+            ) {
+                Text(
+                    card.name,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 18.sp,
+                    color      = Color.White.copy(alpha = 0.85f)
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    card.specialty,
+                    fontFamily = FontFamily.Serif,
+                    fontSize   = 12.sp,
+                    color      = AppGoldColor.copy(alpha = 0.75f)
+                )
+            }
+            // Thin gold bottom border accent
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(AppGoldColor.copy(alpha = 0.35f))
+            )
+        }
     }
 }
 
@@ -278,6 +303,7 @@ private fun SwipeableMatchCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .fillMaxHeight(0.76f)   // 76% — leaves clear room for the button row
             // graphicsLayer runs on the render thread — translationX/Y/rotationZ updates
             // bypass composition entirely for maximum 60fps smoothness
             .graphicsLayer {
@@ -380,7 +406,7 @@ private fun SwipeableMatchCard(
 @Composable
 private fun PremiumCardContent(card: MatchCard) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize(),
         shape    = RoundedCornerShape(32.dp),
         color    = Color.Transparent
     ) {
@@ -390,7 +416,7 @@ private fun PremiumCardContent(card: MatchCard) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(320.dp)
+                    .weight(1f)          // takes all space above the white info panel
                     .background(
                         Brush.verticalGradient(specialtyGradient(card.specialty)),
                         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
@@ -413,9 +439,9 @@ private fun PremiumCardContent(card: MatchCard) {
                 // Avatar circle
                 Surface(
                     modifier = Modifier
-                        .size(110.dp)
+                        .size(160.dp)
                         .align(Alignment.Center)
-                        .offset(y = (-20).dp),
+                        .offset(y = (-28).dp),
                     shape  = CircleShape,
                     color  = AppGoldColor.copy(alpha = 0.12f),
                     border = BorderStroke(2.5.dp, AppGoldColor)
@@ -425,7 +451,7 @@ private fun PremiumCardContent(card: MatchCard) {
                             Icons.Default.Gavel,
                             contentDescription = null,
                             tint     = AppGoldColor,
-                            modifier = Modifier.size(50.dp)
+                            modifier = Modifier.size(74.dp)
                         )
                     }
                 }
@@ -435,7 +461,7 @@ private fun PremiumCardContent(card: MatchCard) {
                     Surface(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .offset(x = 36.dp, y = 38.dp),
+                            .offset(x = 52.dp, y = 52.dp),
                         shape = CircleShape,
                         color = AppGoldColor
                     ) {
@@ -443,7 +469,7 @@ private fun PremiumCardContent(card: MatchCard) {
                             Icons.Default.Verified,
                             contentDescription = "Vérifié",
                             tint     = AppDarkGreen,
-                            modifier = Modifier.size(22.dp).padding(4.dp)
+                            modifier = Modifier.size(26.dp).padding(5.dp)
                         )
                     }
                 }
@@ -465,20 +491,20 @@ private fun PremiumCardContent(card: MatchCard) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 22.dp, bottom = 18.dp, end = 56.dp)
+                        .padding(start = 24.dp, bottom = 22.dp, end = 60.dp)
                 ) {
                     Text(
                         card.name,
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
-                        fontSize   = 21.sp,
+                        fontSize   = 23.sp,
                         color      = Color.White
                     )
-                    Spacer(Modifier.height(3.dp))
+                    Spacer(Modifier.height(5.dp))
                     Text(
                         card.tagline,
                         fontFamily = FontFamily.Serif,
-                        fontSize   = 12.sp,
+                        fontSize   = 13.sp,
                         color      = Color.White.copy(alpha = 0.72f)
                     )
                 }
@@ -515,12 +541,12 @@ private fun PremiumCardContent(card: MatchCard) {
                 shape    = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
                 color    = Color.White
             ) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 22.dp, vertical = 22.dp)) {
 
                     // Badges row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         GlassBadge(
                             icon  = Icons.Default.Balance,
@@ -536,13 +562,13 @@ private fun PremiumCardContent(card: MatchCard) {
                         )
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(20.dp))
 
                     // Match % progress bar
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             "Compatibilité",
@@ -554,9 +580,9 @@ private fun PremiumCardContent(card: MatchCard) {
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(7.dp)
+                                .height(10.dp)           // thicker bar
                                 .clip(RoundedCornerShape(50.dp))
-                                .background(AppDarkGreen.copy(alpha = 0.08f))
+                                .background(AppDarkGreen.copy(alpha = 0.07f))
                         ) {
                             val pct = card.matchPercent / 100f
                             Box(
@@ -566,7 +592,8 @@ private fun PremiumCardContent(card: MatchCard) {
                                     .clip(RoundedCornerShape(50.dp))
                                     .background(
                                         Brush.horizontalGradient(
-                                            listOf(AppDarkGreen, AppGoldColor)
+                                            // Gold → Green (matches brand direction)
+                                            listOf(AppGoldColor, AppDarkGreen)
                                         )
                                     )
                             )
@@ -575,7 +602,7 @@ private fun PremiumCardContent(card: MatchCard) {
                             "${card.matchPercent}%",
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
-                            fontSize   = 12.sp,
+                            fontSize   = 13.sp,
                             color      = AppDarkGreen
                         )
                     }
@@ -646,14 +673,20 @@ private fun StampBadge(text: String, color: Color, alpha: Float, rotate: Float =
 
 @Composable
 private fun ActionButtonRow(
+    modifier: Modifier = Modifier,
     onPass  : () -> Unit,
     onInfo  : () -> Unit,
     onMatch : () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 40.dp, vertical = 18.dp),
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.Transparent, Color.White.copy(alpha = 0.92f))
+                )
+            )
+            .padding(horizontal = 40.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment     = Alignment.CenterVertically
     ) {
