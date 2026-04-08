@@ -69,10 +69,26 @@ fun UserDashboardHost(
     Scaffold(
         topBar = {
             val onMessagesRoute = currentRoute == UserTab.Messages.route
+            val onMatchingRoute = currentRoute == UserTab.Matching.route
+            val showTitleBar    = onMessagesRoute || onMatchingRoute
+            val titleBarText    = when {
+                onMessagesRoute -> "Messages"
+                onMatchingRoute -> "Matching"
+                else            -> ""
+            }
             CenterAlignedTopAppBar(
                 navigationIcon = {
-                    if (onMessagesRoute) {
-                        IconButton(onClick = { innerNavController.popBackStack() }) {
+                    if (showTitleBar) {
+                        IconButton(onClick = {
+                            if (onMatchingRoute) {
+                                innerNavController.navigate(UserTab.Home.route) {
+                                    popUpTo(innerNavController.graph.startDestinationId)
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                innerNavController.popBackStack()
+                            }
+                        }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Retour",
@@ -82,9 +98,9 @@ fun UserDashboardHost(
                     }
                 },
                 title = {
-                    if (onMessagesRoute) {
+                    if (showTitleBar) {
                         Text(
-                            "Messages",
+                            titleBarText,
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
