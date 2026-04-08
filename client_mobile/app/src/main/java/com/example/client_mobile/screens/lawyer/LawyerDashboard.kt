@@ -8,6 +8,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -146,23 +147,38 @@ fun LawyerDashboardHost(
                         }
                     }
                     // Profile avatar
+                    val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == fullName }
                     Box(
                         modifier = Modifier
                             .padding(end = 12.dp)
-                            .size(38.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .clickable { onNavigateToProfile() }
+                            .clickable { onNavigateToProfile() },
+                        contentAlignment = Alignment.Center
                     ) {
                         Surface(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(if (hasActiveStory) 3.dp else 0.dp),
                             shape    = CircleShape,
                             color    = AppDarkGreen.copy(alpha = 0.10f),
-                            border   = BorderStroke(2.dp, AppGoldColor)
+                            border   = if (!hasActiveStory) BorderStroke(1.5.dp, AppGoldColor.copy(alpha = 0.5f)) else null
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Person, contentDescription = "Profil",
-                                    tint = AppGoldColor, modifier = Modifier.size(20.dp))
+                                if (profileImageUri != null) {
+                                    AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                                } else {
+                                    Icon(Icons.Default.Person, contentDescription = "Profil",
+                                        tint = AppGoldColor, modifier = Modifier.size(20.dp))
+                                }
                             }
+                        }
+                        if (hasActiveStory) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .border(2.dp, AppGoldColor, CircleShape)
+                            )
                         }
                         Box(
                             modifier = Modifier
@@ -615,16 +631,28 @@ private fun LawyerHomeTabContent(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(text = today, fontSize = 11.sp, fontFamily = FontFamily.Serif, color = AppGoldColor.copy(alpha = 0.75f))
                 }
-                Surface(
-                    modifier = Modifier.size(60.dp),
-                    shape = CircleShape,
-                    color = Color.Transparent,
-                    border = BorderStroke(2.dp, AppGoldColor)
-                ) {
-                    if (profileImageUri != null) {
-                        AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
-                    } else {
-                        Image(painter = painterResource(id = R.drawable.logo_user), contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == fullName }
+                Box(contentAlignment = Alignment.Center) {
+                    Surface(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .padding(if (hasActiveStory) 4.5.dp else 0.dp),
+                        shape = CircleShape,
+                        color = Color.Transparent,
+                        border = if (!hasActiveStory) BorderStroke(2.dp, AppGoldColor) else null
+                    ) {
+                        if (profileImageUri != null) {
+                            AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                        } else {
+                            Image(painter = painterResource(id = R.drawable.logo_user), contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                        }
+                    }
+                    if (hasActiveStory) {
+                        Box(
+                            modifier = Modifier
+                                .size(66.dp)
+                                .border(2.5.dp, AppGoldColor, CircleShape)
+                        )
                     }
                 }
             }

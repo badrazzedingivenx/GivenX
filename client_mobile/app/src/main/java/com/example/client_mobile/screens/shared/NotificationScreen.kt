@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -338,7 +339,7 @@ private fun notificationIcon(type: NotificationType): ImageVector = when (type) 
     NotificationType.APPOINTMENT  -> Icons.Default.CalendarMonth
     NotificationType.CASE_UPDATE  -> Icons.Default.Folder
     NotificationType.DEADLINE     -> Icons.Default.AccessTime
-    NotificationType.RESPONSE     -> Icons.Default.Reply
+    NotificationType.RESPONSE     -> Icons.AutoMirrored.Filled.Reply
 }
 
 private fun notificationTypeLabel(type: NotificationType): String = when (type) {
