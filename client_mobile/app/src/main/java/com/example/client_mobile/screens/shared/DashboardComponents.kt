@@ -437,7 +437,7 @@ fun UserNavBottomBar(
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceAround,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             UserTab.all.forEach { tab ->
@@ -454,10 +454,13 @@ fun UserNavBottomBar(
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .clip(CircleShape)
+                        .weight(1f)             // each tab claims exactly 1/5 of the bar width
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(20.dp))
                         .clickable { onNavigateTo(tab) }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                        .padding(vertical = 6.dp)
                 ) {
                     Icon(
                         imageVector = tab.icon,
@@ -470,7 +473,8 @@ fun UserNavBottomBar(
                         color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Serif,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Box(
