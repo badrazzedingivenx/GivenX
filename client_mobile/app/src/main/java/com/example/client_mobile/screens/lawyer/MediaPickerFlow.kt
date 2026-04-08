@@ -3,10 +3,13 @@ package com.example.client_mobile.screens.lawyer
 import com.example.client_mobile.screens.shared.*
 
 import android.Manifest
+import android.app.Activity
 import android.content.ContentValues
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
@@ -61,8 +64,13 @@ fun MediaPickerFlow(
     var isVideo           by remember { mutableStateOf(false) }
     var caption           by remember { mutableStateOf("") }
     var cameraPhotoUri    by remember { mutableStateOf<Uri?>(null) }
-    var permissionNeeded  by remember { mutableStateOf<String?>(null) }
+    
+    var showPrePermDialog by remember { mutableStateOf(false) }
+    var prePermType       by remember { mutableStateOf("") }
+    var pendingAction     by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingPerms      by remember { mutableStateOf<Array<String>>(emptyArray()) }
     var showPermDenied    by remember { mutableStateOf(false) }
+    
     var publishProgress   by remember { mutableFloatStateOf(0f) }
     var redirectCountdown by remember { mutableIntStateOf(3) }   // seconds shown in step 3
 
@@ -116,21 +124,39 @@ fun MediaPickerFlow(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         val allGranted = results.values.all { it }
+        val deniedPerms = results.filter { !it.value }.keys
         if (allGranted) {
-            permissionNeeded = null
-            // Retry the requested action — stored in permissionNeeded label
+            pendingAction?.invoke()
+            pendingAction = null
         } else {
-            showPermDenied = true
+            val activity = context as? Activity
+            val isPermanentlyDenied = activity?.let { act ->
+                deniedPerms.any { perm ->
+                    !ActivityCompat.shouldShowRequestPermissionRationale(act, perm)
+                }
+            } ?: false
+
+            if (isPermanentlyDenied) {
+                showPermDenied = true
+            } else {
+                Toast.makeText(context, "Permission is required", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     // ── Helper – check & request permission then run action ──────────────────
-    fun withPermissions(perms: Array<String>, action: () -> Unit) {
+    fun withPermissions(type: String, perms: Array<String>, action: () -> Unit) {
         val denied = perms.filter {
             ContextCompat.checkSelfPermission(context, it) != PermissionChecker.PERMISSION_GRANTED
         }
-        if (denied.isEmpty()) action()
-        else permissionLauncher.launch(denied.toTypedArray())
+        if (denied.isEmpty()) {
+            action()
+        } else {
+            pendingPerms = denied.toTypedArray()
+            pendingAction = action
+            prePermType = type
+            showPrePermDialog = true
+        }
     }
 
     // ── Helper – create camera output URI ────────────────────────────────────
@@ -179,15 +205,53 @@ fun MediaPickerFlow(
         }
     }
 
+    // ── Pre-Permission dialog ─────────────────────────────────────────────────
+    if (showPrePermDialog) {
+        AlertDialog(
+            onDismissRequest = { showPrePermDialog = false },
+            title = { Text("Permission required", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) },
+            text = {
+                val msg = if (prePermType == "camera") "We need access to your camera and microphone to record video." else "We need access to your media to select videos."
+                Text(msg, fontFamily = FontFamily.Serif, fontSize = 14.sp)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPrePermDialog = false
+                    permissionLauncher.launch(pendingPerms)
+                }) {
+                    Text("Allow", fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPrePermDialog = false }) {
+                    Text("Deny", color = AppDarkGreen.copy(alpha=0.6f))
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
     // ── Permission denied dialog ──────────────────────────────────────────────
     if (showPermDenied) {
         AlertDialog(
             onDismissRequest = { showPermDenied = false },
-            title = { Text("Autorisation requise", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) },
-            text  = { Text("Veuillez autoriser l'accès à la caméra et à la galerie dans les paramètres.", fontFamily = FontFamily.Serif, fontSize = 14.sp) },
+            title = { Text("Permission required", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) },
+            text  = { Text("Please enable permission from settings", fontFamily = FontFamily.Serif, fontSize = 14.sp) },
             confirmButton = {
+                TextButton(onClick = {
+                    showPermDenied = false
+                    val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }) {
+                    Text("Open App Settings", fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                }
+            },
+            dismissButton = {
                 TextButton(onClick = { showPermDenied = false }) {
-                    Text("OK", fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                    Text("Cancel", color = AppDarkGreen.copy(alpha=0.6f))
                 }
             },
             containerColor = Color.White,
@@ -229,11 +293,12 @@ fun MediaPickerFlow(
                         onClick  = {
                             val cameraPerms = buildList {
                                 add(Manifest.permission.CAMERA)
+                                if (postType == MediaPostType.Reel) add(Manifest.permission.RECORD_AUDIO)
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
                                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             }.toTypedArray()
 
-                            withPermissions(cameraPerms) {
+                            withPermissions("camera", cameraPerms) {
                                 if (postType == MediaPostType.Reel) {
                                     val uri = createCameraUri(forVideo = true)
                                     cameraPhotoUri = uri
@@ -261,7 +326,7 @@ fun MediaPickerFlow(
                             else
                                 Manifest.permission.READ_EXTERNAL_STORAGE
 
-                            withPermissions(arrayOf(galleryPerm)) {
+                            withPermissions("gallery", arrayOf(galleryPerm)) {
                                 if (postType == MediaPostType.Reel) galleryVideoLauncher.launch("video/*")
                                 else galleryImageLauncher.launch("image/*")
                             }
