@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -304,11 +305,11 @@ internal fun UserMessagesTabContent(paddingValues: PaddingValues) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Chat,
-                contentDescription = null,
-                tint = AppDarkGreen.copy(alpha = 0.35f),
-                modifier = Modifier.size(64.dp)
-            )
+                                imageVector = Icons.AutoMirrored.Filled.Chat,
+                                contentDescription = null,
+                                tint = AppDarkGreen.copy(alpha = 0.35f),
+                                modifier = Modifier.size(64.dp)
+                            )
             Text(
                 text = "Messages",
                 fontSize = 20.sp,
