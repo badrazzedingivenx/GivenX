@@ -140,7 +140,7 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
                 modifier = Modifier.fillMaxSize()
             ) {
                 // Small top gap so the card doesn't hug the top bar
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // ── Card stack — takes all remaining space above the button row ──
                 Box(
@@ -217,7 +217,7 @@ private fun PeekCardLayer(
     Box(
         modifier = Modifier
             .fillMaxWidth(0.96f)
-            .fillMaxHeight(0.76f)  // match active card height
+            .fillMaxHeight(0.85f)  // match active card height
             .graphicsLayer {
                 scaleX          = scale
                 scaleY          = scale
@@ -303,7 +303,7 @@ private fun SwipeableMatchCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.76f)   // 76% — leaves clear room for the button row
+            .fillMaxHeight(0.85f)   // 85% — leaves clear room for the button row
             // graphicsLayer runs on the render thread — translationX/Y/rotationZ updates
             // bypass composition entirely for maximum 60fps smoothness
             .graphicsLayer {
@@ -439,9 +439,9 @@ private fun PremiumCardContent(card: MatchCard) {
                 // Avatar circle
                 Surface(
                     modifier = Modifier
-                        .size(160.dp)
+                        .size(180.dp)
                         .align(Alignment.Center)
-                        .offset(y = (-28).dp),
+                        .offset(y = (-32).dp),
                     shape  = CircleShape,
                     color  = AppGoldColor.copy(alpha = 0.12f),
                     border = BorderStroke(2.5.dp, AppGoldColor)
@@ -451,7 +451,7 @@ private fun PremiumCardContent(card: MatchCard) {
                             Icons.Default.Gavel,
                             contentDescription = null,
                             tint     = AppGoldColor,
-                            modifier = Modifier.size(74.dp)
+                            modifier = Modifier.size(86.dp)
                         )
                     }
                 }
@@ -461,7 +461,7 @@ private fun PremiumCardContent(card: MatchCard) {
                     Surface(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .offset(x = 52.dp, y = 52.dp),
+                            .offset(x = 58.dp, y = 58.dp),
                         shape = CircleShape,
                         color = AppGoldColor
                     ) {
@@ -491,7 +491,7 @@ private fun PremiumCardContent(card: MatchCard) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(start = 24.dp, bottom = 22.dp, end = 60.dp)
+                        .padding(start = 24.dp, bottom = 28.dp, end = 60.dp)
                 ) {
                     Text(
                         card.name,
