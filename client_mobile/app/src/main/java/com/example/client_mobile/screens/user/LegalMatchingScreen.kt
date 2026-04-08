@@ -140,7 +140,7 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
                 modifier = Modifier.fillMaxSize()
             ) {
                 // Small top gap so the card doesn't hug the top bar
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // ── Card stack — takes all remaining space above the button row ──
                 Box(
@@ -303,7 +303,7 @@ private fun SwipeableMatchCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.85f)   // 85% — leaves clear room for the button row
+            .fillMaxHeight(0.95f)   // 85% — leaves clear room for the button row
             // graphicsLayer runs on the render thread — translationX/Y/rotationZ updates
             // bypass composition entirely for maximum 60fps smoothness
             .graphicsLayer {
