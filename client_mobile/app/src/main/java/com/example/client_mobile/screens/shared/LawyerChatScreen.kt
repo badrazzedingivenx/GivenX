@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 
 // --- Chat Screen (bidirectional) ----------------------------------------------
@@ -54,6 +55,15 @@ fun ChatScreen(
 
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage by chatViewModel.errorMessage.collectAsStateWithLifecycle()
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            chatViewModel.clearError()
+        }
+    }
 
     LaunchedEffect(conversationId) {
         if (isLawyer) ConversationRepository.markRead(conversationId)
@@ -137,7 +147,8 @@ fun ChatScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         DashBoardBackground {
             Column(
@@ -260,19 +271,11 @@ fun ChatScreen(
                                 onClick = {
                                     val trimmed = messageText.trim()
                                     if (trimmed.isNotEmpty()) {
-                                        if (isLawyer) {
-                                            ConversationRepository.sendLawyerMessage(
-                                                conversationId = conversationId,
-                                                content = trimmed,
-                                                senderName = currentUserName
-                                            )
-                                        } else {
-                                            ConversationRepository.sendUserMessage(
-                                                conversationId = conversationId,
-                                                content = trimmed,
-                                                senderName = currentUserName
-                                            )
-                                        }
+                                        chatViewModel.send(
+                                            text       = trimmed,
+                                            senderName = currentUserName,
+                                            isFromUser = !isLawyer
+                                        )
                                         messageText = ""
                                     }
                                 },

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,13 +47,15 @@ data class LiveChatMessage(
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveSessionsScreen(
     paddingValues: PaddingValues = PaddingValues(),
     viewModel: LiveViewModel = viewModel()
 ) {
     var activeSession by remember { mutableStateOf<LiveSession?>(null) }
-    val apiLives by viewModel.lives.collectAsStateWithLifecycle()
+    val apiLives      by viewModel.lives.collectAsStateWithLifecycle()
+    val isRefreshing  by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     val creatorLive = CreatorRepository.liveSessions.map { cl ->
         LiveSession(
@@ -72,29 +75,39 @@ fun LiveSessionsScreen(
             onLeave  = { activeSession = null }
         )
     } else {
-        LazyColumn(
-            modifier        = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding  = PaddingValues(vertical = 12.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = { viewModel.fetch() },
+            modifier     = Modifier.fillMaxSize()
         ) {
-            item {
-                val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
-                Text(
-                    text = if (displayName.isNotEmpty()) "Bonjour, $displayName 👋" else "Bonjour 👋",
-                    fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp, color = AppDarkGreen
-                )
-                Text("Sessions en direct", fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp, color = AppDarkGreen.copy(alpha = 0.55f))
-            }
+            LazyColumn(
+                modifier            = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding      = PaddingValues(vertical = 12.dp)
+            ) {
+                item {
+                    val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
+                    Text(
+                        text = if (displayName.isNotEmpty()) "Bonjour, $displayName 👋" else "Bonjour 👋",
+                        fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp, color = AppDarkGreen
+                    )
+                    Text(
+                        "Sessions en direct",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 13.sp,
+                        color = AppDarkGreen.copy(alpha = 0.55f)
+                    )
+                }
 
-            // ── Live now section ──────────────────────────────────────────
-            item { SectionHeader(title = "🔴 En direct") }
-            items(allLive) { session ->
-                LiveSessionCard(session = session, onClick = { activeSession = session })
-            }
+                // ── Live now section ──────────────────────────────────────
+                item { SectionHeader(title = "🔴 En direct") }
+                items(allLive) { session ->
+                    LiveSessionCard(session = session, onClick = { activeSession = session })
+                }
 
-            item { Spacer(Modifier.height(8.dp)) }
+                item { Spacer(Modifier.height(8.dp)) }
+            }
         }
     }
 }

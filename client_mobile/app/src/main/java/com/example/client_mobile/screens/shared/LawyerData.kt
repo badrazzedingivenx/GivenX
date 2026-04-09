@@ -21,6 +21,7 @@ data class LawyerItem(
     val bio: String,
     val isVerified: Boolean,
     val domaine: String,
+    val avatarUrl: String = "",
     val imageUri: Uri? = null
 )
 
@@ -178,7 +179,6 @@ object DocumentRepository {
 
 // ─── Sample Lawyers (For consistency) ─────────────────────────────────────────
 val sampleLawyers = emptyList<LawyerItem>()
-val lawyerFilterDomaines = listOf("Tous", "Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Immobilier", "Droit du Travail", "Droit Fiscal")
 
 // ─── Creator Data Models (Lawyer → Social Content) ────────────────────────────
 

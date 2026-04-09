@@ -20,7 +20,8 @@ data class LawyerDto(
     @SerializedName(value = "reviewCount",  alternate = ["review_count"])  val reviewCount:   Int     = 0,
     @SerializedName(value = "bio")                                         val bio:           String  = "",
     @SerializedName(value = "isVerified",   alternate = ["is_verified"])   val isVerified:    Boolean = true,
-    @SerializedName(value = "domaine")                                     val domaine:       String  = ""
+    @SerializedName(value = "domaine")                                     val domaine:       String  = "",
+    @SerializedName(value = "avatarUrl",    alternate = ["avatar_url"])     val avatarUrl:     String  = ""
 )
 
 /** Standard list envelope: { "data": [...], "total": 42 } */

@@ -8,27 +8,39 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Fetches the authenticated user's conversation list from GET /api/messages
- * and merges the results into [ConversationRepository], which is observed directly
- * by [MessagesInboxScreen].
- *
- * The ViewModel is scoped to the screen or the NavGraph host — Compose will
- * return the same instance across recompositions via `viewModel()`.
- */
 class ConversationViewModel : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    init {
-        fetch()
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+
+    private val _isError = MutableStateFlow(false)
+    val isError: StateFlow<Boolean> = _isError
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun clearError() {
+        _errorMessage.value = null
+        _isError.value = false
     }
 
-    fun fetch() {
+    init { fetch() }
+
+    /** Pull-to-refresh trigger. */
+    fun refresh() {
+        _isRefreshing.value = true
+        fetch(isRefresh = true)
+    }
+
+    fun fetch(isRefresh: Boolean = false) {
         if (!TokenManager.isLoggedIn()) return
+        if (!isRefresh) _isLoading.value = true
+        _isError.value = false
+        val isLawyer = TokenManager.getUserType() == "lawyer"
         viewModelScope.launch {
-            _isLoading.value = true
             try {
                 val response = RetrofitClient.mockApi.getMessages()
                 if (response.isSuccessful) {
@@ -37,19 +49,24 @@ class ConversationViewModel : ViewModel() {
                         dtos.map { dto ->
                             Conversation(
                                 id             = dto.id,
-                                otherPartyName = dto.otherPartyName,
-                                lastMessage    = dto.lastMessage,
-                                timestamp      = dto.timestamp,
-                                unreadCount    = dto.unreadCount,
-                                avatarUrl      = dto.avatarUrl
+                                otherPartyName = dto.displayName(isLawyer),
+                                lastMessage    = dto.displayLastMessage(),
+                                timestamp      = dto.displayTimestamp(),
+                                unreadCount    = dto.displayUnreadCount(isLawyer),
+                                avatarUrl      = dto.displayAvatar(isLawyer)
                             )
                         }
                     )
+                } else {
+                    _isError.value = ConversationRepository.conversations.isEmpty()
+                    _errorMessage.value = "Impossible de charger les conversations."
                 }
             } catch (_: Exception) {
-                // Network unavailable — keep any locally-created conversations
+                _isError.value = ConversationRepository.conversations.isEmpty()
+                _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
             } finally {
                 _isLoading.value = false
+                _isRefreshing.value = false
             }
         }
     }

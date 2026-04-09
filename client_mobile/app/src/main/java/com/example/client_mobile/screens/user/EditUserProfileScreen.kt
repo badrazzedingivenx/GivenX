@@ -40,10 +40,30 @@ fun EditUserProfileScreen(
     onBack: () -> Unit = {},
     userViewModel: UserViewModel = viewModel()
 ) {
-    val profile by userViewModel.profile.collectAsStateWithLifecycle()
-    val isSaving by userViewModel.isSaving.collectAsStateWithLifecycle()
+    val profile        by userViewModel.profile.collectAsStateWithLifecycle()
+    val isSaving        by userViewModel.isSaving.collectAsStateWithLifecycle()
+    val updateSuccess   by userViewModel.updateSuccess.collectAsStateWithLifecycle()
+    val errorMessage    by userViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Pre-fill from Firestore profile (re-initialises when profile loads)
+    // Navigate back with success Snackbar after a confirmed save
+    LaunchedEffect(updateSuccess) {
+        if (updateSuccess) {
+            snackbarHostState.showSnackbar("Profil mis \u00e0 jour")
+            userViewModel.clearUpdateSuccess()
+            onBack()
+        }
+    }
+
+    // Show error Snackbar
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            userViewModel.clearError()
+        }
+    }
+
+    // Pre-fill from API profile (re-initialises when profile loads)
     var firstName by remember(profile) { mutableStateOf(profile?.firstName ?: "") }
     var lastName  by remember(profile) { mutableStateOf(profile?.lastName  ?: "") }
     val email     = profile?.email ?: ""   // email is read-only (managed via Firebase Auth)
@@ -110,7 +130,8 @@ fun EditUserProfileScreen(
                 )
             )
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         DashBoardBackground {
             LazyColumn(
@@ -369,7 +390,7 @@ fun EditUserProfileScreen(
                     onClick = {
                         showSaveDialog = false
                         userViewModel.saveProfile(firstName, lastName, phone, address)
-                        onBack()
+                        // onBack() is triggered by LaunchedEffect(updateSuccess) after API confirms
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)

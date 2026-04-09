@@ -31,9 +31,9 @@ object UserService {
             throw Exception("Identifiants incorrects")
         }
         val body = response.body()!!
-        TokenManager.saveToken(body.token)
+        TokenManager.saveToken(body.effectiveToken())
         TokenManager.saveEmail(email)
-        body.user?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
+        body.effectiveUser()?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
     }
 
     /** Clears the stored JWT — the user is considered logged out. */

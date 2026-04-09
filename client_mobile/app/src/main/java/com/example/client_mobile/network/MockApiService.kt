@@ -9,13 +9,18 @@ import com.example.client_mobile.network.dto.DossierDto
 import com.example.client_mobile.network.dto.LawyerDto
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
+import com.example.client_mobile.network.dto.LikeResponseDto
 import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.NotificationDto
 import com.example.client_mobile.network.dto.ReelDto
+import com.example.client_mobile.network.dto.SendMessageRequest
+import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.network.dto.UserDto
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -37,8 +42,8 @@ interface MockApiService {
 
     // ── User ──────────────────────────────────────────────────────────────────
 
-    /** GET /api/auth/me — { "id": 1, "firstName": "Tarik", ... } */
-    @GET("auth/me")
+    /** GET /api/users/me — { "id": 1, "firstName": "Tarik", ... } */
+    @GET("users/me")
     suspend fun getMe(): Response<UserDto>
 
     // ── Appointments ──────────────────────────────────────────────────────────
@@ -86,7 +91,7 @@ interface MockApiService {
     // ── Lives ──────────────────────────────────────────────────────
 
     /** GET /api/lives — [ { "id": "live_001", "title": "...", "viewersCount": 124 } ] */
-    @GET("lives")
+    @GET("live-sessions")
     suspend fun getLives(): Response<List<LiveDto>>
 
     // ── Notifications ──────────────────────────────────────────────
@@ -111,10 +116,29 @@ interface MockApiService {
     // ── Messages ──────────────────────────────────────────────────────────────
 
     /** GET /api/messages — all conversations for the authenticated user or lawyer. */
-    @GET("messages")
+    @GET("conversations")
     suspend fun getMessages(): Response<List<ConversationApiDto>>
 
-    /** GET /api/messages/{id} — message thread for one conversation. */
-    @GET("messages/{id}")
+    /** GET /api/conversations/{id}/messages — message thread for one conversation. */
+    @GET("conversations/{id}/messages")
     suspend fun getChatDetails(@Path("id") id: String): Response<List<ChatMessageApiDto>>
+
+    // ── Social interactions ────────────────────────────────────────────────────
+
+    /**
+     * POST /api/reels/{id}/like — toggle like on a reel.
+     * Response: { "is_liked": true, "likes_count": 543 }
+     */
+    @POST("reels/{id}/like")
+    suspend fun likeReel(@Path("id") id: String): Response<LikeResponseDto>
+
+    /**
+     * POST /api/conversations/{id}/messages — send a text message in a conversation.
+     * Body: { "content": "...", "type": "text" }
+     */
+    @POST("conversations/{id}/messages")
+    suspend fun sendMessage(
+        @retrofit2.http.Path("id") conversationId: String,
+        @Body request: SendMessageRequest
+    ): Response<SendMessageResponseDto>
 }

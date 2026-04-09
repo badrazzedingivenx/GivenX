@@ -85,6 +85,16 @@ fun LawyerDashboardHost(
     var activeLiveId          by remember { mutableStateOf<Long?>(null) }
     var mediaPickerType       by remember { mutableStateOf<MediaPostType?>(null) }
 
+    val dashboardError by dashboardViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(dashboardError) {
+        if (!dashboardError.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(dashboardError!!)
+            dashboardViewModel.clearError()
+        }
+    }
+
     // ── Live Studio overlay ───────────────────────────────────────────────────
     if (activeLiveId != null) {
         LawyerLiveStudioScreen(
@@ -206,7 +216,8 @@ fun LawyerDashboardHost(
                 }
             }
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         DashBoardBackground {
             NavHost(

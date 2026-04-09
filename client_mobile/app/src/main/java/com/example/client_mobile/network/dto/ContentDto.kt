@@ -2,6 +2,14 @@ package com.example.client_mobile.network.dto
 
 import com.google.gson.annotations.SerializedName
 
+// ─── Consultation ─────────────────────────────────────────────────────────────
+data class SaveConsultationRequest(
+    @SerializedName("user_id")          val userId:          String = "",
+    @SerializedName("lawyer_id")        val lawyerId:        String = "",
+    @SerializedName("lawyer_name")      val lawyerName:      String = "",
+    @SerializedName("lawyer_specialty") val lawyerSpecialty: String = ""
+)
+
 // ─── Story ────────────────────────────────────────────────────────────────────
 // Matches: GET /api/stories
 // [{"id":"story_001","lawyerName":"Me. Yassine Alaoui","lawyerAvatar":"...","imageUrl":"...","expiresAt":"..."}]
@@ -22,6 +30,41 @@ data class ReelDto(
     @SerializedName("lawyerName") val lawyerName: String = "",
     @SerializedName("likes")      val likes:      Int    = 0,
     @SerializedName("caption")    val caption:    String = ""
+)
+
+// ─── Like response ────────────────────────────────────────────────────────────
+// Matches: POST /api/reels/{id}/like → { "is_liked": true, "likes_count": 543 }
+data class LikeResponseDto(
+    @SerializedName("is_liked")    val isLiked:    Boolean = false,
+    @SerializedName("likes_count") val likesCount: Int     = 0
+)
+
+// ─── Send Message ─────────────────────────────────────────────────────────────
+// Body for POST /api/messages/send
+data class SendMessageRequest(
+    @SerializedName("conversationId") val conversationId: String,
+    @SerializedName("content")        val content:        String,
+    @SerializedName("type")           val type:           String = "text"
+)
+
+// Response from POST /api/messages/send
+data class SendMessageResponseDto(
+    @SerializedName("id")         val id:         String = "",
+    @SerializedName("senderId")   val senderId:   String = "",
+    @SerializedName("text")       val text:       String = "",
+    @SerializedName("time")       val time:       String = "",
+    @SerializedName("success")    val success:    Boolean = true
+)
+
+// ─── Search result entries ────────────────────────────────────────────────────
+// Used by GET /api/lawyers?search=... and future unified-search endpoint
+data class LawyerSearchResultDto(
+    @SerializedName("id")         val id:         String = "",
+    @SerializedName("name")       val name:       String = "",
+    @SerializedName("specialty")  val specialty:  String = "",
+    @SerializedName("avatarUrl")  val avatarUrl:  String = "",
+    @SerializedName("rating")     val rating:     Float  = 0f,
+    @SerializedName("domaine")    val domaine:    String = ""
 )
 
 // ─── Notification ─────────────────────────────────────────────────────────────

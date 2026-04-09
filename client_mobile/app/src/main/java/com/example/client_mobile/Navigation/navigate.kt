@@ -24,9 +24,12 @@ import androidx.compose.runtime.getValue
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Route the user to the right home after a cold start
+    // Route the user to the right screen on cold start:
+    // - No token in storage  → Login (always shown, nothing to skip)
+    // - Token valid, lawyer  → LawyerHome  (persisted session, skip login)
+    // - Token valid, user    → UserHome    (persisted session, skip login)
     val startDest = when {
-        !TokenManager.isLoggedIn()               -> "Onboarding"
+        !TokenManager.isLoggedIn()               -> "Login/user"
         TokenManager.getUserType() == "lawyer"   -> "LawyerHome"
         else                                     -> "UserHome"
     }
@@ -78,18 +81,18 @@ fun AppNavigation() {
             val typeArg = backStackEntry.arguments?.getString("userType") ?: "user"
             LoginScreen(
                 userType = typeArg,
-                onNavigateToSignup = { selectedType: String ->
-                    if (selectedType == "lawyer") navController.navigate("CreeAvocat")
-                    else navController.navigate("CreeUser")
+                onNavigateToSignup = {
+                    // Always go through type-selection so lawyers can reach CreeAvocat
+                    navController.navigate("TypeCompte")
                 },
                 onNavigateToLawyerHome = { 
                     navController.navigate("LawyerHome") {
-                        popUpTo("Login/{userType}") { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 },
                 onNavigateToUserHome = { 
                     navController.navigate("UserHome") {
-                        popUpTo("Login/{userType}") { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -101,7 +104,7 @@ fun AppNavigation() {
                 onNavigateToLogin = { navController.navigate("Login/user") },
                 onNavigateToHome = { 
                     navController.navigate("UserHome") {
-                        popUpTo("CreeUser") { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -112,7 +115,7 @@ fun AppNavigation() {
                 onNavigateToLogin = { navController.navigate("Login/lawyer") },
                 onNavigateToHome = { 
                     navController.navigate("LawyerHome") {
-                        popUpTo("CreeAvocat") { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

@@ -128,7 +128,8 @@ fun LoginScreen(
                         placeholder = "E-mail",
                         leadingIcon = Icons.Default.Email,
                         isError = emailError,
-                        errorMessage = "Veuillez saisir votre e-mail"
+                        errorMessage = "Veuillez saisir votre e-mail",
+                        keyboardType = KeyboardType.Email
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
@@ -237,7 +238,8 @@ fun CustomInputField(
     errorMessage: String = "",
     isPassword: Boolean = false,
     isPasswordVisible: Boolean = false,
-    onVisibilityToggle: (() -> Unit)? = null
+    onVisibilityToggle: (() -> Unit)? = null,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val darkGreen = Color(0xFF1B3124)
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -258,7 +260,7 @@ fun CustomInputField(
                 }
             },
             visualTransformation = if (isPassword && !isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = if (isPassword) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions.Default,
+            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(25.dp),
             singleLine = true,

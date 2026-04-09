@@ -28,14 +28,24 @@ data class SignupRequest(
 )
 
 /**
- * Successful auth response.
- * The JWT is stored via [com.example.client_mobile.network.TokenManager].
+ * Flexible auth response that handles both:
+ *   Real API  — { "success": true, "data": { "profile": {...}, "token": "...", "refresh_token": "..." } }
+ *   Legacy mock — { "token": "abc123", "user": {...} }
  */
 data class AuthResponse(
-    @SerializedName("token")      val token:     String,
-    @SerializedName("expires_in") val expiresIn: Long   = 3600,
-    @SerializedName("user")       val user:      UserDto? = null
-)
+    // Real API envelope
+    @SerializedName("success")    val success:      Boolean       = false,
+    @SerializedName("data")       val data:         AuthLoginData? = null,
+    // Legacy mock flat fields
+    @SerializedName("token")      val legacyToken:  String        = "",
+    @SerializedName("expires_in") val expiresIn:    Long          = 3600L,
+    @SerializedName("user")       val legacyUser:   UserDto?      = null
+) {
+    /** JWT — tries nested envelope first, then flat field. */
+    fun effectiveToken(): String  = data?.token?.takeIf { it.isNotBlank() } ?: legacyToken
+    /** User profile — tries nested envelope first, then flat field. */
+    fun effectiveUser():  UserDto? = data?.profile ?: legacyUser
+}
 
 // JSON shape from /api/auth/me (Postman mock + real server):
 // { "id": 1, "firstName": "Tarik", "lastName": "Haq", "email": "tarik@example.com" }
@@ -53,8 +63,14 @@ data class UserDto(
     @SerializedName("photoUrl")    val photoUrl:    String = "",
     @SerializedName("avatar_url")  val avatarUrl:   String = "",
     /** Server-confirmed role: "user" | "lawyer". Drives RBAC routing. */
-    @SerializedName("role")        val role:        String = ""
+    @SerializedName("role")        val role:        String = "",
+    // ── Lawyer-only fields (populated when role == "lawyer") ─────────────────
+    @SerializedName("bar_number")  val barNumber:   String = "",
+    @SerializedName("barNumber")   val barNumberCamel: String = "",
+    @SerializedName("specialty")   val specialty:   String = ""
 ) {
+    /** Effective bar number (supports both snake_case and camelCase). */
+    fun effectiveBarNumber(): String = barNumber.ifBlank { barNumberCamel }
     /** Effective display name (prefers server full_name, falls back to first+last). */
     fun effectiveFullName(): String = fullName.ifBlank { "$firstName $lastName".trim() }
     /** Effective avatar URL (prefers snake_case real API, falls back to camelCase mock). */
@@ -77,11 +93,43 @@ data class UpdateProfileRequest(
     @SerializedName("address")    val address:   String = ""
 )
 
-/** Body for POST /consultations */
-data class SaveConsultationRequest(
-    @SerializedName("user_id")          val userId:         String = "",
-    @SerializedName("lawyer_id")        val lawyerId:       String = "",
-    @SerializedName("lawyer_name")      val lawyerName:     String = "",
-    @SerializedName("lawyer_specialty") val lawyerSpecialty:String = "",
-    @SerializedName("status")           val status:         String = "En attente"
+/** Body for POST /api/auth/register-user */
+data class RegisterUserRequest(
+    @SerializedName("full_name")  val fullName:   String,
+    @SerializedName("email")      val email:      String,
+    @SerializedName("password")   val password:   String,
+    @SerializedName("phone")      val phone:      String = "",
+    @SerializedName("address")    val address:    String = ""
+)
+
+/** Body for POST /api/auth/register-lawyer */
+data class RegisterLawyerRequest(
+    @SerializedName("full_name")        val fullName:        String,
+    @SerializedName("email")            val email:           String,
+    @SerializedName("password")         val password:        String,
+    @SerializedName("phone")            val phone:           String = "",
+    @SerializedName("address")          val address:         String = "",
+    @SerializedName("speciality")       val speciality:      String = "",
+    @SerializedName("bar_association")  val barAssociation:  String = "",
+    @SerializedName("bar_number")       val barNumber:       String = "",
+    @SerializedName("years_experience") val yearsExperience: Int    = 0,
+    @SerializedName("bio")              val bio:             String = ""
+)
+
+/** Body for PUT /api/lawyers/me */
+data class UpdateLawyerProfileRequest(
+    @SerializedName("full_name")        val fullName:        String = "",
+    @SerializedName("phone")            val phone:           String = "",
+    @SerializedName("address")          val address:         String = "",
+    @SerializedName("bio")              val bio:             String = "",
+    @SerializedName("speciality")       val speciality:      String = "",
+    @SerializedName("years_experience") val yearsExperience: Int    = 0,
+    @SerializedName("is_available")     val isAvailable:     Boolean = true
+)
+
+/** Nested data body inside the real API's { "success": true, "data": {...} } login envelope. */
+data class AuthLoginData(
+    @SerializedName("profile")       val profile:      UserDto? = null,
+    @SerializedName("token")         val token:        String   = "",
+    @SerializedName("refresh_token") val refreshToken: String   = ""
 )

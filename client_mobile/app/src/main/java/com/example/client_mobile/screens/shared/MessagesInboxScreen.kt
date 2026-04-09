@@ -11,8 +11,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -25,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
 // ─── Messages Inbox Screen ────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesInboxScreen(
     isLawyer: Boolean,
@@ -32,14 +35,57 @@ fun MessagesInboxScreen(
     onNavigateToChat: (String) -> Unit = {},
     conversationViewModel: ConversationViewModel = viewModel()
 ) {
-    // Trigger fetch on first composition; ConversationRepository is the source of truth
-    val conversations = ConversationRepository.conversations
+    val conversations  = ConversationRepository.conversations
+    val isLoading      by conversationViewModel.isLoading.collectAsStateWithLifecycle()
+    val isRefreshing   by conversationViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isError        by conversationViewModel.isError.collectAsStateWithLifecycle()
+    val errorMessage   by conversationViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            conversationViewModel.clearError()
+        }
+    }
+
     DashBoardBackground {
-        MessagesInboxContent(
-            conversations    = conversations,
-            isLawyer         = isLawyer,
-            paddingValues    = paddingValues,
-            onNavigateToChat = onNavigateToChat
+        // ── No-connection full-screen state ───────────────────────────────────
+        if (isError && conversations.isEmpty()) {
+            NoConnectionScreen(
+                onRetry   = { conversationViewModel.refresh() },
+                modifier  = Modifier.padding(paddingValues)
+            )
+            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+            return@DashBoardBackground
+        }
+
+        // ── Loading bar ───────────────────────────────────────────────────────
+        if (isLoading) {
+            LinearProgressIndicator(
+                modifier   = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+                color      = AppGoldColor,
+                trackColor = AppDarkGreen.copy(alpha = 0.2f)
+            )
+        }
+
+        // ── Pull-to-refresh + conversation list ───────────────────────────────
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = { conversationViewModel.refresh() },
+            modifier     = Modifier.fillMaxSize()
+        ) {
+            MessagesInboxContent(
+                conversations    = conversations,
+                isLawyer         = isLawyer,
+                paddingValues    = paddingValues,
+                onNavigateToChat = onNavigateToChat
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier  = Modifier.align(Alignment.BottomCenter)
         )
     }
 }

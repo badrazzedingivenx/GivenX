@@ -34,6 +34,11 @@ class LawyerDashboardViewModel : ViewModel() {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun clearError() { _errorMessage.value = null }
+
     init { fetch() }
 
     fun fetch() {
@@ -60,7 +65,7 @@ class LawyerDashboardViewModel : ViewModel() {
             if (response.isSuccessful) {
                 _profile.value = response.body()
             }
-        } catch (_: Exception) { /* keep existing state */ }
+        } catch (_: Exception) { _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
     }
 
     private suspend fun fetchStats() {
@@ -69,6 +74,6 @@ class LawyerDashboardViewModel : ViewModel() {
             if (response.isSuccessful) {
                 _stats.value = response.body()
             }
-        } catch (_: Exception) { /* keep existing state */ }
+        } catch (_: Exception) { _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
     }
 }

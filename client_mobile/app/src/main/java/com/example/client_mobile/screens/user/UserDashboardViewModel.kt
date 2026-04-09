@@ -46,6 +46,11 @@ class UserDashboardViewModel : ViewModel() {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun clearError() { _errorMessage.value = null }
+
     init {
         fetch()
     }
@@ -97,6 +102,7 @@ class UserDashboardViewModel : ViewModel() {
             }
         } catch (_: Exception) {
             _firstName.value = ""
+            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
@@ -111,6 +117,7 @@ class UserDashboardViewModel : ViewModel() {
             }
         } catch (_: Exception) {
             _dossiers.value = emptyList()
+            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
@@ -125,6 +132,7 @@ class UserDashboardViewModel : ViewModel() {
             }
         } catch (_: Exception) {
             _appointments.value = emptyList()
+            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
@@ -139,6 +147,7 @@ class UserDashboardViewModel : ViewModel() {
             }
         } catch (_: Exception) {
             _billing.value = BillingSummaryDto()
+            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
@@ -152,6 +161,7 @@ class UserDashboardViewModel : ViewModel() {
             }
         } catch (_: Exception) {
             _stories.value = emptyList()
+            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
@@ -181,7 +191,7 @@ class UserDashboardViewModel : ViewModel() {
                 NotificationRepository.userNotifications.addAll(items)
             }
         } catch (_: Exception) {
-            // Keep existing state on failure
+            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 

@@ -83,6 +83,17 @@ fun UserDashboardHost(
             .joinToString("")
     }.takeIf { !it.isNullOrBlank() }
 
+    val dashboardViewModel: UserDashboardViewModel = viewModel()
+    val dashboardError by dashboardViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(dashboardError) {
+        if (!dashboardError.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(dashboardError!!)
+            dashboardViewModel.clearError()
+        }
+    }
+
     Scaffold(
         topBar = {
             val onMessagesRoute = currentRoute == UserTab.Messages.route
@@ -223,7 +234,8 @@ fun UserDashboardHost(
                 }
             }
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         DashBoardBackground {
             NavHost(

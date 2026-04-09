@@ -1,22 +1,22 @@
 package com.example.client_mobile.network
 
 import com.example.client_mobile.network.dto.LoginRequest
+import com.example.client_mobile.network.dto.RegisterLawyerRequest
 import com.example.client_mobile.network.dto.SignupRequest
+import com.example.client_mobile.screens.shared.LawyerSession
+import com.example.client_mobile.screens.shared.UserSession
 
 /**
  * Single source of truth for authentication.
- * All login / logout logic lives here; ViewModels call this object.
+ * All login / logout / auto-login logic lives here; ViewModels call this object.
  */
 object AuthRepository {
 
     /**
      * Posts credentials to POST /api/auth/login.
-     * On success, stores the JWT token, userId, email, and userType in
-     * [TokenManager] (EncryptedSharedPreferences).
+     * Supports both the real API envelope { "success", "data": { "profile", "token" } }
+     * and the legacy mock flat format { "token", "user" }.
      * Throws an [Exception] with a user-readable message on failure.
-     *
-     * @param userType "user" | "lawyer" — stored so the correct home screen
-     *                 can be restored on next cold start.
      */
     suspend fun login(email: String, password: String, userType: String) {
         val response = RetrofitClient.authApi.login(LoginRequest(email.trim(), password))
@@ -25,40 +25,74 @@ object AuthRepository {
             throw Exception("Identifiants incorrects")
         }
 
-        val body = response.body()!!
-        if (body.token.isBlank()) {
-            throw Exception("Token manquant dans la réponse du serveur")
-        }
+        val body  = response.body()!!
+        val token = body.effectiveToken()
+        if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
 
-        // Role is authoritative from the server; fall back to the UI-selected type
-        // if the mock/server doesn't return it yet.
-        val effectiveRole = body.user?.role?.takeIf { it.isNotBlank() } ?: userType
+        val user         = body.effectiveUser()
+        val effectiveRole = user?.role?.takeIf { it.isNotBlank() } ?: userType
 
-        // Persist all session fields to EncryptedSharedPreferences
-        TokenManager.saveToken(body.token)
+        TokenManager.saveToken(token)
         TokenManager.saveEmail(email.trim())
         TokenManager.saveUserType(effectiveRole)
-        body.user?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
+        user?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
 
-        // Persist display name and avatar so the UI can render them immediately on cold start
-        val fullName = body.user?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: ""
-        if (fullName.isNotBlank()) TokenManager.saveFullName(fullName)
-        val avatarUrl = body.user?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() } ?: ""
+        val fullName  = user?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: ""
+        if (fullName.isNotBlank())  TokenManager.saveFullName(fullName)
+        val avatarUrl = user?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() } ?: ""
         if (avatarUrl.isNotBlank()) TokenManager.saveAvatarUrl(avatarUrl)
     }
 
     /**
-     * Clears all stored credentials. The user is considered logged out
-     * and must authenticate again before reaching the dashboard.
+     * If a stored token exists, fetches the user's profile from the appropriate
+     * /me endpoint and refreshes UserSession / LawyerSession.
+     * If the token is invalid (401), clears it so the user is redirected to login.
+     * Returns the confirmed role ("user" | "lawyer") or null on any failure.
      */
+    suspend fun autoLogin(): String? {
+        if (!TokenManager.isLoggedIn()) return null
+        return try {
+            val role = TokenManager.getUserType()
+            if (role == "lawyer") {
+                val resp = RetrofitClient.authApi.getLawyerMe()
+                if (resp.code() == 401) { TokenManager.clear(); return null }
+                val dto = resp.body() ?: return role
+                LawyerSession.fullName = dto.fullName.ifBlank { LawyerSession.fullName }
+                LawyerSession.title    = dto.speciality.ifBlank { LawyerSession.title }
+                LawyerSession.email    = dto.email.ifBlank { LawyerSession.email }
+                LawyerSession.phone    = dto.phone.ifBlank { LawyerSession.phone }
+                LawyerSession.address  = dto.address.ifBlank { LawyerSession.address }
+                LawyerSession.bio      = dto.bio.ifBlank { LawyerSession.bio }
+                TokenManager.saveFullName(dto.fullName)
+                TokenManager.saveAvatarUrl(dto.avatarUrl)
+                "lawyer"
+            } else {
+                val resp = RetrofitClient.authApi.getMe()
+                if (resp.code() == 401) { TokenManager.clear(); return null }
+                val dto = resp.body() ?: return role
+                val name = dto.effectiveFullName().ifBlank { TokenManager.getFullName() }
+                if (name.isNotBlank())            UserSession.name      = name
+                if (dto.email.isNotBlank())        UserSession.email    = dto.email
+                if (dto.phone.isNotBlank())        UserSession.phone    = dto.phone
+                if (dto.address.isNotBlank())      UserSession.address  = dto.address
+                val avatar = dto.effectiveAvatarUrl()
+                if (avatar.isNotBlank())           UserSession.avatarUrl = avatar
+                TokenManager.saveFullName(name)
+                TokenManager.saveAvatarUrl(avatar)
+                "user"
+            }
+        } catch (_: Exception) {
+            // Network error — keep existing session data, don't invalidate token
+            TokenManager.getUserType()
+        }
+    }
+
+    /** Clears all stored credentials. The user must authenticate again. */
     fun logout() = TokenManager.clear()
 
     /**
-     * Posts a new account to POST /api/signup.
-     * On success, persists the JWT, role, name, and email — same as login.
-     * The caller's role is the authoritative fallback when the server omits it.
-     *
-     * @param role "user" | "lawyer"
+     * Registers a new account.
+     * Routes to /auth/register-user or /auth/register-lawyer based on [role].
      */
     suspend fun register(
         fullName: String,
@@ -68,28 +102,51 @@ object AuthRepository {
         role: String = "user",
         speciality: String = ""
     ) {
-        val response = RetrofitClient.authApi.signup(
-            SignupRequest(fullName.trim(), email.trim(), password, phone.trim(), role, speciality.trim())
-        )
+        val response = if (role == "lawyer") {
+            RetrofitClient.authApi.signupLawyer(
+                RegisterLawyerRequest(
+                    fullName   = fullName.trim(),
+                    email      = email.trim(),
+                    password   = password,
+                    phone      = phone.trim(),
+                    speciality = speciality.trim()
+                )
+            )
+        } else {
+            RetrofitClient.authApi.signup(
+                SignupRequest(
+                    fullName   = fullName.trim(),
+                    email      = email.trim(),
+                    password   = password,
+                    phone      = phone.trim(),
+                    role       = role
+                )
+            )
+        }
 
         if (!response.isSuccessful || response.body() == null) {
             throw Exception("Inscription échouée. Veuillez réessayer.")
         }
 
-        val body = response.body()!!
-        if (body.token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
+        val body  = response.body()!!
+        val token = body.effectiveToken()
+        if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
 
-        val effectiveRole = body.user?.role?.takeIf { it.isNotBlank() } ?: role
+        val user         = body.effectiveUser()
+        val effectiveRole = user?.role?.takeIf { it.isNotBlank() } ?: role
 
-        TokenManager.saveToken(body.token)
+        TokenManager.saveToken(token)
         TokenManager.saveEmail(email.trim())
         TokenManager.saveUserType(effectiveRole)
-        body.user?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
+        user?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
 
-        val savedName = body.user?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: fullName.trim()
+        val savedName = user?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: fullName.trim()
         if (savedName.isNotBlank()) TokenManager.saveFullName(savedName)
+        val avatarUrl = user?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() } ?: ""
+        if (avatarUrl.isNotBlank()) TokenManager.saveAvatarUrl(avatarUrl)
     }
 
     /** Returns true if a non-blank token is currently stored. */
     fun isLoggedIn(): Boolean = TokenManager.isLoggedIn()
 }
+

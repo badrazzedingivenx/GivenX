@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 // ─── Lawyer Detail Screen ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -198,13 +200,23 @@ fun LawyerDetailScreen(
                 item { SectionHeader(title = "Avis Clients", actionLabel = "${lawyer.reviewCount} avis") }
                 item {
                     DashCard {
-                        sampleReviews.forEach { review ->
-                            ReviewItem(review = review)
-                            if (review != sampleReviews.last()) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 10.dp),
-                                    color = AppDarkGreen.copy(alpha = 0.07f)
-                                )
+                        if (sampleReviews.isEmpty()) {
+                            Text(
+                                "Aucun avis pour le moment.",
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 13.sp,
+                                color = AppDarkGreen.copy(alpha = 0.45f),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        } else {
+                            sampleReviews.forEach { review ->
+                                ReviewItem(review = review)
+                                if (review != sampleReviews.last()) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 10.dp),
+                                        color = AppDarkGreen.copy(alpha = 0.07f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -360,13 +372,22 @@ private fun LawyerDetailHeader(lawyer: LawyerItem) {
                         .border(2.dp, AppGoldColor, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        initials,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp,
-                        color = AppGoldColor
-                    )
+                    if (lawyer.avatarUrl.isNotBlank()) {
+                        AsyncImage(
+                            model             = lawyer.avatarUrl,
+                            contentDescription = lawyer.name,
+                            modifier          = Modifier.fillMaxSize().clip(CircleShape),
+                            contentScale      = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            initials,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 32.sp,
+                            color = AppGoldColor
+                        )
+                    }
                 }
                 if (lawyer.isVerified) {
                     Surface(
@@ -511,11 +532,7 @@ private fun LocationCard(city: String) {
 // ─── Review Item ─────────────────────────────────────────────────────────────
 data class ReviewItem(val name: String, val rating: Int, val comment: String, val date: String)
 
-private val sampleReviews = listOf(
-    ReviewItem("Ahmed B.", 5, "Avocat très professionnel, résultat excellent. Je recommande vivement.", "Mars 2026"),
-    ReviewItem("Fatima Z.", 5, "Réactif, à l'écoute et efficace. Mon dossier a été résolu rapidement.", "Fév. 2026"),
-    ReviewItem("Mehdi R.", 4, "Bon suivi du dossier. Communication claire et régulière tout au long de la procédure.", "Jan. 2026")
-)
+private val sampleReviews = emptyList<ReviewItem>()
 
 @Composable
 private fun ReviewItem(review: ReviewItem) {

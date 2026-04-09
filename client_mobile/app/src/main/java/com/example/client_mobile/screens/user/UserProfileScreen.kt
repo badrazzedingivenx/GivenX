@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,15 +45,21 @@ fun UserProfileScreen(
     onNavigateToDocuments: () -> Unit = {},
     userViewModel: UserViewModel = viewModel()
 ) {
-    val profile by userViewModel.profile.collectAsStateWithLifecycle()
+    val profile      by userViewModel.profile.collectAsStateWithLifecycle()
+    val isFetching   by userViewModel.isFetching.collectAsStateWithLifecycle()
+    val isError      by userViewModel.isError.collectAsStateWithLifecycle()
 
     // Derived display values – fall back to UserSession while the VM is loading
-    val userName    = profile?.let { "${it.firstName} ${it.lastName}".trim() }
-                        .takeIf { !it.isNullOrBlank() } ?: UserSession.name
+    val userName    = profile?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: UserSession.name
     val userEmail   = profile?.email?.takeIf { it.isNotBlank() }   ?: UserSession.email
     val userPhone   = profile?.phone?.takeIf { it.isNotBlank() }   ?: UserSession.phone
     val userAddress = profile?.address?.takeIf { it.isNotBlank() } ?: UserSession.address
-    val photoUrl    = profile?.photoUrl
+    val photoUrl    = profile?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() }
+
+    // Role-specific fields (populated when role == "lawyer")
+    val isLawyerRole = profile?.role?.lowercase() == "lawyer"
+    val barNumber    = profile?.effectiveBarNumber()?.takeIf { it.isNotBlank() }
+    val specialty    = profile?.specialty?.takeIf { it.isNotBlank() }
 
     var biometricEnabled by remember { mutableStateOf(false) }
     var showLogOutDialog  by remember { mutableStateOf(false) }
@@ -94,93 +101,124 @@ fun UserProfileScreen(
         containerColor = Color.Transparent
     ) { paddingValues ->
         DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+
+            // ── No-connection state ───────────────────────────────────────────
+            if (isError && profile == null) {
+                NoConnectionScreen(
+                    onRetry  = { userViewModel.refresh() },
+                    modifier = Modifier.padding(paddingValues)
+                )
+                return@DashBoardBackground
+            }
+
+            // ── Pull-to-refresh wrapping the scrollable content ───────────────
+            PullToRefreshBox(
+                isRefreshing = isFetching,
+                onRefresh    = { userViewModel.refresh() },
+                modifier     = Modifier.fillMaxSize()
             ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(4.dp)) }
 
-                // ── Profile Header Card ───────────────────────────────────────
-                item {
-                    ProfileHeaderCard(userName = userName, photoUrl = photoUrl)
-                }
-
-                // ── Account Information ───────────────────────────────────────
-                item {
-                    SectionHeader(title = "Informations Personnelles")
-                }
-                item {
-                    DashCard {
-                        ProfileInfoRow(Icons.Default.Person, "Nom complet", userName)
-                        ProfileDivider()
-                        ProfileInfoRow(Icons.Default.Email, "Adresse e-mail", userEmail)
-                        ProfileDivider()
-                        ProfileInfoRow(Icons.Default.Phone, "Téléphone", userPhone)
-                        ProfileDivider()
-                        ProfileInfoRow(Icons.Default.LocationOn, "Adresse", userAddress, isLast = true)
+                    // ── Profile Header Card ───────────────────────────────────
+                    item {
+                        ProfileHeaderCard(userName = userName, photoUrl = photoUrl)
                     }
-                }
 
-                // ── Security & Settings ───────────────────────────────────────
-                item {
-                    SectionHeader(title = "Sécurité & Paramètres")
-                }
-                item {
-                    DashCard {
-                        BiometricToggleRow(
-                            enabled = biometricEnabled,
-                            onToggle = { biometricEnabled = it }
-                        )
-                        ProfileDivider()
-                        ProfileActionRow(
-                            icon = Icons.Default.Lock,
-                            label = "Changer le mot de passe",
-                            onClick = {}
-                        )
-                        ProfileDivider()
-                        ProfileActionRow(
-                            icon = Icons.Default.Notifications,
-                            label = "Notifications",
-                            onClick = {},
-                            isLast = true
-                        )
+                    // ── Personal Information ──────────────────────────────────
+                    item { SectionHeader(title = "Informations Personnelles") }
+                    item {
+                        DashCard {
+                            ProfileInfoRow(Icons.Default.Person, "Nom complet", userName)
+                            ProfileDivider()
+                            ProfileInfoRow(Icons.Default.Email, "Adresse e-mail", userEmail)
+                            ProfileDivider()
+                            ProfileInfoRow(Icons.Default.Phone, "Téléphone", userPhone)
+                            ProfileDivider()
+                            ProfileInfoRow(Icons.Default.LocationOn, "Adresse", userAddress, isLast = true)
+                        }
                     }
-                }
 
-                // ── Legal Tech Features ───────────────────────────────────────
-                item {
-                    SectionHeader(title = "Espace Juridique")
-                }
-                item {
-                    DashCard {
-                        LegalFeatureRow(
-                            icon = Icons.Default.Folder,
-                            title = "Coffre-fort Numérique",
-                            subtitle = "Mes documents & pièces",
-                            onClick = onNavigateToDocuments
-                        )
-                        ProfileDivider()
-                        LegalFeatureRow(
-                            icon = Icons.Default.CreditCard,
-                            title = "Moyens de Paiement",
-                            subtitle = "Cartes & historique",
-                            onClick = {},
-                            isLast = true
-                        )
+                    // ── Lawyer-specific section (only when role == LAWYER) ─────
+                    if (isLawyerRole) {
+                        item { SectionHeader(title = "Profil Avocat") }
+                        item {
+                            DashCard {
+                                if (!specialty.isNullOrBlank()) {
+                                    ProfileInfoRow(
+                                        icon  = Icons.Default.Work,
+                                        label = "Spécialité",
+                                        value = specialty
+                                    )
+                                    ProfileDivider()
+                                }
+                                ProfileInfoRow(
+                                    icon    = Icons.Default.Badge,
+                                    label   = "Numéro de Barreau",
+                                    value   = barNumber ?: "—",
+                                    isLast  = true
+                                )
+                            }
+                        }
                     }
-                }
 
-                // ── Membership Badge ──────────────────────────────────────────
-                item {
-                    MembershipBanner()
-                }
+                    // ── Security & Settings ───────────────────────────────────
+                    item { SectionHeader(title = "Sécurité & Paramètres") }
+                    item {
+                        DashCard {
+                            BiometricToggleRow(
+                                enabled  = biometricEnabled,
+                                onToggle = { biometricEnabled = it }
+                            )
+                            ProfileDivider()
+                            ProfileActionRow(
+                                icon    = Icons.Default.Lock,
+                                label   = "Changer le mot de passe",
+                                onClick = {}
+                            )
+                            ProfileDivider()
+                            ProfileActionRow(
+                                icon    = Icons.Default.Notifications,
+                                label   = "Notifications",
+                                onClick = {},
+                                isLast  = true
+                            )
+                        }
+                    }
 
-                // ── Footer Actions ────────────────────────────────────────────
-                item {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    // ── Legal Tech Features ───────────────────────────────────
+                    item { SectionHeader(title = "Espace Juridique") }
+                    item {
+                        DashCard {
+                            LegalFeatureRow(
+                                icon     = Icons.Default.Folder,
+                                title    = "Coffre-fort Numérique",
+                                subtitle = "Mes documents & pièces",
+                                onClick  = onNavigateToDocuments
+                            )
+                            ProfileDivider()
+                            LegalFeatureRow(
+                                icon     = Icons.Default.CreditCard,
+                                title    = "Moyens de Paiement",
+                                subtitle = "Cartes & historique",
+                                onClick  = {},
+                                isLast   = true
+                            )
+                        }
+                    }
+
+                    // ── Membership Badge ──────────────────────────────────────
+                    item { MembershipBanner() }
+
+                    // ── Footer Actions ────────────────────────────────────────
+                    item {
+                        Spacer(modifier = Modifier.height(4.dp))
                     Button(
                         onClick = { showLogOutDialog = true },
                         modifier = Modifier
@@ -224,10 +262,11 @@ fun UserProfileScreen(
                         )
                     }
                 }
-                item { Spacer(modifier = Modifier.height(20.dp)) }
-            }
-        }
-    }
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                } // end LazyColumn
+            } // end PullToRefreshBox
+        } // end DashBoardBackground
+    } // end Scaffold
 
     // ── Log Out Confirmation Dialog ───────────────────────────────────────────
     if (showLogOutDialog) {
