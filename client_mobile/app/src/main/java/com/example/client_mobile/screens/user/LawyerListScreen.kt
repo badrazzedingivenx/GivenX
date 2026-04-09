@@ -33,6 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -41,7 +44,8 @@ import kotlinx.coroutines.delay
 fun LawyerListScreen(
     domaine: String,
     onBack: () -> Unit = {},
-    onNavigateToDetail: (String) -> Unit = {}
+    onNavigateToDetail: (String) -> Unit = {},
+    lawyerListViewModel: LawyerListViewModel = viewModel()
 ) {
     // ── Pretty title: replace the stored domaine with a display-friendly label ──
     val displayTitle = domaine
@@ -49,17 +53,19 @@ fun LawyerListScreen(
         .ifBlank { "Avocats" }
 
     // ── State ─────────────────────────────────────────────────────────────────
+    val lawyersState by lawyerListViewModel.lawyers.collectAsStateWithLifecycle()
+    val allLawyers   = lawyersState ?: emptyList()
+
     var searchFieldValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(""))
     }
 
     // Chip filter — pre-select the domaine the user tapped on the home screen.
-    // Falls back to "Tous" if the domaine string doesn't appear in the chip list.
     var selectedFilter by rememberSaveable {
         mutableStateOf(if (domaine in lawyerFilterDomaines) domaine else "Tous")
     }
 
-    // 250 ms debounce — avoids filtering on every single keystroke
+    // 250 ms debounce
     var debouncedQuery by remember { mutableStateOf("") }
     LaunchedEffect(searchFieldValue.text) {
         delay(250L)
@@ -69,10 +75,10 @@ fun LawyerListScreen(
     val focusManager = LocalFocusManager.current
 
     // ── Combined filter: chip domain + search text ─────────────────────────────
-    val filteredList by remember {
+    val filteredList by remember(allLawyers, selectedFilter, debouncedQuery) {
         derivedStateOf {
-            sampleLawyers.filter { lawyer ->
-                val matchesChip = selectedFilter == "Tous" || lawyer.domaine == selectedFilter
+            allLawyers.filter { lawyer ->
+                val matchesChip   = selectedFilter == "Tous" || lawyer.domaine == selectedFilter
                 val matchesSearch = debouncedQuery.isBlank() ||
                     lawyer.name.contains(debouncedQuery, ignoreCase = true) ||
                     lawyer.city.contains(debouncedQuery, ignoreCase = true) ||
@@ -84,10 +90,9 @@ fun LawyerListScreen(
 
     val isSearchActive = searchFieldValue.text.isNotEmpty()
 
-    // Total count for the subtitle — how many lawyers are in the pre-selected domain
-    val domaineTotalCount = remember(selectedFilter) {
-        if (selectedFilter == "Tous") sampleLawyers.size
-        else sampleLawyers.count { it.domaine == selectedFilter }
+    val domaineTotalCount = remember(selectedFilter, allLawyers) {
+        if (selectedFilter == "Tous") allLawyers.size
+        else allLawyers.count { it.domaine == selectedFilter }
     }
 
     Scaffold(
@@ -274,8 +279,11 @@ fun LawyerListScreen(
                 }
             }
 
-            // ── Lawyer cards or empty state ────────────────────────────────────
-            if (filteredList.isEmpty()) {
+            // ── Lawyer cards, loading skeleton, or empty state ────────────────
+            if (lawyersState == null) {
+                // Loading: show skeleton placeholders
+                items(4) { LawyerCardSkeleton() }
+            } else if (filteredList.isEmpty()) {
                 item {
                     LawyerListEmptyState(
                         isFiltered = isSearchActive,
@@ -507,6 +515,64 @@ private fun LawyerListEmptyState(
                         fontSize = 13.sp
                     )
                 }
+            }
+        }
+    }
+}
+
+// ─── Loading Skeleton ─────────────────────────────────────────────────────────
+@Composable
+private fun LawyerCardSkeleton() {
+    val shimmer = androidx.compose.animation.core.rememberInfiniteTransition(label = "lawyerSkeleton")
+    val alpha by shimmer.animateFloat(
+        initialValue  = 0.15f,
+        targetValue   = 0.35f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation   = androidx.compose.animation.core.tween(900),
+            repeatMode  = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "skeletonAlpha"
+    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White,
+        border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.06f)),
+        shadowElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(AppDarkGreen.copy(alpha = alpha))
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier
+                        .width(160.dp)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(AppDarkGreen.copy(alpha = alpha))
+                )
+                Box(
+                    Modifier
+                        .width(110.dp)
+                        .height(11.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(AppGoldColor.copy(alpha = alpha))
+                )
+                Box(
+                    Modifier
+                        .width(80.dp)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(AppDarkGreen.copy(alpha = alpha * 0.6f))
+                )
             }
         }
     }

@@ -29,58 +29,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
 // ─── Edit User Profile Screen ─────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditUserProfileScreen(
-    initialName: String = "Karim Bennani",
-    initialEmail: String = "karim.bennani@email.com",
-    initialPhone: String = "+212 6 12 34 56 78",
-    initialAddress: String = "12, Rue Hassan II, Casablanca",
-    initialImageUri: Uri? = null,
     onBack: () -> Unit = {},
-    onSave: (name: String, email: String, phone: String, address: String, imageUri: Uri?) -> Unit = { _, _, _, _, _ -> }
+    userViewModel: UserViewModel = viewModel()
 ) {
-    // ── Editable state ────────────────────────────────────────────────────────
-    var name    by remember { mutableStateOf(initialName) }
-    var email   by remember { mutableStateOf(initialEmail) }
-    var phone   by remember { mutableStateOf(initialPhone) }
-    var address by remember { mutableStateOf(initialAddress) }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(initialImageUri) }
+    val profile by userViewModel.profile.collectAsStateWithLifecycle()
+    val isSaving by userViewModel.isSaving.collectAsStateWithLifecycle()
+
+    // Pre-fill from Firestore profile (re-initialises when profile loads)
+    var firstName by remember(profile) { mutableStateOf(profile?.firstName ?: "") }
+    var lastName  by remember(profile) { mutableStateOf(profile?.lastName  ?: "") }
+    val email     = profile?.email ?: ""   // email is read-only (managed via Firebase Auth)
+    var phone     by remember(profile) { mutableStateOf(profile?.phone   ?: "") }
+    var address   by remember(profile) { mutableStateOf(profile?.address ?: "") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     // ── Image Picker Launcher ─────────────────────────────────────────────────
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            selectedImageUri = uri
-        }
-    }
+    ) { uri: Uri? -> if (uri != null) selectedImageUri = uri }
 
     // ── Validation errors ─────────────────────────────────────────────────────
-    var nameError    by remember { mutableStateOf("") }
-    var emailError   by remember { mutableStateOf("") }
-    var phoneError   by remember { mutableStateOf("") }
+    var firstNameError by remember { mutableStateOf("") }
+    var phoneError     by remember { mutableStateOf("") }
 
     var showSaveDialog by remember { mutableStateOf(false) }
 
     fun validate(): Boolean {
-        nameError  = if (name.isBlank()) "Le nom ne peut pas être vide." else ""
-        emailError = when {
-            email.isBlank()                    -> "L'e-mail est requis."
-            !email.contains("@") ||
-            !email.contains(".")               -> "Adresse e-mail invalide."
-            else                               -> ""
-        }
+        firstNameError = if (firstName.isBlank()) "Le prénom est requis." else ""
         phoneError = when {
             phone.isBlank()                    -> "Le numéro est requis."
             phone.replace(" ", "").length < 8  -> "Numéro trop court (min. 8 chiffres)."
             else                               -> ""
         }
-        return nameError.isEmpty() && emailError.isEmpty() && phoneError.isEmpty()
+        return firstNameError.isEmpty() && phoneError.isEmpty()
     }
+
 
     Scaffold(
         topBar = {
@@ -152,7 +143,8 @@ fun EditUserProfileScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                val initials = name
+                                val initials = "$firstName $lastName"
+                                    .trim()
                                     .split(" ")
                                     .mapNotNull { it.firstOrNull()?.uppercaseChar() }
                                     .take(2)
@@ -215,21 +207,25 @@ fun EditUserProfileScreen(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             ProfileTextField(
-                                value = name,
-                                onValueChange = { name = it; nameError = "" },
-                                label = "Nom complet",
+                                value = firstName,
+                                onValueChange = { firstName = it; firstNameError = "" },
+                                label = "Prénom",
                                 leadingIcon = Icons.Default.Person,
-                                isError = nameError.isNotEmpty(),
-                                errorMessage = nameError
+                                isError = firstNameError.isNotEmpty(),
+                                errorMessage = firstNameError
+                            )
+                            ProfileTextField(
+                                value = lastName,
+                                onValueChange = { lastName = it },
+                                label = "Nom",
+                                leadingIcon = Icons.Default.Person
                             )
                             ProfileTextField(
                                 value = email,
-                                onValueChange = { email = it; emailError = "" },
-                                label = "Adresse e-mail",
+                                onValueChange = {},
+                                label = "Adresse e-mail (non modifiable)",
                                 leadingIcon = Icons.Default.Email,
-                                isError = emailError.isNotEmpty(),
-                                errorMessage = emailError,
-                                keyboardType = KeyboardType.Email
+                                enabled = false
                             )
                             ProfileTextField(
                                 value = phone,
@@ -285,6 +281,7 @@ fun EditUserProfileScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Button(
                             onClick = { if (validate()) showSaveDialog = true },
+                            enabled = !isSaving,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(54.dp),
@@ -292,20 +289,28 @@ fun EditUserProfileScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
                             border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
                         ) {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = null,
-                                tint = AppGoldColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                "Sauvegarder",
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = Color.White
-                            )
+                            if (isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = AppGoldColor,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = AppGoldColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    "Sauvegarder",
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color.White
+                                )
+                            }
                         }
                         OutlinedButton(
                             onClick = onBack,
@@ -363,7 +368,7 @@ fun EditUserProfileScreen(
                 Button(
                     onClick = {
                         showSaveDialog = false
-                        onSave(name, email, phone, address, selectedImageUri)
+                        userViewModel.saveProfile(firstName, lastName, phone, address)
                         onBack()
                     },
                     shape = RoundedCornerShape(12.dp),

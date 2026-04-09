@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Data Model ───────────────────────────────────────────────────────────────
 
@@ -42,12 +43,7 @@ data class AppNotification(
 // ─── Notification Repository (singleton, observable) ─────────────────────────
 
 object NotificationRepository {
-    val userNotifications = mutableStateListOf(
-        AppNotification("u1", "Réponse de votre avocat", "Maître El Amrani a répondu à votre dossier n°1042.", NotificationType.RESPONSE, isRead = false, time = "Il y a 5 min"),
-        AppNotification("u2", "Mise à jour du dossier", "L'état de votre dossier «Litige locatif» a changé : En cours.", NotificationType.CASE_UPDATE, isRead = false, time = "Il y a 30 min"),
-        AppNotification("u3", "Rendez-vous confirmé", "Votre RDV avec Maître Benali est confirmé pour demain à 10h.", NotificationType.APPOINTMENT, isRead = true, time = "Hier"),
-        AppNotification("u4", "Message reçu", "Maître Tazi vous a envoyé un nouveau message.", NotificationType.MESSAGE, isRead = true, time = "Il y a 2 j"),
-    )
+    val userNotifications = mutableStateListOf<AppNotification>()
 
     val lawyerNotifications = mutableStateListOf(
         AppNotification("l1", "Nouveau message client", "Ahmed Zian vous a envoyé un message concernant son dossier.", NotificationType.MESSAGE, isRead = false, time = "Il y a 3 min"),
@@ -71,7 +67,8 @@ object NotificationRepository {
 @Composable
 fun NotificationScreen(
     isLawyer: Boolean = false,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    notifViewModel: NotificationViewModel = viewModel()
 ) {
     val notifications = if (isLawyer)
         NotificationRepository.lawyerNotifications
@@ -116,7 +113,7 @@ fun NotificationScreen(
                         TextButton(
                             onClick = {
                                 if (isLawyer) NotificationRepository.markAllReadLawyer()
-                                else NotificationRepository.markAllReadUser()
+                                else notifViewModel.markAllRead()
                             }
                         ) {
                             Text(
@@ -193,14 +190,14 @@ fun NotificationScreen(
                     SwipeToDeleteNotification(
                         onDismiss = {
                             if (isLawyer) NotificationRepository.removeLawyer(notif.id)
-                            else NotificationRepository.removeUser(notif.id)
+                            else notifViewModel.remove(notif.id)
                         }
                     ) {
                         NotificationCard(
                             notification = notif,
                             onRead = {
                                 if (isLawyer) NotificationRepository.markReadLawyer(notif.id)
-                                else NotificationRepository.markReadUser(notif.id)
+                                else notifViewModel.markRead(notif.id)
                             }
                         )
                     }

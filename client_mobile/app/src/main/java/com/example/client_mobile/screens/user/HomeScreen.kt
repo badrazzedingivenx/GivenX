@@ -34,6 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -60,11 +62,22 @@ fun UserDashboardHost(
     onNavigateToAppointments: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
     onNavigateToFacturation: () -> Unit = {},
-    onNavigateToDossier: (String) -> Unit = {}
+    onNavigateToDossier: (String) -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Live user initials from Firestore
+    val profile by userViewModel.profile.collectAsStateWithLifecycle()
+    val initials = profile?.let {
+        "${it.firstName} ${it.lastName}".trim()
+            .split(" ")
+            .mapNotNull { w -> w.firstOrNull()?.uppercaseChar() }
+            .take(2)
+            .joinToString("")
+    }.takeIf { !it.isNullOrBlank() }
 
     Scaffold(
         topBar = {
@@ -148,18 +161,28 @@ fun UserDashboardHost(
                     ) {
                         // Gold-bordered avatar circle
                         Surface(
-                            modifier    = Modifier.fillMaxSize(),
-                            shape       = CircleShape,
-                            color       = AppDarkGreen.copy(alpha = 0.10f),
-                            border      = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
+                            modifier = Modifier.fillMaxSize(),
+                            shape    = CircleShape,
+                            color    = AppDarkGreen.copy(alpha = 0.10f),
+                            border   = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Profil",
-                                    tint       = AppGoldColor,
-                                    modifier   = Modifier.size(20.dp)
-                                )
+                                if (!initials.isNullOrBlank()) {
+                                    Text(
+                                        text       = initials,
+                                        fontFamily = FontFamily.Serif,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize   = 13.sp,
+                                        color      = AppGoldColor
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = "Profil",
+                                        tint     = AppGoldColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                         // Online green dot
@@ -167,9 +190,9 @@ fun UserDashboardHost(
                             modifier = Modifier
                                 .size(11.dp)
                                 .align(Alignment.BottomEnd)
-                                .background(Color.White, CircleShape)   // white ring
+                                .background(Color.White, CircleShape)
                                 .padding(2.dp)
-                                .background(Color(0xFF34A853), CircleShape) // green dot
+                                .background(Color(0xFF34A853), CircleShape)
                         )
                     }
                 },

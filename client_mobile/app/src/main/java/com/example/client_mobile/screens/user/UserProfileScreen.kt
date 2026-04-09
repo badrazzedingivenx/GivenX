@@ -30,25 +30,33 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
 // ─── User Profile Screen ──────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
-    userName: String = "Karim Bennani",
-    userEmail: String = "karim.bennani@email.com",
-    userPhone: String = "+212 6 12 34 56 78",
-    userAddress: String = "12, Rue Hassan II, Casablanca",
-    profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
     onLogOut: () -> Unit = {},
     onNavigateToEdit: () -> Unit = {},
-    onNavigateToDocuments: () -> Unit = {}
+    onNavigateToDocuments: () -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
 ) {
+    val profile by userViewModel.profile.collectAsStateWithLifecycle()
+
+    // Derived display values – fall back to UserSession while the VM is loading
+    val userName    = profile?.let { "${it.firstName} ${it.lastName}".trim() }
+                        .takeIf { !it.isNullOrBlank() } ?: UserSession.name
+    val userEmail   = profile?.email?.takeIf { it.isNotBlank() }   ?: UserSession.email
+    val userPhone   = profile?.phone?.takeIf { it.isNotBlank() }   ?: UserSession.phone
+    val userAddress = profile?.address?.takeIf { it.isNotBlank() } ?: UserSession.address
+    val photoUrl    = profile?.photoUrl
+
     var biometricEnabled by remember { mutableStateOf(false) }
-    var showLogOutDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLogOutDialog  by remember { mutableStateOf(false) }
+    var showDeleteDialog  by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -97,7 +105,7 @@ fun UserProfileScreen(
 
                 // ── Profile Header Card ───────────────────────────────────────
                 item {
-                    ProfileHeaderCard(userName = userName, profileImageUri = profileImageUri)
+                    ProfileHeaderCard(userName = userName, photoUrl = photoUrl)
                 }
 
                 // ── Account Information ───────────────────────────────────────
@@ -251,7 +259,7 @@ fun UserProfileScreen(
 
 // ─── Profile Header Card ──────────────────────────────────────────────────────
 @Composable
-private fun ProfileHeaderCard(userName: String, profileImageUri: Uri? = null) {
+private fun ProfileHeaderCard(userName: String, photoUrl: String? = null) {
     val initials = userName
         .split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
@@ -289,9 +297,9 @@ private fun ProfileHeaderCard(userName: String, profileImageUri: Uri? = null) {
             ) {
                 // Avatar with edit overlay
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    if (profileImageUri != null) {
+                    if (!photoUrl.isNullOrBlank()) {
                         AsyncImage(
-                            model = profileImageUri,
+                            model = photoUrl,
                             contentDescription = "Photo de profil",
                             modifier = Modifier
                                 .size(90.dp)

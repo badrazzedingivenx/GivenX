@@ -499,6 +499,7 @@ fun ProfileTextField(
     label: String,
     leadingIcon: ImageVector,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String = "",
     singleLine: Boolean = true,
@@ -521,6 +522,7 @@ fun ProfileTextField(
                     modifier = Modifier.size(20.dp)
                 )
             },
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             isError = isError,

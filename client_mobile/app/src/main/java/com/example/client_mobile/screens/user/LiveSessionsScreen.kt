@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
@@ -42,23 +44,19 @@ data class LiveChatMessage(
     val isMe: Boolean = false
 )
 
-private val sampleLiveSessions = listOf(
-    LiveSession(1, "Maître Amina Chraibi",   "Droit Pénal",     "Vos droits lors d'une garde à vue",          1240, isLive = true),
-    LiveSession(2, "Maître Sara Benali",      "Droit Famille",   "Q&A : Divorce & garde d'enfants",              876, isLive = true),
-    LiveSession(3, "Maître Khalid Tazi",      "Droit Affaires",  "Comment créer votre SARL en 2026",             532, isLive = false),
-    LiveSession(4, "Maître Nadia Mansouri",   "Droit du Travail","Licenciement : défendez-vous !",               1087, isLive = true),
-)
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 @Composable
-fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
+fun LiveSessionsScreen(
+    paddingValues: PaddingValues = PaddingValues(),
+    viewModel: LiveViewModel = viewModel()
+) {
     var activeSession by remember { mutableStateOf<LiveSession?>(null) }
+    val apiLives by viewModel.lives.collectAsStateWithLifecycle()
 
-    // Merge lawyer-created live sessions from CreatorRepository into the feed
     val creatorLive = CreatorRepository.liveSessions.map { cl ->
         LiveSession(
-            id      = cl.id.toInt(),
+            id         = cl.id.toInt(),
             lawyerName = cl.lawyerName,
             specialty  = cl.specialty,
             topic      = cl.topic,
@@ -66,8 +64,7 @@ fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
             isLive     = cl.isLive
         )
     }
-    val allLive    = creatorLive + sampleLiveSessions.filter { it.isLive }
-    val allReplays = sampleLiveSessions.filter { !it.isLive }
+    val allLive = creatorLive + (apiLives ?: emptyList())
 
     if (activeSession != null) {
         LiveRoomView(
@@ -94,12 +91,6 @@ fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
             // ── Live now section ──────────────────────────────────────────
             item { SectionHeader(title = "🔴 En direct") }
             items(allLive) { session ->
-                LiveSessionCard(session = session, onClick = { activeSession = session })
-            }
-
-            // ── Replays ───────────────────────────────────────────────────
-            item { SectionHeader(title = "Rediffusions") }
-            items(allReplays) { session ->
                 LiveSessionCard(session = session, onClick = { activeSession = session })
             }
 

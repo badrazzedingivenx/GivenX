@@ -46,6 +46,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.client_mobile.network.dto.LawyerStatsDto
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class ScheduleItem(val clientName: String, val time: String, val type: String)
@@ -55,19 +58,27 @@ data class TaskItem(val label: String, val dueDate: String, val isDone: Boolean)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LawyerDashboardHost(
-    fullName: String = "Yassine El Amrani",
-    speciality: String = "Droit Pénal",
+    fullName: String = "",
+    speciality: String = "",
     profileImageUri: Uri? = null,
     isMasculine: Boolean = true,
     onNavigateToProfile: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToRequests: () -> Unit = {},
-    onNavigateToPayments: () -> Unit = {}
+    onNavigateToPayments: () -> Unit = {},
+    dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Collect API data — profile overrides the passed-in params when available
+    val lawyerProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
+    val lawyerStats   by dashboardViewModel.stats.collectAsStateWithLifecycle()
+
+    val displayName      = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }   ?: fullName
+    val displaySpeciality = lawyerProfile?.speciality?.takeIf { it.isNotBlank() } ?: speciality
 
     // ── Create bottom sheet state ─────────────────────────────────────────────
     var showCreateSheet       by remember { mutableStateOf(false) }
@@ -203,10 +214,11 @@ fun LawyerDashboardHost(
                 composable(LawyerTab.Home.route) {
                     LawyerHomeTabContent(
                         paddingValues = paddingValues,
-                        fullName = fullName,
-                        speciality = speciality,
+                        fullName = displayName,
+                        speciality = displaySpeciality,
                         profileImageUri = profileImageUri,
                         isMasculine = isMasculine,
+                        stats = lawyerStats,
                         onNavigateToRequests = onNavigateToRequests,
                         onNavigateToPayments = onNavigateToPayments
                     )
@@ -568,32 +580,21 @@ fun RequestCard(request: RequestItem, onAccept: () -> Unit, onDecline: () -> Uni
 @Composable
 private fun LawyerHomeTabContent(
     paddingValues: PaddingValues,
-    fullName: String = "Yassine El Amrani",
-    speciality: String = "Droit Pénal",
+    fullName: String = "",
+    speciality: String = "",
     profileImageUri: Uri? = null,
     isMasculine: Boolean = true,
+    stats: LawyerStatsDto? = null,
     onNavigateToRequests: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val today = remember { SimpleDateFormat("EEEE d MMMM yyyy", Locale.FRENCH).format(Date()).replaceFirstChar { it.uppercase() } }
 
-    val scheduleItems = listOf(
-        ScheduleItem("Karim Bennani", "09:00", "Consultation"),
-        ScheduleItem("Sara Alaoui", "11:30", "Suivi dossier"),
-        ScheduleItem("Mohammed Fassi", "14:00", "Réunion")
-    )
-
-    val tasks = remember {
-        mutableStateListOf(
-            TaskItem("Préparer le dossier Bennani", "Aujourd'hui", false),
-            TaskItem("Soumettre l'appel Alaoui", "Demain", false),
-            TaskItem("Relire contrat Fassi & Associés", "4 Avr", false)
-        )
-    }
-
-    val revenueData = listOf(18f, 25f, 32f, 22f, 40f, 35f, 48f, 30f, 42f, 38f, 55f, 60f)
-    val monthLabels = listOf("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D")
+    // KPI values — show "-" while the API call is in flight
+    val clientCount    = stats?.totalClients?.toString()    ?: "-"
+    val audiencesToday = stats?.audiencesToday?.toString()  ?: "-"
+    val revenueMonth   = stats?.totalRevenueMonth?.let { "%.0f MAD".format(it) } ?: "-"
 
     Column(
         modifier = Modifier
@@ -605,7 +606,7 @@ private fun LawyerHomeTabContent(
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Banner Hero
+        // ── Banner Hero ───────────────────────────────────────────────────────
         DarkDashCard {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -628,54 +629,51 @@ private fun LawyerHomeTabContent(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                CompactStatTile(modifier = Modifier.weight(1f), icon = Icons.Default.Groups, count = LawyerSession.clients.size.toString(), label = "Clients")
-                CompactStatTile(modifier = Modifier.weight(1f).clickable { onNavigateToRequests() }, icon = Icons.Default.Description, count = LawyerSession.requests.count { it.status == "Nouveau" }.toString(), label = "Demandes")
-                CompactStatTile(modifier = Modifier.weight(1f), icon = Icons.Default.CheckCircle, count = "47", label = "Clôturés")
-            }
         }
 
-        // Agenda Section
-        SectionHeader(title = "Agenda du Jour", actionLabel = "Calendrier") {}
-        DashCard {
-            scheduleItems.forEachIndexed { index, item ->
-                LawyerScheduleRow(item = item)
-                if (index < scheduleItems.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = AppDarkGreen.copy(alpha = 0.07f))
-            }
+        // ── RBAC KPI Cards: Mes Clients / Audiences du Jour / Honoraires ──────
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            RbacKpiCard(
+                modifier  = Modifier.weight(1f),
+                icon      = Icons.Default.Groups,
+                count     = clientCount,
+                label     = "Mes Clients",
+                isLoading = stats == null
+            )
+            RbacKpiCard(
+                modifier  = Modifier.weight(1f),
+                icon      = Icons.Default.Gavel,
+                count     = audiencesToday,
+                label     = "Audiences",
+                isLoading = stats == null
+            )
+            RbacKpiCard(
+                modifier  = Modifier.weight(1f).clickable { onNavigateToPayments() },
+                icon      = Icons.Default.Payments,
+                count     = revenueMonth,
+                label     = "Honoraires",
+                isLoading = stats == null
+            )
         }
 
-        // Nouvelles Demandes (Management Quick view)
+        // ── Nouvelles Demandes quick view ─────────────────────────────────────
         SectionHeader(title = "Dernières Demandes", actionLabel = "Voir tout", onAction = onNavigateToRequests)
         DashCard {
-            val pending = LawyerSession.requests.filter { it.status == "Nouveau" }.take(2)
-            if (pending.isEmpty()) {
+            if (stats?.newRequests == 0) {
                 Text("Aucune nouvelle demande.", fontSize = 13.sp, color = Color.Gray, fontFamily = FontFamily.Serif)
             } else {
-                pending.forEachIndexed { index, lead ->
-                    NewLeadRow(lead = lead)
-                    if (index < pending.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = AppDarkGreen.copy(alpha = 0.07f))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = AppDarkGreen.copy(alpha = 0.09f)) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Description, contentDescription = null, tint = AppDarkGreen, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("${stats?.newRequests ?: "-"} demandes en attente", fontSize = 14.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                        Text("Consultez vos dossiers", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+                    }
                 }
-            }
-        }
-
-        // Revenue Section
-        SectionHeader(title = "Activité Financière", actionLabel = "Détails", onAction = onNavigateToPayments)
-        DashCard {
-            val total = LawyerSession.payments.filter { it.status == "Reçu" }.sumOf { it.amount.replace(" MAD", "").toInt() }
-            Text(text = "$total MAD", fontSize = 24.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
-            Text(text = "Total encaissé ce mois", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
-            Spacer(modifier = Modifier.height(18.dp))
-            RevenueBarChart(data = revenueData, labels = monthLabels, highlightIndex = 11)
-        }
-
-        // Tasks Section
-        SectionHeader(title = "Tâches Juridiques")
-        DashCard {
-            tasks.forEachIndexed { index, task ->
-                TaskRow(task = task, onToggle = { tasks[index] = tasks[index].copy(isDone = !tasks[index].isDone) })
             }
         }
 
@@ -697,6 +695,54 @@ fun NewLeadRow(lead: RequestItem) {
             Text(lead.topic, fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
         }
         Text(lead.date, fontSize = 10.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+    }
+}
+
+// ─── RBAC KPI Card (Mes Clients / Audiences du Jour / Honoraires) ─────────────
+@Composable
+fun RbacKpiCard(
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    count: String,
+    label: String,
+    isLoading: Boolean = false
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = AppDarkGreen,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(icon, contentDescription = label, tint = AppGoldColor, modifier = Modifier.size(22.dp))
+            Spacer(modifier = Modifier.height(6.dp))
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = AppGoldColor,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = count,
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1
+                )
+            }
+            Text(
+                text = label,
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Serif,
+                color = Color.White.copy(alpha = 0.65f),
+                maxLines = 1
+            )
+        }
     }
 }
 

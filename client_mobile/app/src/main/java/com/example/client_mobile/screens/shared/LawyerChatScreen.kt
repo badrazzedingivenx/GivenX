@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 fun ChatScreen(
     conversationId: String,
     isLawyer: Boolean = false,
-    currentUserName: String = if (isLawyer) "Avocat" else "Karim Bennani",
+    currentUserName: String = if (isLawyer) "Avocat" else UserSession.name.ifBlank { "" },
     onBack: () -> Unit = {}
 ) {
     val conversation = ConversationRepository.conversations.find { it.id == conversationId }

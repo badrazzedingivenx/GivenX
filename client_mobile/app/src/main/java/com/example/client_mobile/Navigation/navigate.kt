@@ -14,13 +14,21 @@ import androidx.navigation.navArgument
 import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.user.*
 import com.example.client_mobile.screens.lawyer.*
+import com.example.client_mobile.network.TokenManager
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    // Route the user to the right home after a cold start
+    val startDest = when {
+        !TokenManager.isLoggedIn()               -> "Onboarding"
+        TokenManager.getUserType() == "lawyer"   -> "LawyerHome"
+        else                                     -> "UserHome"
+    }
     NavHost(
         navController = navController,
-        startDestination = "Onboarding",
+        startDestination = startDest,
         enterTransition = {
             fadeIn(animationSpec = tween(300)) +
                 slideInHorizontally(animationSpec = tween(300)) { it / 4 }
@@ -109,9 +117,6 @@ fun AppNavigation() {
         // 5. Lawyer Home / Profile
         composable("LawyerHome") {
             LawyerDashboardHost(
-                fullName = LawyerSession.fullName,
-                speciality = LawyerSession.title,
-                profileImageUri = LawyerSession.profileImageUri,
                 onNavigateToProfile = { navController.navigate("AvocatProfile") },
                 onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
@@ -130,13 +135,6 @@ fun AppNavigation() {
 
         composable("AvocatProfile") {
             AvocatProfile(
-                fullName = LawyerSession.fullName,
-                title = LawyerSession.title,
-                email = LawyerSession.email,
-                phone = LawyerSession.phone,
-                address = LawyerSession.address,
-                bio = LawyerSession.bio,
-                profileImageUri = LawyerSession.profileImageUri,
                 onBack = { navController.popBackStack() },
                 onNavigateToEdit = { navController.navigate("EditLawyerProfile") }
             )
@@ -179,14 +177,13 @@ fun AppNavigation() {
 
         composable("UserProfile") {
             UserProfileScreen(
-                userName = UserSession.name,
-                userEmail = UserSession.email,
-                userPhone = UserSession.phone,
-                userAddress = UserSession.address,
-                profileImageUri = UserSession.profileImageUri,
                 onBack = { navController.popBackStack() },
                 onLogOut = {
-                    navController.navigate("Login/user") { popUpTo(0) { inclusive = true } }
+                    // Use role before clearing so we route to the right login screen
+                    val role = TokenManager.getUserType()
+                    UserService.signOut()
+                    val dest = if (role == "lawyer") "Login/lawyer" else "Login/user"
+                    navController.navigate(dest) { popUpTo(0) { inclusive = true } }
                 },
                 onNavigateToEdit = { navController.navigate("EditUserProfile") },
                 onNavigateToDocuments = { navController.navigate("DocumentVault") }
@@ -195,15 +192,7 @@ fun AppNavigation() {
 
         composable("EditUserProfile") {
             EditUserProfileScreen(
-                initialName = UserSession.name,
-                initialEmail = UserSession.email,
-                initialPhone = UserSession.phone,
-                initialAddress = UserSession.address,
-                initialImageUri = UserSession.profileImageUri,
-                onBack = { navController.popBackStack() },
-                onSave = { name, email, phone, address, imageUri ->
-                    UserSession.updateProfile(name, email, phone, address, imageUri)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -244,12 +233,12 @@ fun AppNavigation() {
             route = "LawyerDetail/{lawyerId}",
             arguments = listOf(navArgument("lawyerId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val lawyerId = backStackEntry.arguments?.getString("lawyerId") ?: "1"
-            LawyerDetailScreen(lawyerId = lawyerId, onBack = { navController.popBackStack() }, onNavigateToChat = { id ->
-                val lawyer = sampleLawyers.find { it.id == id } ?: sampleLawyers.first()
-                val conv = ConversationRepository.getOrCreate(lawyerId = id, lawyerName = lawyer.name, lawyerSpecialty = lawyer.specialty, clientName = UserSession.name)
-                navController.navigate("Chat/${conv.id}")
-            })
+            val lawyerId = backStackEntry.arguments?.getString("lawyerId") ?: ""
+            LawyerDetailScreen(
+                lawyerId = lawyerId,
+                onBack = { navController.popBackStack() },
+                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
+            )
         }
 
         composable(

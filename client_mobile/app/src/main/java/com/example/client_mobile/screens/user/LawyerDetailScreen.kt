@@ -26,16 +26,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Lawyer Detail Screen ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LawyerDetailScreen(
-    lawyerId: String = "1",
+    lawyerId: String = "",
     onBack: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    lawyerListViewModel: LawyerListViewModel = viewModel()
 ) {
-    val lawyer = sampleLawyers.find { it.id == lawyerId } ?: sampleLawyers.first()
+    val lawyers by lawyerListViewModel.lawyers.collectAsStateWithLifecycle()
+    val lawyer  = lawyers?.firstOrNull { it.id == lawyerId }
 
     var showBookingDialog by remember { mutableStateOf(false) }
 
@@ -61,7 +65,15 @@ fun LawyerDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onNavigateToChat(lawyerId) }) {
+                    IconButton(onClick = {
+                        val conv = ConversationRepository.getOrCreate(
+                            lawyerId        = lawyerId,
+                            lawyerName      = lawyer?.name      ?: "",
+                            lawyerSpecialty = lawyer?.specialty ?: "",
+                            clientName      = UserSession.name
+                        )
+                        onNavigateToChat(conv.id)
+                    }) {
                         Icon(
                             Icons.AutoMirrored.Filled.Chat,
                             contentDescription = "Message",
@@ -77,6 +89,44 @@ fun LawyerDetailScreen(
         containerColor = Color.Transparent
     ) { paddingValues ->
         DashBoardBackground {
+            if (lawyers == null) {
+                // Still loading from Firestore
+                Box(
+                    Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = AppDarkGreen, strokeWidth = 2.5.dp)
+                }
+            } else if (lawyer == null) {
+                Box(
+                    Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.PersonOff,
+                            contentDescription = null,
+                            tint = AppDarkGreen.copy(alpha = 0.30f),
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Text(
+                            "Avocat introuvable",
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = AppDarkGreen
+                        )
+                        Button(
+                            onClick = onBack,
+                            colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                            shape = RoundedCornerShape(14.dp)
+                        ) { Text("Retour", fontFamily = FontFamily.Serif, color = Color.White) }
+                    }
+                }
+            } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -165,7 +215,15 @@ fun LawyerDetailScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Button(
-                            onClick = { onNavigateToChat(lawyerId) },
+                            onClick = {
+                                val conv = ConversationRepository.getOrCreate(
+                                    lawyerId        = lawyerId,
+                                    lawyerName      = lawyer?.name      ?: "",
+                                    lawyerSpecialty = lawyer?.specialty ?: "",
+                                    clientName      = UserSession.name
+                                )
+                                onNavigateToChat(conv.id)
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(54.dp),
@@ -215,6 +273,7 @@ fun LawyerDetailScreen(
 
                 item { Spacer(modifier = Modifier.height(24.dp)) }
             }
+            } // end else (lawyer found)
         }
     }
 
@@ -244,7 +303,7 @@ fun LawyerDetailScreen(
             },
             text = {
                 Text(
-                    "Votre demande de rendez-vous avec ${lawyer.name} sera envoyée. Vous recevrez une confirmation sous 24h.",
+            "Votre demande de rendez-vous avec ${lawyer?.name ?: ""} sera envoyée. Vous recevrez une confirmation sous 24h.",
                     fontFamily = FontFamily.Serif,
                     fontSize = 13.sp,
                     color = AppDarkGreen.copy(alpha = 0.65f),

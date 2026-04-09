@@ -36,25 +36,44 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Lawyer Profile Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvocatProfile(
-    fullName: String = "Maître Yassine El Amrani",
-    title: String = "Avocat au Barreau de Casablanca",
-    email: String = "y.elamrani@cabinetyassine.ma",
-    phone: String = "+212 6 61 23 45 67",
-    address: String = "34, Bd Zerktouni, Casablanca",
-    bio: String = "Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation. Reconnu pour son engagement envers ses clients et ses résultats probants.",
+    fullName: String = "",
+    title: String = "",
+    email: String = "",
+    phone: String = "",
+    address: String = "",
+    bio: String = "",
     profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
-    onNavigateToEdit: () -> Unit = {}
+    onNavigateToEdit: () -> Unit = {},
+    dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
-    val specializations = listOf(
-        "Droit Pénal", "Droit Civil", "Droit des Affaires",
-        "Droit Fiscal", "Contentieux Commercial"
-    )
+    val lawyerProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
+
+    // API fields override the passed-in fallback params
+    val displayName    = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }      ?: fullName
+    val displayTitle   = lawyerProfile?.let {
+        buildString {
+            if (it.speciality.isNotBlank())     append(it.speciality)
+            if (it.barAssociation.isNotBlank()) append(" — Barreau de ${it.barAssociation}")
+        }.takeIf { s -> s.isNotBlank() }
+    } ?: title
+    val displayEmail   = lawyerProfile?.email?.takeIf { it.isNotBlank() }         ?: email
+    val displayPhone   = lawyerProfile?.phone?.takeIf { it.isNotBlank() }         ?: phone
+    val displayAddress = lawyerProfile?.address?.takeIf { it.isNotBlank() }       ?: address
+    val displayBio     = lawyerProfile?.bio?.takeIf { it.isNotBlank() }           ?: bio
+    val specializations = lawyerProfile?.specializations?.takeIf { it.isNotEmpty() }
+        ?: emptyList()
+
+    val yearsExp  = lawyerProfile?.yearsExperience ?: 0
+    val clientCnt = lawyerProfile?.clientCount     ?: 0
+    val rating    = lawyerProfile?.rating          ?: 0f
 
     var showLogOutDialog by remember { mutableStateOf(false) }
 
@@ -108,22 +127,26 @@ fun AvocatProfile(
                 // ── Header Card ───────────────────────────────────────────────
                 item {
                     LawyerHeaderCard(
-                        fullName = fullName,
-                        title = title,
+                        fullName = displayName,
+                        title = displayTitle,
                         profileImageUri = profileImageUri,
-                        yearsExp = 12,
-                        casesWon = 340,
-                        rating = 4.9f
+                        yearsExp = yearsExp,
+                        casesWon = clientCnt,
+                        rating = rating
                     )
                 }
 
-                // ── Specializations ───────────────────────────────────────────
-                item { SectionHeader(title = "Domaines d'Expertise") }
-                item { SpecializationChipsRow(specializations = specializations) }
+                // ── Specializations ───────────────────────────────────────────────
+                if (specializations.isNotEmpty()) {
+                    item { SectionHeader(title = "Domaines d'Expertise") }
+                    item { SpecializationChipsRow(specializations = specializations) }
+                }
 
-                // ── Bio ───────────────────────────────────────────────────────
-                item { SectionHeader(title = "À Propos") }
-                item { LawyerBioCard(bio = bio) }
+                // ── Bio ──────────────────────────────────────────────────────────
+                if (displayBio.isNotBlank()) {
+                    item { SectionHeader(title = "À Propos") }
+                    item { LawyerBioCard(bio = displayBio) }
+                }
 
                 // ── Cabinet Links ─────────────────────────────────────────────
                 item { SectionHeader(title = "Mon Cabinet") }
@@ -132,7 +155,7 @@ fun AvocatProfile(
                         LawyerActionRow(
                             icon = Icons.Default.Business,
                             label = "Mon Cabinet",
-                            subtitle = address,
+                            subtitle = displayAddress,
                             onClick = {}
                         )
                         LawyerDivider()
@@ -164,11 +187,11 @@ fun AvocatProfile(
                 item { SectionHeader(title = "Contact") }
                 item {
                     DashCard {
-                        LawyerInfoRow(Icons.Default.Email, "E-mail", email)
+                        LawyerInfoRow(Icons.Default.Email, "E-mail", displayEmail)
                         LawyerDivider()
-                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", phone)
+                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", displayPhone)
                         LawyerDivider()
-                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", address, isLast = true)
+                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", displayAddress, isLast = true)
                     }
                 }
 

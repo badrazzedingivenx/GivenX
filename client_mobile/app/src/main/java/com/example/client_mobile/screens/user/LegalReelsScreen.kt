@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
@@ -39,34 +41,26 @@ data class LegalReel(
     val isLive: Boolean = false
 )
 
-private val sampleReels = listOf(
-    LegalReel(1, "Maître Sara Benali",     "Droit Famille",   "Comment protéger vos droits lors d'un divorce ?",         1240, "8.2k"),
-    LegalReel(2, "Maître Khalid Tazi",     "Droit Affaires",  "Les 5 erreurs à éviter quand vous créez une entreprise",   987, "5.4k"),
-    LegalReel(3, "Maître Nadia Mansouri",  "Droit du Travail","Licenciement abusif : vos recours légaux expliqués",        643, "3.1k", isLive = true),
-    LegalReel(4, "Maître Youssef El Fassi","Droit Immobilier","Bail commercial : ce que vous devez savoir avant de signer",432, "2.7k"),
-    LegalReel(5, "Maître Amina Chraibi",   "Droit Pénal",     "Garde à vue : vos droits minute par minute",              2103, "12k"),
-)
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 @Composable
-fun LegalReelsScreen(paddingValues: PaddingValues = PaddingValues()) {
-    val staticReels = remember { mutableStateListOf(*sampleReels.toTypedArray()) }
+fun LegalReelsScreen(
+    paddingValues: PaddingValues = PaddingValues(),
+    viewModel: ReelViewModel = viewModel()
+) {
+    val apiReels by viewModel.reels.collectAsStateWithLifecycle()
+    val allReels = remember { mutableStateListOf<LegalReel>() }
 
-    // Merge lawyer-created reels at the top (live from CreatorRepository)
-    val creatorReels = CreatorRepository.reels.map { cr ->
-        LegalReel(
-            id         = cr.id.toInt(),
-            lawyerName = cr.lawyerName,
-            specialty  = cr.specialty,
-            title      = cr.title,
-            likes      = cr.likes,
-            views      = "${cr.views}",
-            isLiked    = cr.isLiked
-        )
-    }
-    val allReels = remember(creatorReels.size) {
-        mutableStateListOf(*(creatorReels + staticReels).toTypedArray())
+    // Rebuild list whenever API data loads or lawyer-created reels change
+    LaunchedEffect(apiReels, CreatorRepository.reels.size) {
+        val loaded = apiReels ?: return@LaunchedEffect
+        val creatorMapped = CreatorRepository.reels.map { cr ->
+            LegalReel(id = cr.id.toInt(), lawyerName = cr.lawyerName, specialty = cr.specialty,
+                title = cr.title, likes = cr.likes, views = "${cr.views}", isLiked = cr.isLiked)
+        }
+        allReels.clear()
+        allReels.addAll(creatorMapped + loaded)
     }
 
     LazyColumn(
