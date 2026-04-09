@@ -3,6 +3,7 @@ package com.example.client_mobile.network
 import com.example.client_mobile.network.dto.AuthResponse
 import com.example.client_mobile.network.dto.LoginRequest
 import com.example.client_mobile.network.dto.RegisterRequest
+import com.example.client_mobile.network.dto.SignupRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
 import retrofit2.Response
@@ -14,14 +15,19 @@ import retrofit2.http.POST
 /**
  * REST endpoints for authentication and the current user's profile.
  *
- * POST /api/auth/login    – returns a JWT
- * POST /api/auth/register – creates an account, returns a JWT
- * GET  /api/auth/me       – returns the logged-in user (requires JWT)
+ * POST /api/login          – returns a JWT
+ * POST /api/signup         – registers a new account, returns a JWT
+ * POST /api/auth/register  – legacy / real-server registration
+ * GET  /api/auth/me        – returns the logged-in user (requires JWT)
  */
 interface AuthApiService {
 
-    @POST("auth/login")
+    @POST("login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
+
+    /** POST /api/signup — unified registration for both users and lawyers. */
+    @POST("signup")
+    suspend fun signup(@Body request: SignupRequest): Response<AuthResponse>
 
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>

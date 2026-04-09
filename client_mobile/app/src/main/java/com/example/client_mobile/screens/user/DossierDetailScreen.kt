@@ -546,10 +546,9 @@ private fun LawyerContactCard(
         Button(
             onClick = {
                 val conv = ConversationRepository.getOrCreate(
-                    lawyerId        = dossier.lawyerId.ifBlank { dossier.id },
-                    lawyerName      = dossier.lawyerName,
-                    lawyerSpecialty = dossier.lawyerSpecialty,
-                    clientName      = UserSession.name
+                    lawyerId   = dossier.lawyerId.ifBlank { dossier.id },
+                    lawyerName = dossier.lawyerName,
+                    clientName = UserSession.name
                 )
                 onNavigateToChat(conv.id)
             },

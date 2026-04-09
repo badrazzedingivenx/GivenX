@@ -100,7 +100,9 @@ fun LawyerDashboardHost(
         MediaPickerFlow(
             postType    = mediaPickerType!!,
             onPublished = { mediaPickerType = null },
-            onCancel    = { mediaPickerType = null }
+            onCancel    = { mediaPickerType = null },
+            lawyerName  = displayName,
+            specialty   = displaySpeciality
         )
         return
     }
@@ -256,8 +258,8 @@ fun LawyerDashboardHost(
                 onGoLive = {
                     showCreateSheet = false
                     activeLiveId = CreatorRepository.goLive(
-                        lawyerName = LawyerSession.fullName,
-                        specialty  = LawyerSession.title,
+                        lawyerName = displayName,
+                        specialty  = displaySpeciality,
                         topic      = "Q&A en direct"
                     )
                 }

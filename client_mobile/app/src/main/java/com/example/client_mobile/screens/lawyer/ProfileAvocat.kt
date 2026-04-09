@@ -129,6 +129,7 @@ fun AvocatProfile(
                     LawyerHeaderCard(
                         fullName = displayName,
                         title = displayTitle,
+                        avatarUrl = lawyerProfile?.avatarUrl ?: "",
                         profileImageUri = profileImageUri,
                         yearsExp = yearsExp,
                         casesWon = clientCnt,
@@ -338,6 +339,7 @@ fun AvocatProfile(
 private fun LawyerHeaderCard(
     fullName: String,
     title: String,
+    avatarUrl: String = "",
     profileImageUri: Uri?,
     yearsExp: Int,
     casesWon: Int,
@@ -374,7 +376,18 @@ private fun LawyerHeaderCard(
             ) {
                 // Avatar + verified badge
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    if (profileImageUri != null) {
+                    if (avatarUrl.isNotBlank()) {
+                        // CDN URL from API — shown with highest priority
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = "Photo de profil",
+                            modifier = Modifier
+                                .size(96.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, AppGoldColor, CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else if (profileImageUri != null) {
                         AsyncImage(
                             model = profileImageUri,
                             contentDescription = "Photo de profil",

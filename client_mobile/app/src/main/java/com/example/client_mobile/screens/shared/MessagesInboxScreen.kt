@@ -21,14 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 // ─── Messages Inbox Screen ────────────────────────────────────────────────────
 @Composable
 fun MessagesInboxScreen(
     isLawyer: Boolean,
     paddingValues: PaddingValues = PaddingValues(),
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    conversationViewModel: ConversationViewModel = viewModel()
 ) {
+    // Trigger fetch on first composition; ConversationRepository is the source of truth
     val conversations = ConversationRepository.conversations
     DashBoardBackground {
         MessagesInboxContent(
@@ -114,8 +118,8 @@ private fun ConversationCard(
     isLawyer: Boolean,
     onClick: () -> Unit
 ) {
-    val otherName = if (isLawyer) conversation.clientName else conversation.lawyerName
-    val unreadCount = if (isLawyer) conversation.unreadCountForLawyer else conversation.unreadCountForUser
+    val otherName = conversation.otherPartyName
+    val unreadCount = conversation.unreadCount
     val initials = otherName
         .removePrefix("Maître ")
         .split(" ")
@@ -147,13 +151,21 @@ private fun ConversationCard(
                     .background(AppDarkGreen),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    initials,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = AppGoldColor
-                )
+                if (conversation.avatarUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = conversation.avatarUrl,
+                        contentDescription = otherName,
+                        modifier = Modifier.fillMaxSize().clip(CircleShape)
+                    )
+                } else {
+                    Text(
+                        initials,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = AppGoldColor
+                    )
+                }
             }
 
             Column(
@@ -175,9 +187,9 @@ private fun ConversationCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    if (conversation.lastTimestamp.isNotEmpty()) {
+                    if (conversation.timestamp.isNotEmpty()) {
                         Text(
-                            conversation.lastTimestamp,
+                            conversation.timestamp,
                             fontFamily = FontFamily.Serif,
                             fontSize = 10.sp,
                             color = AppDarkGreen.copy(alpha = 0.40f),
@@ -223,9 +235,9 @@ private fun ConversationCard(
                     }
                 }
 
-                if (!isLawyer && conversation.lawyerSpecialty.isNotEmpty()) {
+                if (!isLawyer && conversation.timestamp.isNotEmpty()) {
                     Text(
-                        conversation.lawyerSpecialty,
+                        conversation.timestamp,
                         fontFamily = FontFamily.Serif,
                         fontSize = 10.sp,
                         color = AppGoldColor.copy(alpha = 0.80f)

@@ -86,9 +86,11 @@ class UserDashboardViewModel : ViewModel() {
                 if (dto != null) {
                     val fullName = "${dto.firstName} ${dto.lastName}".trim()
                     if (fullName.isNotBlank()) UserSession.name    = fullName
-                    if (dto.email.isNotBlank()) UserSession.email  = dto.email
-                    if (dto.phone.isNotBlank()) UserSession.phone  = dto.phone
+                    if (dto.email.isNotBlank())   UserSession.email   = dto.email
+                    if (dto.phone.isNotBlank())   UserSession.phone   = dto.phone
                     if (dto.address.isNotBlank()) UserSession.address = dto.address
+                    val avatar = dto.effectiveAvatarUrl()
+                    if (avatar.isNotBlank()) UserSession.avatarUrl = avatar
                 }
             } else {
                 _firstName.value = ""

@@ -66,6 +66,8 @@ object UserSession {
     var email by mutableStateOf("")
     var phone by mutableStateOf("")
     var address by mutableStateOf("")
+    /** CDN URL returned by the API (populated after login and profile fetch). */
+    var avatarUrl by mutableStateOf("")
     var profileImageUri by mutableStateOf<Uri?>(null)
 
     fun updateProfile(newName: String, newEmail: String, newPhone: String, newAddress: String, newImageUri: Uri?) {

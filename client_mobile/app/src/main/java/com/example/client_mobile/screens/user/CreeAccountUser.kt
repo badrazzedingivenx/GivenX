@@ -30,14 +30,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
 
 @Composable
 fun CreeUserScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -51,6 +55,17 @@ fun CreeUserScreen(
     var emailError by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf(false) }
     var confirmPasswordError by remember { mutableStateOf(false) }
+
+    val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
+    val isLoading = registerState is AuthViewModel.RegisterUiState.Loading
+    val authError = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
+
+    LaunchedEffect(registerState) {
+        if (registerState is AuthViewModel.RegisterUiState.Success) {
+            authViewModel.resetRegisterState()
+            onNavigateToHome()
+        }
+    }
 
     val darkGreen = Color(0xFF1B3124)
 
@@ -159,6 +174,18 @@ fun CreeUserScreen(
                         onVisibilityToggle = { isConfirmPasswordVisible = !isConfirmPasswordVisible }
                     )
                     Spacer(modifier = Modifier.height(30.dp))
+                    authError?.let { err ->
+                        Text(
+                            text = err,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Serif,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        )
+                    }
                     Button(
                         onClick = {
                             fullNameError = fullName.isBlank()
@@ -167,23 +194,36 @@ fun CreeUserScreen(
                             confirmPasswordError = confirmPassword.isBlank() || confirmPassword != password
                             
                             if (!fullNameError && !emailError && !passwordError && !confirmPasswordError) {
-                                // Logic for API call will go here
-                                onNavigateToHome()
+                                authViewModel.register(
+                                    fullName = fullName,
+                                    email    = email,
+                                    password = password,
+                                    role     = "user"
+                                )
                             }
                         },
+                        enabled = !isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                         shape = RoundedCornerShape(25.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(55.dp)
                     ) {
-                        Text(
-                            text = "S'inscrire",
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = Color.White,
+                                strokeWidth = 2.5.dp
+                            )
+                        } else {
+                            Text(
+                                text = "S'inscrire",
+                                fontSize = 18.sp,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                     Row(

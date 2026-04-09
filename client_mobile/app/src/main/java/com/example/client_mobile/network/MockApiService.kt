@@ -2,6 +2,8 @@ package com.example.client_mobile.network
 
 import com.example.client_mobile.network.dto.AppointmentDto
 import com.example.client_mobile.network.dto.BillingSummaryDto
+import com.example.client_mobile.network.dto.ChatMessageApiDto
+import com.example.client_mobile.network.dto.ConversationApiDto
 import com.example.client_mobile.network.dto.DocumentApiDto
 import com.example.client_mobile.network.dto.DossierDto
 import com.example.client_mobile.network.dto.LawyerDto
@@ -14,6 +16,7 @@ import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.network.dto.UserDto
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -104,4 +107,14 @@ interface MockApiService {
      */
     @GET("lawyers/me/stats")
     suspend fun getLawyerStats(): Response<LawyerStatsDto>
+
+    // ── Messages ──────────────────────────────────────────────────────────────
+
+    /** GET /api/messages — all conversations for the authenticated user or lawyer. */
+    @GET("messages")
+    suspend fun getMessages(): Response<List<ConversationApiDto>>
+
+    /** GET /api/messages/{id} — message thread for one conversation. */
+    @GET("messages/{id}")
+    suspend fun getChatDetails(@Path("id") id: String): Response<List<ChatMessageApiDto>>
 }

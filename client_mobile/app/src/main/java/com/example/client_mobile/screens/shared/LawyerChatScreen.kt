@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 // --- Chat Screen (bidirectional) ----------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,11 +35,15 @@ fun ChatScreen(
     currentUserName: String = if (isLawyer) "Avocat" else UserSession.name.ifBlank { "" },
     onBack: () -> Unit = {}
 ) {
+    // Fetch messages from API on first composition
+    val chatViewModel: ChatViewModel = viewModel(
+        factory = ChatViewModel.Factory(conversationId)
+    )
     val conversation = ConversationRepository.conversations.find { it.id == conversationId }
     val messages = ConversationRepository.getMessages(conversationId)
 
-    val otherName = if (isLawyer) conversation?.clientName ?: "" else conversation?.lawyerName ?: ""
-    val otherSubtitle = if (isLawyer) "Client" else conversation?.lawyerSpecialty ?: ""
+    val otherName = conversation?.otherPartyName ?: ""
+    val otherSubtitle = ""
 
     val initials = otherName
         .removePrefix("Ma�tre ")
@@ -50,8 +56,8 @@ fun ChatScreen(
     val listState = rememberLazyListState()
 
     LaunchedEffect(conversationId) {
-        if (isLawyer) ConversationRepository.markReadByLawyer(conversationId)
-        else ConversationRepository.markReadByUser(conversationId)
+        if (isLawyer) ConversationRepository.markRead(conversationId)
+        else ConversationRepository.markRead(conversationId)
     }
 
     LaunchedEffect(messages.size) {
@@ -73,13 +79,21 @@ fun ChatScreen(
                                 .background(AppDarkGreen),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                initials,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = AppGoldColor
-                            )
+                            if (conversation?.avatarUrl?.isNotBlank() == true) {
+                                AsyncImage(
+                                    model = conversation.avatarUrl,
+                                    contentDescription = otherName,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
+                                Text(
+                                    initials,
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = AppGoldColor
+                                )
+                            }
                         }
                         Column {
                             Text(

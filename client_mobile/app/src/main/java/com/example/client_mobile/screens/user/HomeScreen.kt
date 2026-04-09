@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
+import coil.compose.AsyncImage
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -69,8 +70,11 @@ fun UserDashboardHost(
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Live user initials from Firestore
+    // Live user initials + photo from REST profile
     val profile by userViewModel.profile.collectAsStateWithLifecycle()
+    val photoUrl = profile?.photoUrl?.takeIf { it.isNotBlank() }
+        ?: profile?.let { "" }  // resolved via UserSession after fetch, see below
+        ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
     val initials = profile?.let {
         "${it.firstName} ${it.lastName}".trim()
             .split(" ")
@@ -167,16 +171,23 @@ fun UserDashboardHost(
                             border   = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                if (!initials.isNullOrBlank()) {
-                                    Text(
+                                val resolvedPhoto = profile?.photoUrl?.takeIf { it.isNotBlank() }
+                                    ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
+                                when {
+                                    !resolvedPhoto.isNullOrBlank() -> AsyncImage(
+                                        model              = resolvedPhoto,
+                                        contentDescription = "Profil",
+                                        modifier           = Modifier.fillMaxSize().clip(CircleShape),
+                                        contentScale       = ContentScale.Crop
+                                    )
+                                    !initials.isNullOrBlank() -> Text(
                                         text       = initials,
                                         fontFamily = FontFamily.Serif,
                                         fontWeight = FontWeight.Bold,
                                         fontSize   = 13.sp,
                                         color      = AppGoldColor
                                     )
-                                } else {
-                                    Icon(
+                                    else -> Icon(
                                         Icons.Default.Person,
                                         contentDescription = "Profil",
                                         tint     = AppGoldColor,

@@ -15,6 +15,10 @@ import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.user.*
 import com.example.client_mobile.screens.lawyer.*
 import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.services.UserService
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
 
 @Composable
 fun AppNavigation() {
@@ -141,15 +145,17 @@ fun AppNavigation() {
         }
 
         composable("EditLawyerProfile") {
+            val editVm: LawyerDashboardViewModel = viewModel()
+            val editProfile by editVm.profile.collectAsStateWithLifecycle()
             EditLawyerProfileScreen(
-                initialName = LawyerSession.fullName,
-                initialTitle = LawyerSession.title,
-                initialEmail = LawyerSession.email,
-                initialPhone = LawyerSession.phone,
-                initialAddress = LawyerSession.address,
-                initialBio = LawyerSession.bio,
-                initialSpecs = LawyerSession.specializations,
-                initialImageUri = LawyerSession.profileImageUri,
+                initialName    = editProfile?.fullName          ?: "",
+                initialTitle   = editProfile?.speciality        ?: "",
+                initialEmail   = editProfile?.email             ?: "",
+                initialPhone   = editProfile?.phone             ?: "",
+                initialAddress = editProfile?.address           ?: "",
+                initialBio     = editProfile?.bio               ?: "",
+                initialSpecs   = editProfile?.specializations   ?: emptyList(),
+                initialImageUri = null,
                 onBack = { navController.popBackStack() },
                 onSave = { name, title, email, phone, address, bio, specs, imageUri ->
                     LawyerSession.updateProfile(name, title, email, phone, address, bio, specs, imageUri)

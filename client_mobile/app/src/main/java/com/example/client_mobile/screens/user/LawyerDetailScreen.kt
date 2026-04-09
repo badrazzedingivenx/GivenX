@@ -67,10 +67,9 @@ fun LawyerDetailScreen(
                 actions = {
                     IconButton(onClick = {
                         val conv = ConversationRepository.getOrCreate(
-                            lawyerId        = lawyerId,
-                            lawyerName      = lawyer?.name      ?: "",
-                            lawyerSpecialty = lawyer?.specialty ?: "",
-                            clientName      = UserSession.name
+                            lawyerId   = lawyerId,
+                            lawyerName = lawyer?.name ?: "",
+                            clientName = UserSession.name
                         )
                         onNavigateToChat(conv.id)
                     }) {
@@ -217,10 +216,9 @@ fun LawyerDetailScreen(
                         Button(
                             onClick = {
                                 val conv = ConversationRepository.getOrCreate(
-                                    lawyerId        = lawyerId,
-                                    lawyerName      = lawyer?.name      ?: "",
-                                    lawyerSpecialty = lawyer?.specialty ?: "",
-                                    clientName      = UserSession.name
+                                    lawyerId   = lawyerId,
+                                    lawyerName = lawyer?.name ?: "",
+                                    clientName = UserSession.name
                                 )
                                 onNavigateToChat(conv.id)
                             },
