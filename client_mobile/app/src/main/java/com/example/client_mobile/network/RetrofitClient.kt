@@ -30,8 +30,15 @@ object RetrofitClient {
     private const val LOCAL_BASE_URL = "http://10.0.2.2:3000/api/"
 
     /**
-     * Toggle: set true to hit the Postman Mock, false for local dev server.
-     * NOTE: do NOT commit API keys in production — use BuildConfig fields instead.
+     * Toggle: set true to hit the Postman Mock, false for local Express server.
+     *
+     * Local server test accounts (POST http://localhost:3000/api/seed to create):
+     *   CLIENT  →  tarik@example.com   / 123456  → dashboard dyal l-muwakil
+     *   LAWYER  →  yassine@example.com / 123456  → dashboard dyal l-mu7ami
+     *
+     * To run the local server:
+     *   cd api_server && npm install && node index.js
+     * Then set USE_MOCK_SERVER = false and run the app on an emulator.
      */
     private const val USE_MOCK_SERVER = true
 
