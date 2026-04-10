@@ -32,8 +32,8 @@ interface AuthApiService {
     @POST("api/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
-    /** POST /api/register */
-    @POST("api/register")
+    /** POST /api/auth/register-user — legacy register (camelCase body). */
+    @POST("api/auth/register-user")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
     /** POST /api/auth/register-user — register a new client account. */
@@ -44,19 +44,19 @@ interface AuthApiService {
     @POST("api/auth/register-lawyer")
     suspend fun signupLawyer(@Body request: RegisterLawyerRequest): Response<AuthResponse>
 
-    /** GET /api/auth/me — client's own profile. JWT added by interceptor. */
-    @GET("api/auth/me")
+    /** GET /api/users/me — client's own profile. JWT added by interceptor. */
+    @GET("api/users/me")
     suspend fun getMe(): Response<UserDto>
 
-    /** PUT /api/auth/me — update client profile fields. */
-    @PUT("api/auth/me")
+    /** PUT /api/users/me — update client profile fields. */
+    @PUT("api/users/me")
     suspend fun updateMe(@Body request: UpdateProfileRequest): Response<UserDto>
 
     /** GET /api/lawyers/me — lawyer's own full profile. */
-    @GET("api/auth/me")
+    @GET("api/lawyers/me")
     suspend fun getLawyerMe(): Response<LawyerProfileDto>
 
-    /** PUT /api/auth/me — update lawyer profile fields. */
-    @PUT("api/auth/me")
+    /** PUT /api/lawyers/me — update lawyer profile fields. */
+    @PUT("api/lawyers/me")
     suspend fun updateLawyerMe(@Body request: UpdateLawyerProfileRequest): Response<LawyerProfileDto>
 }

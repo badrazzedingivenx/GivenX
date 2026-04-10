@@ -82,26 +82,37 @@ class UserDashboardViewModel : ViewModel() {
     // ── Private fetchers ──────────────────────────────────────────────────────
 
     private suspend fun fetchUser() {
+        // Seed immediately from login cache so the greeting renders before network
+        if (_firstName.value == null) {
+            val cachedName = TokenManager.getFullName()
+            if (cachedName.isNotBlank()) {
+                _firstName.value = cachedName.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: cachedName
+            }
+        }
         try {
             val response = RetrofitClient.mockApi.getMe()
             if (response.isSuccessful) {
                 val dto = response.body()
-                _firstName.value = dto?.firstName?.takeIf { it.isNotBlank() } ?: ""
+                val fullName = dto?.effectiveFullName() ?: ""
+                _firstName.value = fullName.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: fullName
                 // Sync into UserSession for backward-compatible screens (e.g. LawyerChatScreen)
                 if (dto != null) {
-                    val fullName = "${dto.firstName} ${dto.lastName}".trim()
-                    if (fullName.isNotBlank()) UserSession.name    = fullName
+                    if (fullName.isNotBlank())    UserSession.name    = fullName
                     if (dto.email.isNotBlank())   UserSession.email   = dto.email
                     if (dto.phone.isNotBlank())   UserSession.phone   = dto.phone
                     if (dto.address.isNotBlank()) UserSession.address = dto.address
                     val avatar = dto.effectiveAvatarUrl()
                     if (avatar.isNotBlank()) UserSession.avatarUrl = avatar
+                    // Refresh TokenManager with latest values
+                    if (fullName.isNotBlank())    TokenManager.saveFullName(fullName)
+                    if (avatar.isNotBlank())      TokenManager.saveAvatarUrl(avatar)
+                    if (dto.city.isNotBlank())    TokenManager.saveCity(dto.city)
                 }
             } else {
-                _firstName.value = ""
+                if (_firstName.value == null) _firstName.value = ""
             }
         } catch (_: Exception) {
-            _firstName.value = ""
+            if (_firstName.value == null) _firstName.value = ""
             _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }

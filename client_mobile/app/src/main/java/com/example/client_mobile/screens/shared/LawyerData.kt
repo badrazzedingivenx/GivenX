@@ -88,6 +88,7 @@ object LawyerSession {
     var phone by mutableStateOf("")
     var address by mutableStateOf("")
     var bio by mutableStateOf("")
+    var avatarUrl by mutableStateOf("")
     var profileImageUri by mutableStateOf<Uri?>(null)
     val specializations = mutableStateListOf<String>()
 

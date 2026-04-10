@@ -16,12 +16,15 @@ import com.example.client_mobile.network.dto.SaveConsultationRequest
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
+import com.example.client_mobile.network.dto.UpdateProfileRequest
+import com.example.client_mobile.network.dto.UserDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -74,6 +77,18 @@ interface HaqApiService {
     @GET("api/lawyers/me/stats")
     suspend fun getLawyerStats(): Response<ApiResponse<LawyerStatsDto>>
 
+    // ── User Profile ─────────────────────────────────────────────────────────
+
+    /** GET /api/users/me — authenticated user's full profile. */
+    @GET("api/users/me")
+    suspend fun getUserProfile(): Response<ApiResponse<UserDto>>
+
+    /** PUT /api/users/me — update authenticated user's profile. */
+    @PUT("api/users/me")
+    suspend fun updateUserProfile(
+        @Body request: UpdateProfileRequest
+    ): Response<ApiResponse<UserDto>>
+
     // ── Dossiers ──────────────────────────────────────────────────────────────
 
     /**
@@ -82,7 +97,7 @@ interface HaqApiService {
      * The JWT in the Authorization header is validated server-side to ensure
      * the caller can only read their own dossiers.
      */
-    @GET("dossiers/{userId}")
+    @GET("api/dossiers/{userId}")
     suspend fun getDossiers(
         @Path("userId") userId: String
     ): Response<ApiResponse<List<DossierDto>>>
@@ -92,14 +107,14 @@ interface HaqApiService {
      * Convenience endpoint: returns the current user's dossiers using
      * the JWT alone (no explicit userId needed).
      */
-    @GET("dossiers/me")
+    @GET("api/dossiers/me")
     suspend fun getMyDossiers(): Response<ApiResponse<List<DossierDto>>>
 
     /**
      * GET /api/dossiers/detail/{id}
      * Returns a single dossier by its database ID.
      */
-    @GET("dossiers/detail/{id}")
+    @GET("api/dossiers/{id}")
     suspend fun getDossierById(
         @Path("id") id: String
     ): Response<ApiResponse<DossierDto>>
@@ -110,7 +125,7 @@ interface HaqApiService {
      * POST /api/consultations
      * Creates a consultation record when a user matches a lawyer.
      */
-    @POST("consultations")
+    @POST("api/consultations")
     suspend fun saveConsultation(
         @Body request: SaveConsultationRequest
     ): Response<ApiResponse<Unit>>
@@ -118,13 +133,13 @@ interface HaqApiService {
     // ── Appointments ──────────────────────────────────────────────────────────
 
     /** GET /api/appointments/me — returns all appointments for the current user. */
-    @GET("appointments/me")
+    @GET("api/appointments/me")
     suspend fun getMyAppointments(): Response<ApiResponse<List<AppointmentDto>>>
 
     // ── Billing ───────────────────────────────────────────────────────────────
 
     /** GET /api/billing/me — returns billing summary + invoice list for current user. */
-    @GET("billing/me")
+    @GET("api/billing/me")
     suspend fun getMyBilling(): Response<ApiResponse<BillingSummaryDto>>
 
     // ── Documents ─────────────────────────────────────────────────────────────
@@ -134,33 +149,34 @@ interface HaqApiService {
     suspend fun getMyDocuments(): Response<ApiResponse<List<DocumentApiDto>>>
 
     /** POST /api/documents — upload / register a new document record. */
-    @POST("documents")
+    @POST("api/documents")
     suspend fun createDocument(
         @Body request: CreateDocumentRequest
     ): Response<ApiResponse<DocumentApiDto>>
 
     /** PATCH /api/documents/{id} — rename an existing document. */
-    @PATCH("documents/{id}")
+    @PATCH("api/documents/{id}")
     suspend fun renameDocument(
         @Path("id") id: String,
         @Body request: RenameDocumentRequest
     ): Response<ApiResponse<DocumentApiDto>>
 
     /** DELETE /api/documents/{id} — remove a document record. */
-    @DELETE("documents/{id}")
+    @DELETE("api/documents/{id}")
     suspend fun deleteDocument(
         @Path("id") id: String
     ): Response<ApiResponse<Unit>>
 
     // ── Messages ──────────────────────────────────────────────────────────────
 
-    /** GET /api/messages — all conversations for the authenticated user or lawyer. */
-    @GET("api/messages")
+    /** GET /api/conversations — all conversations for the authenticated user or lawyer. */
+    @GET("api/conversations")
     suspend fun getMessages(): Response<ApiResponse<List<ConversationApiDto>>>
 
-    /** POST /api/messages/send — send a text message in a conversation. */
-    @POST("api/messages/send")
+    /** POST /api/conversations/{id}/messages — send a text message in a conversation. */
+    @POST("api/conversations/{id}/messages")
     suspend fun sendMessage(
+        @Path("id") conversationId: String,
         @Body request: SendMessageRequest
     ): Response<ApiResponse<SendMessageResponseDto>>
 

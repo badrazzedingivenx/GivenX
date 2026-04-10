@@ -21,6 +21,7 @@ object TokenManager {
     private const val KEY_USER_TYPE = "user_type"
     private const val KEY_FULL_NAME = "user_full_name"
     private const val KEY_AVATAR_URL= "user_avatar_url"
+    private const val KEY_CITY      = "user_city"
 
     private lateinit var prefs: SharedPreferences
 
@@ -78,6 +79,9 @@ object TokenManager {
 
     fun saveAvatarUrl(url: String) = prefs.edit().putString(KEY_AVATAR_URL, url).apply()
     fun getAvatarUrl(): String = prefs.getString(KEY_AVATAR_URL, "") ?: ""
+
+    fun saveCity(city: String) = prefs.edit().putString(KEY_CITY, city).apply()
+    fun getCity(): String = prefs.getString(KEY_CITY, "") ?: ""
 
     // ── Cached user/lawyer JSON (avoids re-fetching profile on every screen open) ──
 

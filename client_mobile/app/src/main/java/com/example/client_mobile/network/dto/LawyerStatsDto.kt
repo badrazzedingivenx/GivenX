@@ -22,6 +22,9 @@ data class LawyerProfileDto(
     @SerializedName("rating")           val rating:          Float   = 0f,
     @SerializedName("review_count")     val reviewCount:     Int     = 0,
     @SerializedName("client_count")     val clientCount:     Int     = 0,
+    @SerializedName("status")           val status:          String  = "active",
+    @SerializedName("created_at")       val createdAt:       String  = "",
+    @SerializedName("updated_at")       val updatedAt:       String  = "",
     @SerializedName("role")             val role:            String  = "lawyer"
 )
 

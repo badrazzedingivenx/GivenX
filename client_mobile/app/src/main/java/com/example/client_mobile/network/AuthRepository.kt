@@ -98,6 +98,8 @@ object AuthRepository {
         if (fullName.isNotBlank())  TokenManager.saveFullName(fullName)
         val avatarUrl = user?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() } ?: ""
         if (avatarUrl.isNotBlank()) TokenManager.saveAvatarUrl(avatarUrl)
+        val city = user?.city?.takeIf { it.isNotBlank() } ?: ""
+        if (city.isNotBlank())      TokenManager.saveCity(city)
 
         // Cache the full user object so Profile screens can render without a network call
         if (user != null) {

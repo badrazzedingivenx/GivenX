@@ -142,13 +142,7 @@ fun LawyerDashboardHost(
                             color = AppDarkGreen
                         )
                     } else {
-                        Text(
-                            "GivenX",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = AppDarkGreen
-                        )
+
                     }
                 },
                 actions = {

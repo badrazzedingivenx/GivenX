@@ -6,6 +6,7 @@ import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
+import com.example.client_mobile.screens.shared.LawyerSession
 import com.google.gson.Gson
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +90,9 @@ class LawyerDashboardViewModel : ViewModel() {
             val cached = TokenManager.getLawyerJson()
             if (cached != null) {
                 try {
-                    _profile.value = Gson().fromJson(cached, LawyerProfileDto::class.java)
+                    val dto = Gson().fromJson(cached, LawyerProfileDto::class.java)
+                    _profile.value = dto
+                    syncLawyerSession(dto)
                 } catch (_: Exception) { /* malformed cache — ignore */ }
             }
         }
@@ -102,6 +105,7 @@ class LawyerDashboardViewModel : ViewModel() {
                 val dto = response.body()?.data
                 if (dto != null) {
                     _profile.value = dto
+                    syncLawyerSession(dto)
                     TokenManager.saveLawyerJson(Gson().toJson(dto))
                 }
                 return
@@ -112,6 +116,7 @@ class LawyerDashboardViewModel : ViewModel() {
                 val dto = mockResponse.body()
                 if (dto != null) {
                     _profile.value = dto
+                    syncLawyerSession(dto)
                     TokenManager.saveLawyerJson(Gson().toJson(dto))
                 }
             }
@@ -122,15 +127,30 @@ class LawyerDashboardViewModel : ViewModel() {
                     val dto = mockResponse.body()
                     if (dto != null) {
                         _profile.value = dto
+                        syncLawyerSession(dto)
                         TokenManager.saveLawyerJson(Gson().toJson(dto))
                     }
                 } else {
-                    if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur r\u00e9seau. V\u00e9rifiez votre connexion." }
+                    if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
                 }
             } catch (_: Exception) {
-                if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur r\u00e9seau. V\u00e9rifiez votre connexion." }
+                if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
             }
         }
+    }
+
+    /** Pushes lawyer profile data into [LawyerSession] so all screens see it immediately. */
+    private fun syncLawyerSession(dto: LawyerProfileDto) {
+        if (dto.fullName.isNotBlank())    LawyerSession.fullName = dto.fullName
+        if (dto.speciality.isNotBlank())  LawyerSession.title    = dto.speciality
+        if (dto.email.isNotBlank())       LawyerSession.email    = dto.email
+        if (dto.phone.isNotBlank())       LawyerSession.phone    = dto.phone
+        if (dto.address.isNotBlank())     LawyerSession.address  = dto.address
+        if (dto.bio.isNotBlank())         LawyerSession.bio      = dto.bio
+        if (dto.avatarUrl.isNotBlank())   LawyerSession.avatarUrl = dto.avatarUrl
+        // Save key fields back to TokenManager for cross-session persistence
+        if (dto.fullName.isNotBlank())    TokenManager.saveFullName(dto.fullName)
+        if (dto.avatarUrl.isNotBlank())   TokenManager.saveAvatarUrl(dto.avatarUrl)
     }
 
     private suspend fun fetchStats() {

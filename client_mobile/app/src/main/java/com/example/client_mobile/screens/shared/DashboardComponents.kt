@@ -290,11 +290,6 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
         ) {
             tabs.forEachIndexed { index, (icon, label) ->
                 val selected = selectedTab == index
-                val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.20f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "userTabScale_$index"
-                )
                 val indicatorWidth by animateDpAsState(
                     targetValue = if (selected) 16.dp else 0.dp,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -311,7 +306,7 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
                         imageVector = icon,
                         contentDescription = label,
                         tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp).scale(iconScale)
+                        modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = label,
@@ -374,11 +369,6 @@ fun LawyerNavBottomBar(
         ) {
             LawyerTab.all.forEach { tab ->
                 val selected = currentRoute == tab.route
-                val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.20f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "lawyerTabScale_${tab.route}"
-                )
                 val indicatorWidth by animateDpAsState(
                     targetValue = if (selected) 16.dp else 0.dp,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -395,7 +385,7 @@ fun LawyerNavBottomBar(
                         imageVector = tab.icon,
                         contentDescription = tab.label,
                         tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp).scale(iconScale)
+                        modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = tab.label,
@@ -440,11 +430,6 @@ fun UserNavBottomBar(
         ) {
             UserTab.all.forEach { tab ->
                 val selected = currentRoute == tab.route
-                val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.20f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "userNavTabScale_${tab.route}"
-                )
                 val indicatorWidth by animateDpAsState(
                     targetValue = if (selected) 16.dp else 0.dp,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -464,7 +449,7 @@ fun UserNavBottomBar(
                         imageVector = tab.icon,
                         contentDescription = tab.label,
                         tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp).scale(iconScale)
+                        modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = tab.label,

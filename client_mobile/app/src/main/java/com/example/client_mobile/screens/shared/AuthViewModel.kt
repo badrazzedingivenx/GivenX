@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.client_mobile.network.AuthRepository
 import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.network.dto.LawyerProfileDto
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -36,6 +38,23 @@ class AuthViewModel : ViewModel() {
                 UserSession.email = TokenManager.getEmail() ?: ""
                 // "lawyer" → LawyerDashboard, "user"/"CLIENT" → ClientDashboard
                 val resolvedRole = TokenManager.getUserType() // "lawyer" | "user"
+                // Populate LawyerSession immediately from cache so screens that
+                // read LawyerSession.fullName directly (e.g. LiveStudioScreen) work.
+                if (resolvedRole == "lawyer") {
+                    if (fullName.isNotBlank())  LawyerSession.fullName = fullName
+                    if (avatarUrl.isNotBlank()) LawyerSession.avatarUrl = avatarUrl
+                    LawyerSession.email = TokenManager.getEmail() ?: ""
+                    val lawyerJson = TokenManager.getLawyerJson()
+                    if (lawyerJson != null) {
+                        try {
+                            val dto = Gson().fromJson(lawyerJson, LawyerProfileDto::class.java)
+                            if (dto.speciality.isNotBlank()) LawyerSession.title   = dto.speciality
+                            if (dto.phone.isNotBlank())      LawyerSession.phone   = dto.phone
+                            if (dto.address.isNotBlank())    LawyerSession.address = dto.address
+                            if (dto.bio.isNotBlank())        LawyerSession.bio     = dto.bio
+                        } catch (_: Exception) { /* malformed cache — ignore */ }
+                    }
+                }
                 _loginState.value = LoginUiState.Success(resolvedRole)
             } catch (e: Exception) {
                 _loginState.value = LoginUiState.Error(
