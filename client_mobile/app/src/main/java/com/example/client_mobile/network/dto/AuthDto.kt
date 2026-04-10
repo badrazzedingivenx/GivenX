@@ -29,11 +29,30 @@ data class SignupRequest(
 )
 
 /**
- * Flexible auth response that handles both:
- *   Real API  — { "success": true, "data": { "profile": {...}, "token": "...", "refresh_token": "..." } }
- *   Legacy mock — { "token": "abc123", "user": {...} }
+ * One entry inside the "profiles" map returned by the multi-profile mock:
+ *   { "token": "...", "role": "CLIENT", "user": { ... } }
+ */
+data class ProfileEntry(
+    @SerializedName("token") val token: String  = "",
+    @SerializedName("role")  val role:  String  = "",
+    @SerializedName("user")  val user:  UserDto? = null
+)
+
+/**
+ * Flexible auth response that handles three shapes:
+ *
+ *   1. Multi-profile mock (Mockable.io testing):
+ *      { "profiles": { "tarik@example.com": { "token": "...", "role": "CLIENT", "user": {...} }, ... } }
+ *
+ *   2. Real API envelope:
+ *      { "success": true, "data": { "profile": {...}, "token": "..." } }
+ *
+ *   3. Legacy flat mock:
+ *      { "token": "abc123", "role": "user", "user": {...} }
  */
 data class AuthResponse(
+    // Multi-profile mock map — keyed by email address
+    @SerializedName("profiles")   val profiles:     Map<String, ProfileEntry>? = null,
     // Real API envelope
     @SerializedName("success")    val success:      Boolean       = false,
     @SerializedName("data")       val data:         AuthLoginData? = null,
@@ -43,6 +62,13 @@ data class AuthResponse(
     @SerializedName("role")       val role:         String        = "",
     @SerializedName("user")       val legacyUser:   UserDto?      = null
 ) {
+    /**
+     * Looks up [email] in the profiles map and returns the matching entry,
+     * or null if this response does not use the multi-profile format.
+     */
+    fun profileFor(email: String): ProfileEntry? =
+        profiles?.get(email.lowercase().trim())
+
     /** JWT — tries nested envelope first, then flat field. */
     fun effectiveToken(): String  = data?.token?.takeIf { it.isNotBlank() } ?: legacyToken
     /** User profile — tries nested envelope first, then flat field. */

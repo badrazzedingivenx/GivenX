@@ -56,15 +56,33 @@ object AuthRepository {
             throw Exception("Réponse du serveur invalide (corps vide)")
         }
 
-        val body  = response.body()!!
-        val token = body.effectiveToken()
-        if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
+        val body = response.body()!!
 
-        val user          = body.effectiveUser()
-        // Priority: user.role → top-level body.role → caller-supplied userType
-        val effectiveRole = user?.role?.uppercase()?.takeIf { it.isNotBlank() }
-            ?: body.role.uppercase().takeIf { it.isNotBlank() }
-            ?: userType.uppercase()
+        // ── Shape 1: multi-profile mock — look up by the entered email ─────────
+        val entry = body.profileFor(email)
+        val token: String
+        val user: com.example.client_mobile.network.dto.UserDto?
+        val effectiveRole: String
+
+        if (entry != null) {
+            // Found a matching profile in the "profiles" map
+            token = entry.token.takeIf { it.isNotBlank() }
+                ?: throw Exception("Token manquant pour ce compte")
+            user  = entry.user
+            effectiveRole = entry.role.uppercase().takeIf { it.isNotBlank() }
+                ?: user?.role?.uppercase()?.takeIf { it.isNotBlank() }
+                ?: userType.uppercase()
+        } else {
+            // ── Shape 2 / 3: real API envelope or legacy flat mock ────────────
+            token = body.effectiveToken()
+            if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
+            user = body.effectiveUser()
+            // Priority: user.role → top-level body.role → caller-supplied userType
+            effectiveRole = user?.role?.uppercase()?.takeIf { it.isNotBlank() }
+                ?: body.role.uppercase().takeIf { it.isNotBlank() }
+                ?: userType.uppercase()
+        }
+
         val storedRole = when (effectiveRole) {
             "LAWYER" -> "lawyer"
             "CLIENT" -> "user"
