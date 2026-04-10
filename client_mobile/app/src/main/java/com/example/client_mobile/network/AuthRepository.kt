@@ -98,6 +98,28 @@ object AuthRepository {
         if (fullName.isNotBlank())  TokenManager.saveFullName(fullName)
         val avatarUrl = user?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() } ?: ""
         if (avatarUrl.isNotBlank()) TokenManager.saveAvatarUrl(avatarUrl)
+
+        // Cache the full user object so Profile screens can render without a network call
+        if (user != null) {
+            val userJson = Gson().toJson(user)
+            if (storedRole == "lawyer") {
+                // Convert UserDto → LawyerProfileDto fields for the lawyer cache
+                val lawyerDto = com.example.client_mobile.network.dto.LawyerProfileDto(
+                    id              = user.id,
+                    fullName        = user.effectiveFullName(),
+                    email           = user.email,
+                    phone           = user.phone,
+                    address         = user.address,
+                    avatarUrl       = user.effectiveAvatarUrl(),
+                    speciality      = user.specialty,
+                    barNumber       = user.effectiveBarNumber(),
+                    role            = "lawyer"
+                )
+                TokenManager.saveLawyerJson(Gson().toJson(lawyerDto))
+            } else {
+                TokenManager.saveUserJson(userJson)
+            }
+        }
     }
 
     /**

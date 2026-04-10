@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.client_mobile.network.TokenManager
 
 // ─── Lawyer Profile Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +55,10 @@ fun AvocatProfile(
     onNavigateToEdit: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
-    val lawyerProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
+    val lawyerProfile  by dashboardViewModel.profile.collectAsStateWithLifecycle()
+    val lawyerStats    by dashboardViewModel.stats.collectAsStateWithLifecycle()
+    val isRefreshing   by dashboardViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isError        by dashboardViewModel.isError.collectAsStateWithLifecycle()
 
     // API fields override the passed-in fallback params
     val displayName    = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }      ?: fullName
@@ -72,8 +76,14 @@ fun AvocatProfile(
         ?: emptyList()
 
     val yearsExp  = lawyerProfile?.yearsExperience ?: 0
-    val clientCnt = lawyerProfile?.clientCount     ?: 0
-    val rating    = lawyerProfile?.rating          ?: 0f
+    // Prefer stats.dossiers_gagnes from /api/lawyers/me/stats, fall back to profile.client_count
+    val casesWon  = lawyerStats?.effectiveDossiersGagnes()
+        ?: lawyerStats?.closedCases
+        ?: lawyerProfile?.clientCount
+        ?: 0
+    val rating    = lawyerStats?.averageRating?.takeIf { it > 0f }
+        ?: lawyerProfile?.rating
+        ?: 0f
 
     var showLogOutDialog by remember { mutableStateOf(false) }
 
@@ -115,6 +125,25 @@ fun AvocatProfile(
         containerColor = Color.Transparent
     ) { paddingValues ->
         DashBoardBackground {
+
+            // ── Initial loading state ─────────────────────────────────────────────
+            if (isRefreshing && lawyerProfile == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) { CircularProgressIndicator(color = AppGoldColor) }
+                return@DashBoardBackground
+            }
+
+            // ── No-connection state ─────────────────────────────────────────
+            if (isError && lawyerProfile == null) {
+                NoConnectionScreen(
+                    onRetry  = { dashboardViewModel.fetch() },
+                    modifier = Modifier.padding(paddingValues)
+                )
+                return@DashBoardBackground
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -132,7 +161,7 @@ fun AvocatProfile(
                         avatarUrl = lawyerProfile?.avatarUrl ?: "",
                         profileImageUri = profileImageUri,
                         yearsExp = yearsExp,
-                        casesWon = clientCnt,
+                        casesWon = casesWon,
                         rating = rating
                     )
                 }

@@ -7,6 +7,7 @@ import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
 import com.example.client_mobile.screens.shared.UserSession
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -50,11 +51,25 @@ class UserViewModel : ViewModel() {
     /** Pull-to-refresh trigger on the profile screen. */
     fun refresh() { fetchProfile() }
 
-    /** Fetches GET /api/auth/me and populates [profile] and [UserSession]. */
+    /** Fetches the user profile, seeding from cache first then refreshing in background. */
     fun fetchProfile() {
         if (!TokenManager.isLoggedIn()) return
-        _isFetching.value = true
         _isError.value = false
+
+        // ── Step 1: render immediately from cache (no spinner, no wait) ──────
+        if (_profile.value == null) {
+            val cached = TokenManager.getUserJson()
+            if (cached != null) {
+                try {
+                    val dto = Gson().fromJson(cached, UserDto::class.java)
+                    _profile.value = dto
+                    syncSession(dto)
+                } catch (_: Exception) { /* malformed cache — ignore */ }
+            }
+        }
+
+        // ── Step 2: silently refresh from network ─────────────────────────────
+        _isFetching.value = true
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.mockApi.getMe()
@@ -62,6 +77,7 @@ class UserViewModel : ViewModel() {
                     val dto = response.body() ?: return@launch
                     _profile.value = dto
                     syncSession(dto)
+                    TokenManager.saveUserJson(Gson().toJson(dto))
                 } else {
                     if (_profile.value == null) _isError.value = true
                 }

@@ -79,5 +79,20 @@ object TokenManager {
     fun saveAvatarUrl(url: String) = prefs.edit().putString(KEY_AVATAR_URL, url).apply()
     fun getAvatarUrl(): String = prefs.getString(KEY_AVATAR_URL, "") ?: ""
 
+    // ── Cached user/lawyer JSON (avoids re-fetching profile on every screen open) ──
+
+    private const val KEY_USER_JSON   = "cached_user_json"
+    private const val KEY_LAWYER_JSON = "cached_lawyer_json"
+
+    /** Persist the full UserDto object as a JSON string after a successful login. */
+    fun saveUserJson(json: String)   = prefs.edit().putString(KEY_USER_JSON,   json).apply()
+    /** Returns the cached UserDto JSON, or null if nothing was saved yet. */
+    fun getUserJson(): String?        = prefs.getString(KEY_USER_JSON,   null)?.takeIf { it.isNotBlank() }
+
+    /** Persist the full LawyerProfileDto object as a JSON string after a successful login. */
+    fun saveLawyerJson(json: String)  = prefs.edit().putString(KEY_LAWYER_JSON, json).apply()
+    /** Returns the cached LawyerProfileDto JSON, or null if nothing was saved yet. */
+    fun getLawyerJson(): String?       = prefs.getString(KEY_LAWYER_JSON, null)?.takeIf { it.isNotBlank() }
+
     fun clear() = prefs.edit().clear().apply()
 }

@@ -33,7 +33,12 @@ data class LawyerStatsDto(
     @SerializedName("audiences_today")      val audiencesToday:     Int   = 0,
     @SerializedName("new_requests")         val newRequests:        Int   = 0,
     @SerializedName("closed_cases")         val closedCases:        Int   = 0,
+    /** Matches the 'dossiers_gagnes' key returned by the updated Mockable.io endpoint. */
+    @SerializedName("dossiers_gagnes")      val dossiersGagnes:     Int   = 0,
     @SerializedName("total_revenue_month")  val totalRevenueMonth:  Float = 0f,
     @SerializedName("total_revenue_year")   val totalRevenueYear:   Float = 0f,
     @SerializedName("average_rating")       val averageRating:      Float = 0f
-)
+) {
+    /** Effective 'Dossiers gagnés' — prefers the explicit field, falls back to closed_cases. */
+    fun effectiveDossiersGagnes(): Int = if (dossiersGagnes > 0) dossiersGagnes else closedCases
+}

@@ -6,6 +6,7 @@ import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
+import com.google.gson.Gson
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,10 +35,14 @@ class LawyerDashboardViewModel : ViewModel() {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
+    /** true after a network failure with no cached data — drives NoConnectionScreen. */
+    private val _isError = MutableStateFlow(false)
+    val isError: StateFlow<Boolean> = _isError
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    fun clearError() { _errorMessage.value = null }
+    fun clearError() { _errorMessage.value = null; _isError.value = false }
 
     init { fetch() }
 
@@ -79,29 +84,51 @@ class LawyerDashboardViewModel : ViewModel() {
     // ── Private fetchers ──────────────────────────────────────────────────────
 
     private suspend fun fetchProfile() {
+        // ── Step 1: seed from login cache so the screen renders instantly ────
+        if (_profile.value == null) {
+            val cached = TokenManager.getLawyerJson()
+            if (cached != null) {
+                try {
+                    _profile.value = Gson().fromJson(cached, LawyerProfileDto::class.java)
+                } catch (_: Exception) { /* malformed cache — ignore */ }
+            }
+        }
+
+        // ── Step 2: refresh from network in the background ────────────────────
         try {
-            // Priority: Real API
+            // Priority: Real API (wrapped ApiResponse)
             val response = RetrofitClient.haqApi.getLawyerProfile()
             if (response.isSuccessful && response.body()?.success == true) {
-                _profile.value = response.body()?.data
+                val dto = response.body()?.data
+                if (dto != null) {
+                    _profile.value = dto
+                    TokenManager.saveLawyerJson(Gson().toJson(dto))
+                }
                 return
             }
-            // Fallback: Mock API
+            // Fallback: Mock API (flat JSON)
             val mockResponse = RetrofitClient.mockApi.getLawyerProfile()
             if (mockResponse.isSuccessful) {
-                _profile.value = mockResponse.body()
+                val dto = mockResponse.body()
+                if (dto != null) {
+                    _profile.value = dto
+                    TokenManager.saveLawyerJson(Gson().toJson(dto))
+                }
             }
         } catch (_: Exception) {
-            // Final attempt: Mock API (in case HaqApi threw network error)
             try {
                 val mockResponse = RetrofitClient.mockApi.getLawyerProfile()
                 if (mockResponse.isSuccessful) {
-                    _profile.value = mockResponse.body()
+                    val dto = mockResponse.body()
+                    if (dto != null) {
+                        _profile.value = dto
+                        TokenManager.saveLawyerJson(Gson().toJson(dto))
+                    }
                 } else {
-                    _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
+                    if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur r\u00e9seau. V\u00e9rifiez votre connexion." }
                 }
             } catch (_: Exception) {
-                _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
+                if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur r\u00e9seau. V\u00e9rifiez votre connexion." }
             }
         }
     }

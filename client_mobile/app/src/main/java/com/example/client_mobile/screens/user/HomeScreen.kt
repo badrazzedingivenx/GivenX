@@ -133,11 +133,12 @@ fun UserDashboardHost(
                             color = AppDarkGreen
                         )
                     } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.height(126.dp),
-                            contentScale = ContentScale.Fit
+                        Text(
+                            "GivenX",
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = AppDarkGreen
                         )
                     }
                 },
