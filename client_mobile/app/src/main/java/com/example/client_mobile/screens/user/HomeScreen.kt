@@ -96,11 +96,9 @@ fun UserDashboardHost(
 
     Scaffold(
         topBar = {
-            val onMessagesRoute = currentRoute == UserTab.Messages.route
             val onMatchingRoute = currentRoute == UserTab.Matching.route
-            val showTitleBar    = onMessagesRoute || onMatchingRoute
+            val showTitleBar    = onMatchingRoute
             val titleBarText    = when {
-                onMessagesRoute -> "Messages"
                 onMatchingRoute -> "Matching"
                 else            -> ""
             }
@@ -249,38 +247,21 @@ fun UserDashboardHost(
                         onNavigateToCategory = onNavigateToCategory
                     )
                 }
-                composable(UserTab.Cases.route) {
+                composable(UserTab.Matching.route) {
+                    LegalMatchingScreen(paddingValues = paddingValues)
+                }
+                composable(UserTab.Vault.route) {
                     UserCasesTabContent(
                         paddingValues = paddingValues,
                         onNavigateToConsulter = onNavigateToAppointments,
                         onNavigateToMessages = {
-                            innerNavController.navigate(UserTab.Messages.route) {
-                                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            // This might need a different handling now that Messages is not in bottom bar
                         },
                         onNavigateToDocuments = onNavigateToDocuments,
                         onNavigateToFacturation = onNavigateToFacturation,
                         onNavigateToDossier = onNavigateToDossier
                     )
                 }
-                composable(UserTab.Messages.route) {
-                    MessagesInboxScreen(
-                        isLawyer = false,
-                        paddingValues = paddingValues,
-                        onNavigateToChat = onNavigateToChat
-                    )
-                }
-                composable(UserTab.Matching.route) {
-                    LegalMatchingScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Reels.route) {
-                    LegalReelsScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Live.route) {
-                    LiveSessionsScreen(paddingValues = paddingValues)
-                 }
             }
         }
     }

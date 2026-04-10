@@ -42,14 +42,22 @@ object LawyerApiRepository {
     fun getLawyersFlow(pollIntervalMs: Long = 30_000L): Flow<List<LawyerItem>> = flow {
         while (true) {
             try {
-                val response = RetrofitClient.lawyerApi.getLawyers()
+                // Use haqApi as the primary source of truth for the Ecosystem
+                val response = RetrofitClient.haqApi.getLawyers()
                 if (response.isSuccessful) {
                     val list = response.body()?.data?.map { it.toItem() } ?: emptyList()
                     emit(list)
+                } else {
+                    // Fallback to the legacy lawyerApi if haqApi fails or is not yet fully implemented
+                    val legacyResponse = RetrofitClient.lawyerApi.getLawyers()
+                    if (legacyResponse.isSuccessful) {
+                        val list = legacyResponse.body()?.data?.map { it.toItem() } ?: emptyList()
+                        emit(list)
+                    }
                 }
-                // On HTTP error we just skip and retry after the interval
-            } catch (_: Exception) {
-                emit(emptyList())
+            } catch (e: Exception) {
+                // Final fallback to mock data if all else fails to ensure UI isn't broken
+                emit(emptyList()) 
             }
             delay(pollIntervalMs)
         }
@@ -59,8 +67,12 @@ object LawyerApiRepository {
 
     /** Fetches one page of lawyers. Returns an empty list on failure. */
     suspend fun getLawyers(): List<LawyerItem> = try {
-        val response = RetrofitClient.lawyerApi.getLawyers()
-        response.body()?.data?.map { it.toItem() } ?: emptyList()
+        val response = RetrofitClient.haqApi.getLawyers()
+        if (response.isSuccessful) {
+            response.body()?.data?.map { it.toItem() } ?: emptyList()
+        } else {
+            RetrofitClient.lawyerApi.getLawyers().body()?.data?.map { it.toItem() } ?: emptyList()
+        }
     } catch (_: Exception) {
         emptyList()
     }

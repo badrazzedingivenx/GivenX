@@ -336,22 +336,20 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 
 // ─── Navigation Route Tokens ──────────────────────────────────────────────────
 sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,   "Accueil")
-    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,   "Messages")
-    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups, "Clients")
-    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person, "Profil")
-    companion object { val all get() = listOf(Home, Messages, Clients, Profile) }
+    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,       "Tableau")
+    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,       "Messages")
+    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups,     "Clients")
+    data object Creator  : LawyerTab("lawyer_creator",  Icons.Default.AutoAwesome, "Studio")
+    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person,     "Profil")
+    companion object { val all: List<LawyerTab> by lazy { listOf(Home, Messages, Clients, Creator, Profile) } }
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
     data object Home     : UserTab("user_home",      Icons.Default.Home,          "Accueil")
-    data object Cases    : UserTab("user_cases",     Icons.Default.Assignment,    "Dossiers")
-    data object Matching : UserTab("user_matching",  Icons.Default.Favorite,      "Matching")
-    data object Reels    : UserTab("user_reels",     Icons.Default.PlayCircle,    "Reels")
-    data object Live     : UserTab("user_live",      Icons.Default.LiveTv,        "Live")
-    data object Messages : UserTab("user_messages",  Icons.Default.Chat,          "Messages")
+    data object Matching : UserTab("user_matching",  Icons.Default.Search,        "Découvrir")
+    data object Vault    : UserTab("user_vault",     Icons.Default.Shield,        "Coffre")
     data object Profile  : UserTab("user_profile",   Icons.Default.Person,        "Profil")
-    companion object { val all get() = listOf(Home, Cases, Matching, Reels, Live) }
+    companion object { val all: List<UserTab> by lazy { listOf(Home, Matching, Vault, Profile) } }
 }
 
 // ─── Lawyer Nav Bottom Bar ─────────────────────────────────────────────────────

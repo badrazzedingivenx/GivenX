@@ -14,28 +14,21 @@ import androidx.navigation.navArgument
 import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.user.*
 import com.example.client_mobile.screens.lawyer.*
+import com.example.client_mobile.screens.shared.RegistrationScreen
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.services.UserService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
-
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Route the user to the right screen on cold start:
-    // - No token in storage  → Login (always shown, nothing to skip)
-    // - Token valid, lawyer  → LawyerHome  (persisted session, skip login)
-    // - Token valid, user    → UserHome    (persisted session, skip login)
-    val startDest = when {
-        !TokenManager.isLoggedIn()               -> "Login/user"
-        TokenManager.getUserType() == "lawyer"   -> "LawyerHome"
-        else                                     -> "UserHome"
-    }
+    // "Splash" is always the entry point. It validates any stored token against
+    // the live API before navigating — no dashboard jump without an API response.
     NavHost(
         navController = navController,
-        startDestination = startDest,
+        startDestination = "Splash",
         enterTransition = {
             fadeIn(animationSpec = tween(300)) +
                 slideInHorizontally(animationSpec = tween(300)) { it / 4 }
@@ -53,7 +46,28 @@ fun AppNavigation() {
                 slideOutHorizontally(animationSpec = tween(200)) { it / 4 }
         }
     ) {
-        
+
+        // 0. Splash — validates stored token via API, routes to Login or Dashboard
+        composable("Splash") {
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate("Login/user") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                },
+                onNavigateToUserHome = {
+                    navController.navigate("UserHome") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                },
+                onNavigateToLawyerHome = {
+                    navController.navigate("LawyerHome") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // 1. Initial Onboarding Swipe
         composable("Onboarding") {
             ScreenSwipeInfo(
@@ -82,8 +96,7 @@ fun AppNavigation() {
             LoginScreen(
                 userType = typeArg,
                 onNavigateToSignup = {
-                    // Always go through type-selection so lawyers can reach CreeAvocat
-                    navController.navigate("TypeCompte")
+                    navController.navigate("Register")
                 },
                 onNavigateToLawyerHome = { 
                     navController.navigate("LawyerHome") {
@@ -99,21 +112,15 @@ fun AppNavigation() {
         }
 
         // 4. Registration Screens
-        composable("CreeUser") {
-            CreeUserScreen(
-                onNavigateToLogin = { navController.navigate("Login/user") },
-                onNavigateToHome = { 
+        composable("Register") {
+            RegistrationScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserHome = {
                     navController.navigate("UserHome") {
                         popUpTo(0) { inclusive = true }
                     }
-                }
-            )
-        }
-
-        composable("CreeAvocat") {
-            CreeAvocatScreen(
-                onNavigateToLogin = { navController.navigate("Login/lawyer") },
-                onNavigateToHome = { 
+                },
+                onNavigateToLawyerHome = {
                     navController.navigate("LawyerHome") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -148,21 +155,8 @@ fun AppNavigation() {
         }
 
         composable("EditLawyerProfile") {
-            val editVm: LawyerDashboardViewModel = viewModel()
-            val editProfile by editVm.profile.collectAsStateWithLifecycle()
             EditLawyerProfileScreen(
-                initialName    = editProfile?.fullName          ?: "",
-                initialTitle   = editProfile?.speciality        ?: "",
-                initialEmail   = editProfile?.email             ?: "",
-                initialPhone   = editProfile?.phone             ?: "",
-                initialAddress = editProfile?.address           ?: "",
-                initialBio     = editProfile?.bio               ?: "",
-                initialSpecs   = editProfile?.specializations   ?: emptyList(),
-                initialImageUri = null,
-                onBack = { navController.popBackStack() },
-                onSave = { name, title, email, phone, address, bio, specs, imageUri ->
-                    LawyerSession.updateProfile(name, title, email, phone, address, bio, specs, imageUri)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 

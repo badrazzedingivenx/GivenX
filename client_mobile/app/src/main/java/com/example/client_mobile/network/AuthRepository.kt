@@ -1,10 +1,13 @@
 package com.example.client_mobile.network
 
+import android.util.Log
 import com.example.client_mobile.network.dto.LoginRequest
 import com.example.client_mobile.network.dto.RegisterLawyerRequest
+import com.example.client_mobile.network.dto.RegisterRequest
 import com.example.client_mobile.network.dto.SignupRequest
 import com.example.client_mobile.screens.shared.LawyerSession
 import com.example.client_mobile.screens.shared.UserSession
+import com.google.gson.Gson
 
 /**
  * Single source of truth for authentication.
@@ -13,28 +16,64 @@ import com.example.client_mobile.screens.shared.UserSession
 object AuthRepository {
 
     /**
-     * Posts credentials to POST /api/auth/login.
+     * Posts credentials to POST /api/login.
      * Supports both the real API envelope { "success", "data": { "profile", "token" } }
      * and the legacy mock flat format { "token", "user" }.
      * Throws an [Exception] with a user-readable message on failure.
      */
     suspend fun login(email: String, password: String, userType: String) {
-        val response = RetrofitClient.authApi.login(LoginRequest(email.trim(), password))
+        val request = LoginRequest(email.lowercase().trim(), password)
+        val loginBody = Gson().toJson(request)
+        Log.d("API_DEBUG", "Body: $loginBody")
 
-        if (!response.isSuccessful || response.body() == null) {
-            throw Exception("Identifiants incorrects")
+        val response = try {
+            RetrofitClient.authApi.login(request)
+        } catch (e: java.io.IOException) {
+            Log.e("API_DEBUG", "Network error: ${e.message}", e)
+            println("API Network Error: ${e.message}")
+            throw Exception("Erreur de connexion au serveur")
+        }
+
+        Log.d("API_DEBUG", "Response Code: ${response.code()}")
+        println("API Response Code: ${response.code()}")
+
+        if (!response.isSuccessful) {
+            val errorBody = response.errorBody()?.string()
+            Log.e("API_DEBUG", "Error Body: $errorBody")
+            println("API Error Body: $errorBody")
+            throw when (response.code()) {
+                401  -> Exception("Email ou mot de passe incorrect")
+                403  -> Exception("Compte suspendu ou en attente de vérification")
+                404  -> Exception("Serveur introuvable (vérifiez l'URL de base)")
+                500  -> Exception("Erreur interne du serveur. Réessayez plus tard.")
+                else -> Exception("Erreur ${response.code()} : $errorBody")
+            }
+        }
+
+        if (response.body() == null) {
+            Log.e("API_DEBUG", "HTTP 200 but body is null — mapping error (check AuthResponse fields)")
+            println("API Response Code: 200 — body is null (mapping error)")
+            throw Exception("Réponse du serveur invalide (corps vide)")
         }
 
         val body  = response.body()!!
         val token = body.effectiveToken()
         if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
 
-        val user         = body.effectiveUser()
-        val effectiveRole = user?.role?.takeIf { it.isNotBlank() } ?: userType
+        val user          = body.effectiveUser()
+        // Priority: user.role → top-level body.role → caller-supplied userType
+        val effectiveRole = user?.role?.uppercase()?.takeIf { it.isNotBlank() }
+            ?: body.role.uppercase().takeIf { it.isNotBlank() }
+            ?: userType.uppercase()
+        val storedRole = when (effectiveRole) {
+            "LAWYER" -> "lawyer"
+            "CLIENT" -> "user"
+            else     -> if (userType.lowercase() == "lawyer") "lawyer" else "user"
+        }
 
         TokenManager.saveToken(token)
         TokenManager.saveEmail(email.trim())
-        TokenManager.saveUserType(effectiveRole)
+        TokenManager.saveUserType(storedRole)
         user?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
 
         val fullName  = user?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: ""
@@ -91,7 +130,53 @@ object AuthRepository {
     fun logout() = TokenManager.clear()
 
     /**
-     * Registers a new account.
+     * Registers a new account using the generic /api/register endpoint.
+     */
+    suspend fun registerUser(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String,
+        role: String
+    ) {
+        val request = RegisterRequest(
+            firstName = firstName.trim(),
+            lastName = lastName.trim(),
+            email = email.trim().lowercase(),
+            password = password.trim(),
+            role = role.uppercase() // Mock expects uppercase CLIENT or LAWYER
+        )
+        
+        val jsonBody = Gson().toJson(request)
+        Log.d("RegisterBody", jsonBody)
+
+        val response = RetrofitClient.authApi.register(request)
+
+        if (!response.isSuccessful || response.body() == null) {
+            val errorBody = response.errorBody()?.string()
+            Log.e("RegisterError", "Error: $errorBody")
+            throw Exception("Inscription échouée. Veuillez réessayer.")
+        }
+
+        val body = response.body()!!
+        val token = body.effectiveToken()
+        if (token.isBlank()) throw Exception("Token manquant dans la réponse")
+
+        val user = body.effectiveUser()
+        val effectiveRole = user?.role?.uppercase() ?: role.uppercase()
+        val storedRole = if (effectiveRole == "LAWYER") "lawyer" else "user"
+
+        TokenManager.saveToken(token)
+        TokenManager.saveEmail(email.trim().lowercase())
+        TokenManager.saveUserType(storedRole)
+        user?.id?.let { TokenManager.saveUserId(it) }
+        
+        val fullName = user?.effectiveFullName() ?: "$firstName $lastName".trim()
+        TokenManager.saveFullName(fullName)
+    }
+
+    /**
+     * Registers a new account (Legacy/Specific).
      * Routes to /auth/register-user or /auth/register-lawyer based on [role].
      */
     suspend fun register(

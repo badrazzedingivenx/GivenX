@@ -24,16 +24,19 @@ class AuthViewModel : ViewModel() {
 
     fun login(email: String, password: String, userType: String) {
         if (_loginState.value is LoginUiState.Loading) return
+        val lowerEmail = email.lowercase().trim()
         viewModelScope.launch {
             _loginState.value = LoginUiState.Loading
             try {
-                AuthRepository.login(email, password, userType)
+                AuthRepository.login(lowerEmail, password, userType)
                 val fullName  = TokenManager.getFullName()
                 val avatarUrl = TokenManager.getAvatarUrl()
                 if (fullName.isNotBlank())  UserSession.name      = fullName
                 if (avatarUrl.isNotBlank()) UserSession.avatarUrl = avatarUrl
                 UserSession.email = TokenManager.getEmail() ?: ""
-                _loginState.value = LoginUiState.Success(TokenManager.getUserType())
+                // "lawyer" → LawyerDashboard, "user"/"CLIENT" → ClientDashboard
+                val resolvedRole = TokenManager.getUserType() // "lawyer" | "user"
+                _loginState.value = LoginUiState.Success(resolvedRole)
             } catch (e: Exception) {
                 _loginState.value = LoginUiState.Error(
                     e.message ?: "Identifiants incorrects. Veuillez réessayer."
@@ -44,6 +47,30 @@ class AuthViewModel : ViewModel() {
 
     fun resetState() {
         _loginState.value = LoginUiState.Idle
+    }
+
+    /**
+     * Centralised post-login navigation.
+     * Call this from any Composable's LaunchedEffect instead of duplicating
+     * the role check everywhere.
+     *
+     * Usage:
+     *   LaunchedEffect(loginState) {
+     *       if (loginState is LoginUiState.Success) {
+     *           authViewModel.proceedToDashboard(
+     *               onLawyer = onNavigateToLawyerHome,
+     *               onClient = onNavigateToUserHome
+     *           )
+     *       }
+     *   }
+     */
+    fun proceedToDashboard(
+        onLawyer: () -> Unit,
+        onClient: () -> Unit
+    ) {
+        val role = TokenManager.getUserType()   // "lawyer" | "user"
+        resetState()
+        if (role == "lawyer") onLawyer() else onClient()
     }
 
     // ── Register state ────────────────────────────────────────────────────────
@@ -57,6 +84,30 @@ class AuthViewModel : ViewModel() {
 
     private val _registerState = MutableStateFlow<RegisterUiState>(RegisterUiState.Idle)
     val registerState: StateFlow<RegisterUiState> = _registerState
+
+    fun registerNewUser(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String,
+        role: String
+    ) {
+        if (_registerState.value is RegisterUiState.Loading) return
+        viewModelScope.launch {
+            _registerState.value = RegisterUiState.Loading
+            try {
+                AuthRepository.registerUser(firstName, lastName, email, password, role)
+                val savedName = TokenManager.getFullName()
+                if (savedName.isNotBlank()) UserSession.name = savedName
+                UserSession.email = TokenManager.getEmail() ?: ""
+                _registerState.value = RegisterUiState.Success(TokenManager.getUserType())
+            } catch (e: Exception) {
+                _registerState.value = RegisterUiState.Error(
+                    e.message ?: "Erreur lors de l'inscription. Veuillez réessayer."
+                )
+            }
+        }
+    }
 
     fun register(
         fullName: String,

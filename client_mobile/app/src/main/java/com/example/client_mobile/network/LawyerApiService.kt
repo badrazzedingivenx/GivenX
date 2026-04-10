@@ -28,7 +28,7 @@ interface LawyerApiService {
      *
      * Returns: { "data": [...], "total": 42 }
      */
-    @GET("lawyers")
+    @GET("api/lawyers")
     suspend fun getLawyers(
         @Query("domaine") domaine: String? = null,
         @Query("q")       query:   String? = null,
@@ -41,7 +41,7 @@ interface LawyerApiService {
      *
      * Returns a single lawyer object.
      */
-    @GET("lawyers/{id}")
+    @GET("api/lawyers/{id}")
     suspend fun getLawyerById(
         @Path("id") id: String
     ): Response<LawyerDto>

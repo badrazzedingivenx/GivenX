@@ -14,7 +14,8 @@ data class RegisterRequest(
     @SerializedName("last_name")  val lastName:  String,
     @SerializedName("email")      val email:     String,
     @SerializedName("password")   val password:  String,
-    @SerializedName("phone")      val phone:     String = ""
+    @SerializedName("phone")      val phone:     String = "",
+    @SerializedName("role")       val role:      String = "user"
 )
 
 /** Body for POST /api/signup (Postman mock + real server). */
@@ -39,6 +40,7 @@ data class AuthResponse(
     // Legacy mock flat fields
     @SerializedName("token")      val legacyToken:  String        = "",
     @SerializedName("expires_in") val expiresIn:    Long          = 3600L,
+    @SerializedName("role")       val role:         String        = "",
     @SerializedName("user")       val legacyUser:   UserDto?      = null
 ) {
     /** JWT — tries nested envelope first, then flat field. */
@@ -54,12 +56,15 @@ data class UserDto(
     @SerializedName("id")          val id:          String = "",
     @SerializedName("firstName")   val firstName:   String = "",
     @SerializedName("lastName")    val lastName:    String = "",
-    /** Real API uses full_name; mock uses firstName+lastName. */
+    /** Real API uses full_name; mock may use name or firstName+lastName. */
     @SerializedName("full_name")   val fullName:    String = "",
+    @SerializedName("name")        val name:        String = "",
     @SerializedName("email")       val email:       String = "",
     @SerializedName("phone")       val phone:       String = "",
     @SerializedName("address")     val address:     String = "",
-    /** Mock server returns camelCase photoUrl; real API returns avatar_url. */
+    @SerializedName("city")        val city:        String = "",
+    /** Mock server may use avatar, photoUrl, or avatar_url. */
+    @SerializedName("avatar")      val avatar:      String = "",
     @SerializedName("photoUrl")    val photoUrl:    String = "",
     @SerializedName("avatar_url")  val avatarUrl:   String = "",
     /** Server-confirmed role: "user" | "lawyer". Drives RBAC routing. */
@@ -71,10 +76,10 @@ data class UserDto(
 ) {
     /** Effective bar number (supports both snake_case and camelCase). */
     fun effectiveBarNumber(): String = barNumber.ifBlank { barNumberCamel }
-    /** Effective display name (prefers server full_name, falls back to first+last). */
-    fun effectiveFullName(): String = fullName.ifBlank { "$firstName $lastName".trim() }
-    /** Effective avatar URL (prefers snake_case real API, falls back to camelCase mock). */
-    fun effectiveAvatarUrl(): String = avatarUrl.ifBlank { photoUrl }
+    /** Effective display name (prefers full_name, then name, then first+last). */
+    fun effectiveFullName(): String = fullName.ifBlank { name.ifBlank { "$firstName $lastName".trim() } }
+    /** Effective avatar URL (prefers snake_case real API, then camelCase, then plain avatar). */
+    fun effectiveAvatarUrl(): String = avatarUrl.ifBlank { photoUrl.ifBlank { avatar } }
 }
 
 /** Generic API error body: { "error": "Invalid credentials" } */

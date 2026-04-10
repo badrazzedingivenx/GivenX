@@ -2,12 +2,20 @@ package com.example.client_mobile.network
 
 import com.example.client_mobile.network.dto.AppointmentDto
 import com.example.client_mobile.network.dto.BillingSummaryDto
+import com.example.client_mobile.network.dto.ConversationApiDto
 import com.example.client_mobile.network.dto.CreateDocumentRequest
 import com.example.client_mobile.network.dto.DocumentApiDto
 import com.example.client_mobile.network.dto.DossierDto
 import com.example.client_mobile.network.dto.LawyerDto
+import com.example.client_mobile.network.dto.LawyerProfileDto
+import com.example.client_mobile.network.dto.LawyerStatsDto
+import com.example.client_mobile.network.dto.LiveDto
+import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.RenameDocumentRequest
 import com.example.client_mobile.network.dto.SaveConsultationRequest
+import com.example.client_mobile.network.dto.SendMessageRequest
+import com.example.client_mobile.network.dto.SendMessageResponseDto
+import com.example.client_mobile.network.dto.StoryDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -36,7 +44,7 @@ interface HaqApiService {
      * GET /api/lawyers
      * Optional: ?domaine=Droit+Civil  ?q=dupont  ?page=1  ?limit=50
      */
-    @GET("lawyers")
+    @GET("api/lawyers")
     suspend fun getLawyers(
         @Query("domaine") domaine: String? = null,
         @Query("q")       query:   String? = null,
@@ -47,10 +55,24 @@ interface HaqApiService {
     /**
      * GET /api/lawyers/{id}
      */
-    @GET("lawyers/{id}")
+    @GET("api/lawyers/{id}")
     suspend fun getLawyerById(
         @Path("id") id: String
     ): Response<ApiResponse<LawyerDto>>
+
+    /** GET /api/lawyers/me — returns the authenticated lawyer's profile. */
+    @GET("api/lawyers/me")
+    suspend fun getLawyerProfile(): Response<ApiResponse<LawyerProfileDto>>
+
+    /** PATCH /api/lawyers/me — update the authenticated lawyer's profile. */
+    @PATCH("api/lawyers/me")
+    suspend fun updateLawyerProfile(
+        @Body profile: LawyerProfileDto
+    ): Response<ApiResponse<LawyerProfileDto>>
+
+    /** GET /api/lawyers/me/stats — returns dashboard KPIs for the lawyer. */
+    @GET("api/lawyers/me/stats")
+    suspend fun getLawyerStats(): Response<ApiResponse<LawyerStatsDto>>
 
     // ── Dossiers ──────────────────────────────────────────────────────────────
 
@@ -107,8 +129,8 @@ interface HaqApiService {
 
     // ── Documents ─────────────────────────────────────────────────────────────
 
-    /** GET /api/documents/me — returns all documents owned by the current user. */
-    @GET("documents/me")
+    /** GET /api/documents/vault — returns all documents owned by the current user. */
+    @GET("api/documents/vault")
     suspend fun getMyDocuments(): Response<ApiResponse<List<DocumentApiDto>>>
 
     /** POST /api/documents — upload / register a new document record. */
@@ -129,4 +151,34 @@ interface HaqApiService {
     suspend fun deleteDocument(
         @Path("id") id: String
     ): Response<ApiResponse<Unit>>
+
+    // ── Messages ──────────────────────────────────────────────────────────────
+
+    /** GET /api/messages — all conversations for the authenticated user or lawyer. */
+    @GET("api/messages")
+    suspend fun getMessages(): Response<ApiResponse<List<ConversationApiDto>>>
+
+    /** POST /api/messages/send — send a text message in a conversation. */
+    @POST("api/messages/send")
+    suspend fun sendMessage(
+        @Body request: SendMessageRequest
+    ): Response<ApiResponse<SendMessageResponseDto>>
+
+    // ── Reels ──────────────────────────────────────────────────────
+
+    /** GET /api/reels — [ { "id": "reel_001", "lawyerName": "...", "likes": 542, "caption": "..." } ] */
+    @GET("api/reels")
+    suspend fun getReels(): Response<ApiResponse<List<ReelDto>>>
+
+    // ── Stories ────────────────────────────────────────────────────
+
+    /** GET /api/stories — [ { "id": "story_001", "lawyerName": "...", "imageUrl": "..." } ] */
+    @GET("api/stories")
+    suspend fun getStories(): Response<ApiResponse<List<StoryDto>>>
+
+    // ── Lives ──────────────────────────────────────────────────────
+
+    /** GET /api/lives — [ { "id": "live_001", "title": "...", "viewersCount": 124 } ] */
+    @GET("api/lives")
+    suspend fun getLives(): Response<ApiResponse<List<LiveDto>>>
 }

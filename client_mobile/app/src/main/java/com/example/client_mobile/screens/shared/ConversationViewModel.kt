@@ -42,9 +42,20 @@ class ConversationViewModel : ViewModel() {
         val isLawyer = TokenManager.getUserType() == "lawyer"
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.mockApi.getMessages()
-                if (response.isSuccessful) {
-                    val dtos = response.body() ?: emptyList()
+                // Try HaqApiService first, then fallback to mockApi
+                val haqResponse = RetrofitClient.haqApi.getMessages()
+                val dtos = if (haqResponse.isSuccessful && haqResponse.body()?.success == true) {
+                    haqResponse.body()?.data ?: emptyList()
+                } else {
+                    val mockResponse = RetrofitClient.mockApi.getMessages()
+                    if (mockResponse.isSuccessful) {
+                        mockResponse.body() ?: emptyList()
+                    } else {
+                        null
+                    }
+                }
+
+                if (dtos != null) {
                     ConversationRepository.replaceFromApi(
                         dtos.map { dto ->
                             Conversation(

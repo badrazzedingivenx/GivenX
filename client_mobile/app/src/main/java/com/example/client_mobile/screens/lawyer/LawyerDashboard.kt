@@ -233,7 +233,8 @@ fun LawyerDashboardHost(
                         isMasculine = isMasculine,
                         stats = lawyerStats,
                         onNavigateToRequests = onNavigateToRequests,
-                        onNavigateToPayments = onNavigateToPayments
+                        onNavigateToPayments = onNavigateToPayments,
+                        onNavigateToCreator = { innerNavController.navigate(LawyerTab.Creator.route) }
                     )
                 }
                 composable(LawyerTab.Messages.route) {
@@ -245,6 +246,11 @@ fun LawyerDashboardHost(
                 }
                 composable(LawyerTab.Clients.route) {
                     LawyerClientsTabContent(paddingValues = paddingValues)
+                }
+                composable(LawyerTab.Creator.route) {
+                    LawyerCreatorManagementScreen(
+                        onBack = { innerNavController.navigate(LawyerTab.Home.route) }
+                    )
                 }
             }
         }
@@ -599,7 +605,8 @@ private fun LawyerHomeTabContent(
     isMasculine: Boolean = true,
     stats: LawyerStatsDto? = null,
     onNavigateToRequests: () -> Unit = {},
-    onNavigateToPayments: () -> Unit = {}
+    onNavigateToPayments: () -> Unit = {},
+    onNavigateToCreator: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val today = remember { SimpleDateFormat("EEEE d MMMM yyyy", Locale.FRENCH).format(Date()).replaceFirstChar { it.uppercase() } }
@@ -667,6 +674,36 @@ private fun LawyerHomeTabContent(
                 label     = "Honoraires",
                 isLoading = stats == null
             )
+        }
+
+        // ── Creator Mode Quick Access ────────────────────────────────────────
+        SectionHeader(
+            title = "Studio Créateur",
+            actionLabel = "Gérer",
+            onAction = { onNavigateToCreator() }
+        )
+        DashCard {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable { onNavigateToCreator() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = CircleShape,
+                    color = AppGoldColor.copy(alpha = 0.12f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = AppGoldColor, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Gérer mon contenu social", fontSize = 14.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                    val totalContent = (CreatorRepository.stories.size + CreatorRepository.reels.size + CreatorRepository.liveSessions.size)
+                    Text("$totalContent publications actives", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+                }
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+            }
         }
 
         // ── Nouvelles Demandes quick view ─────────────────────────────────────

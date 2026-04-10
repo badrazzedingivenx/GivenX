@@ -44,28 +44,36 @@ object MainRepository {
      */
     suspend fun searchLawyers(query: String): List<LawyerSearchResultDto> {
         return try {
-            val response = RetrofitClient.mockApi.getLawyers(limit = 20)
-            if (response.isSuccessful) {
-                // Filter client-side while the mock server doesn't support ?search=
-                val q = query.lowercase().trim()
-                (response.body() ?: emptyList())
-                    .filter {
-                        q.isBlank()
-                            || it.name.lowercase().contains(q)
-                            || it.specialty.lowercase().contains(q)
-                            || it.domaine.lowercase().contains(q)
-                    }
-                    .map { dto ->
-                        LawyerSearchResultDto(
-                            id        = dto.id,
-                            name      = dto.name,
-                            specialty = dto.specialty,
-                            avatarUrl = dto.avatarUrl,
-                            rating    = dto.rating,
-                            domaine   = dto.domaine
-                        )
-                    }
-            } else emptyList()
+            // haqApi returns { "success": true, "data": [...] } — same URL as mockApi
+            val rawList = run {
+                val haqResp = RetrofitClient.haqApi.getLawyers(limit = 20)
+                if (haqResp.isSuccessful && haqResp.body()?.success == true) {
+                    haqResp.body()?.data ?: emptyList()
+                } else {
+                    // Fallback: mockApi expects a raw array (works when mock returns [] directly)
+                    val mockResp = RetrofitClient.mockApi.getLawyers(limit = 20)
+                    if (mockResp.isSuccessful) mockResp.body() ?: emptyList() else emptyList()
+                }
+            }
+            // Filter client-side while the mock server doesn't support ?search=
+            val q = query.lowercase().trim()
+            rawList
+                .filter {
+                    q.isBlank()
+                        || it.name.lowercase().contains(q)
+                        || it.specialty.lowercase().contains(q)
+                        || it.domaine.lowercase().contains(q)
+                }
+                .map { dto ->
+                    LawyerSearchResultDto(
+                        id        = dto.id,
+                        name      = dto.name,
+                        specialty = dto.specialty,
+                        avatarUrl = dto.avatarUrl,
+                        rating    = dto.rating,
+                        domaine   = dto.domaine
+                    )
+                }
         } catch (_: Exception) { emptyList() }
     }
 

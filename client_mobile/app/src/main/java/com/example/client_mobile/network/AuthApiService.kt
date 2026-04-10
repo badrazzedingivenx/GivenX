@@ -4,6 +4,7 @@ import com.example.client_mobile.network.dto.AuthResponse
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LoginRequest
 import com.example.client_mobile.network.dto.RegisterLawyerRequest
+import com.example.client_mobile.network.dto.RegisterRequest
 import com.example.client_mobile.network.dto.SignupRequest
 import com.example.client_mobile.network.dto.UpdateLawyerProfileRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
@@ -27,31 +28,35 @@ import retrofit2.http.PUT
  */
 interface AuthApiService {
 
-    /** POST /api/auth/login */
-    @POST("auth/login")
+    /** POST /api/login */
+    @POST("api/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
+    /** POST /api/register */
+    @POST("api/register")
+    suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
+
     /** POST /api/auth/register-user — register a new client account. */
-    @POST("auth/register-user")
+    @POST("api/auth/register-user")
     suspend fun signup(@Body request: SignupRequest): Response<AuthResponse>
 
     /** POST /api/auth/register-lawyer — register a new lawyer account. */
-    @POST("auth/register-lawyer")
+    @POST("api/auth/register-lawyer")
     suspend fun signupLawyer(@Body request: RegisterLawyerRequest): Response<AuthResponse>
 
-    /** GET /api/users/me — client's own profile. JWT added by interceptor. */
-    @GET("users/me")
+    /** GET /api/auth/me — client's own profile. JWT added by interceptor. */
+    @GET("api/auth/me")
     suspend fun getMe(): Response<UserDto>
 
-    /** PUT /api/users/me — update client profile fields. */
-    @PUT("users/me")
+    /** PUT /api/auth/me — update client profile fields. */
+    @PUT("api/auth/me")
     suspend fun updateMe(@Body request: UpdateProfileRequest): Response<UserDto>
 
     /** GET /api/lawyers/me — lawyer's own full profile. */
-    @GET("lawyers/me")
+    @GET("api/auth/me")
     suspend fun getLawyerMe(): Response<LawyerProfileDto>
 
-    /** PUT /api/lawyers/me — update lawyer profile fields. */
-    @PUT("lawyers/me")
+    /** PUT /api/auth/me — update lawyer profile fields. */
+    @PUT("api/auth/me")
     suspend fun updateLawyerMe(@Body request: UpdateLawyerProfileRequest): Response<LawyerProfileDto>
 }

@@ -23,14 +23,14 @@ object RetrofitClient {
 
     // ── Server configuration ──────────────────────────────────────────────────
 
-    /** Postman Mock Server URL — your mock from app.postman.com */
-    private const val POSTMAN_MOCK_URL = "https://be265b06-28af-4cd8-bb16-fd55835c84ca.mock.pstmn.io/api/"
+    /** Mockable.io public mock — no API key required */
+    private const val MOCK_URL = "http://demo3674879.mockable.io/"
 
     /** Local dev server (Android Emulator → host localhost:3000) */
-    private const val LOCAL_BASE_URL = "http://10.0.2.2:3000/api/"
+    private const val LOCAL_BASE_URL = "http://10.0.2.2:3000/"
 
     /**
-     * Toggle: set true to hit the Postman Mock, false for local Express server.
+     * Toggle: set true to hit the Mockable.io mock, false for local Express server.
      *
      * Local server test accounts (POST http://localhost:3000/api/seed to create):
      *   CLIENT  →  tarik@example.com   / 123456  → dashboard dyal l-muwakil
@@ -42,14 +42,8 @@ object RetrofitClient {
      */
     private const val USE_MOCK_SERVER = true
 
-    /**
-     * Postman API key — required for private mock servers.
-     * Get it from https://app.postman.com/settings/me/api-keys
-     */
-    private const val POSTMAN_API_KEY = "tarik"
-
-    /** Active base URL, selected by the USE_MOCK_SERVER flag. */
-    val BASE_URL: String = if (USE_MOCK_SERVER) POSTMAN_MOCK_URL else LOCAL_BASE_URL
+    /** Active base URL — Mockable.io mock or local Express. */
+    val BASE_URL: String = if (USE_MOCK_SERVER) MOCK_URL else LOCAL_BASE_URL
 
     // ── Auth interceptor – adds: Authorization: Bearer <token> ───────────────
 
@@ -58,20 +52,6 @@ object RetrofitClient {
         val request = if (token != null) {
             chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer $token")
-                .build()
-        } else {
-            chain.request()
-        }
-        chain.proceed(request)
-    }
-
-    // ── Postman Mock API-key interceptor ──────────────────────────────────────
-    // Sends the x-api-key header when USE_MOCK_SERVER is true and the key is set.
-
-    private val postmanKeyInterceptor = Interceptor { chain ->
-        val request = if (USE_MOCK_SERVER && POSTMAN_API_KEY.isNotBlank()) {
-            chain.request().newBuilder()
-                .addHeader("x-api-key", POSTMAN_API_KEY)
                 .build()
         } else {
             chain.request()
@@ -92,10 +72,10 @@ object RetrofitClient {
         }
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .addInterceptor(postmanKeyInterceptor)
             .addInterceptor(logging)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)  // extra slack for cold mock startup
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
     }
 
@@ -107,6 +87,7 @@ object RetrofitClient {
      * `"id": 1` (Int) for fields declared as `val id: String`.
      */
     private val gson = GsonBuilder()
+        .setLenient()                        // tolerate non-strict JSON from mock server
         .registerTypeAdapter(
             String::class.java,
             object : JsonDeserializer<String> {

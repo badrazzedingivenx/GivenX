@@ -1,5 +1,6 @@
 package com.example.client_mobile.screens.shared
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,15 +55,21 @@ fun LoginScreen(
     val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
     val isLoading = loginState is AuthViewModel.LoginUiState.Loading
     val authError = (loginState as? AuthViewModel.LoginUiState.Error)?.message
+    val context   = LocalContext.current
+
+    // Show Toast on every new error, then keep inline text as well
+    LaunchedEffect(authError) {
+        if (!authError.isNullOrBlank()) {
+            Toast.makeText(context, authError, Toast.LENGTH_LONG).show()
+        }
+ }
 
     LaunchedEffect(loginState) {
-        when (val state = loginState) {
-            is AuthViewModel.LoginUiState.Success -> {
-                authViewModel.resetState()
-                if (state.userType == "lawyer") onNavigateToLawyerHome()
-                else onNavigateToUserHome()
-            }
-            else -> Unit
+        if (loginState is AuthViewModel.LoginUiState.Success) {
+            authViewModel.proceedToDashboard(
+                onLawyer = onNavigateToLawyerHome,
+                onClient = onNavigateToUserHome
+            )
         }
     }
 

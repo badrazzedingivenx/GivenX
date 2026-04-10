@@ -253,4 +253,5 @@ object CreatorRepository {
 
     fun deleteReel(id: Long)  { reels.removeAll  { it.id == id } }
     fun deleteStory(id: Long) { stories.removeAll { it.id == id } }
+    fun deleteLive(id: Long)  { liveSessions.removeAll { it.id == id } }
 }

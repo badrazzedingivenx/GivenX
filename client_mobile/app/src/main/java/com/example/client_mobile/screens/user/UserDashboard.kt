@@ -62,7 +62,8 @@ data class LegalStory(
     val id: Int,
     val lawyerName: String,
     val specialty: String,
-    val hasNewStory: Boolean = true
+    val hasNewStory: Boolean = true,
+    val isLive: Boolean = false
 )
 
 
@@ -120,14 +121,16 @@ internal fun UserCasesTabContent(
             id          = dto.id.hashCode(),
             lawyerName  = dto.lawyerName,
             specialty   = "",
-            hasNewStory = true
+            hasNewStory = true,
+            isLive      = dto.isLive
         )
     } ?: emptyList()) + CreatorRepository.stories.map { cs ->
         LegalStory(
             id          = cs.id.toInt(),
             lawyerName  = cs.lawyerName,
             specialty   = cs.specialty,
-            hasNewStory = cs.hasNewStory
+            hasNewStory = cs.hasNewStory,
+            isLive      = false
         )
     }
 
@@ -719,6 +722,17 @@ fun BillingSummaryCard(paid: Float, pending: Float, total: Float) {
 // ─── Stories Item ─────────────────────────────────────────────────────────────
 @Composable
 fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
+    val infiniteTransition = rememberInfiniteTransition(label = "live_pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -730,7 +744,11 @@ fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
             shape    = CircleShape,
             border   = BorderStroke(
                 width = 2.5.dp,
-                color = if (story.hasNewStory) AppGoldColor else Color.Gray.copy(alpha = 0.35f)
+                color = when {
+                    story.isLive -> Color.Red
+                    story.hasNewStory -> AppGoldColor
+                    else -> Color.Gray.copy(alpha = 0.35f)
+                }
             ),
             color = AppDarkGreen.copy(alpha = 0.07f)
         ) {
@@ -738,10 +756,29 @@ fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
                 Icon(
                     Icons.Default.Person,
                     contentDescription = null,
-                    tint = if (story.hasNewStory) AppGoldColor else Color.Gray.copy(alpha = 0.55f),
+                    tint = when {
+                        story.isLive -> Color.Red.copy(alpha = pulseAlpha)
+                        story.hasNewStory -> AppGoldColor
+                        else -> Color.Gray.copy(alpha = 0.55f)
+                    },
                     modifier = Modifier.size(26.dp)
                 )
-                if (story.hasNewStory) {
+                if (story.isLive) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .offset(y = 2.dp)
+                            .background(Color.Red, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            "LIVE",
+                            color = Color.White,
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else if (story.hasNewStory) {
                     Box(
                         modifier = Modifier
                             .size(14.dp)
@@ -764,8 +801,8 @@ fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
             text = story.lawyerName,
             fontFamily = FontFamily.Serif,
             fontSize = 10.sp,
-            fontWeight = if (story.hasNewStory) FontWeight.Bold else FontWeight.Normal,
-            color = if (story.hasNewStory) AppDarkGreen else Color.Gray,
+            fontWeight = if (story.hasNewStory || story.isLive) FontWeight.Bold else FontWeight.Normal,
+            color = if (story.isLive) Color.Red else if (story.hasNewStory) AppDarkGreen else Color.Gray,
             textAlign = TextAlign.Center,
             maxLines = 2
         )

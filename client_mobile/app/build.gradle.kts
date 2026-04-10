@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 
     // ── Lifecycle (collectAsStateWithLifecycle + viewModel()) ────────────────
     implementation(libs.androidx.lifecycle.runtime.compose)

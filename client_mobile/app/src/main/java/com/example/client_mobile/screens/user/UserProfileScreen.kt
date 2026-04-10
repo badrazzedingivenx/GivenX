@@ -102,6 +102,17 @@ fun UserProfileScreen(
     ) { paddingValues ->
         DashBoardBackground {
 
+            // ── Initial loading state ─────────────────────────────────────────
+            if (isFetching && profile == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = AppGoldColor)
+                }
+                return@DashBoardBackground
+            }
+
             // ── No-connection state ───────────────────────────────────────────
             if (isError && profile == null) {
                 NoConnectionScreen(

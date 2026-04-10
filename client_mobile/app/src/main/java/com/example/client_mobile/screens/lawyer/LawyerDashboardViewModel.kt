@@ -57,23 +57,80 @@ class LawyerDashboardViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Updates the authenticated lawyer's profile on the server.
+     * Fires [HaqApiService.updateLawyerProfile].
+     */
+    fun updateProfile(updatedProfile: LawyerProfileDto) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.haqApi.updateLawyerProfile(updatedProfile)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    _profile.value = response.body()?.data
+                } else {
+                    _errorMessage.value = "Erreur lors de la mise à jour."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Erreur réseau : ${e.localizedMessage}"
+            }
+        }
+    }
+
     // ── Private fetchers ──────────────────────────────────────────────────────
 
     private suspend fun fetchProfile() {
         try {
-            val response = RetrofitClient.mockApi.getLawyerProfile()
-            if (response.isSuccessful) {
-                _profile.value = response.body()
+            // Priority: Real API
+            val response = RetrofitClient.haqApi.getLawyerProfile()
+            if (response.isSuccessful && response.body()?.success == true) {
+                _profile.value = response.body()?.data
+                return
             }
-        } catch (_: Exception) { _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
+            // Fallback: Mock API
+            val mockResponse = RetrofitClient.mockApi.getLawyerProfile()
+            if (mockResponse.isSuccessful) {
+                _profile.value = mockResponse.body()
+            }
+        } catch (_: Exception) {
+            // Final attempt: Mock API (in case HaqApi threw network error)
+            try {
+                val mockResponse = RetrofitClient.mockApi.getLawyerProfile()
+                if (mockResponse.isSuccessful) {
+                    _profile.value = mockResponse.body()
+                } else {
+                    _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
+                }
+            } catch (_: Exception) {
+                _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
+            }
+        }
     }
 
     private suspend fun fetchStats() {
         try {
-            val response = RetrofitClient.mockApi.getLawyerStats()
-            if (response.isSuccessful) {
-                _stats.value = response.body()
+            // Priority: Real API
+            val response = RetrofitClient.haqApi.getLawyerStats()
+            if (response.isSuccessful && response.body()?.success == true) {
+                _stats.value = response.body()?.data
+                return
             }
-        } catch (_: Exception) { _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
+            // Fallback: Mock API
+            val mockResponse = RetrofitClient.mockApi.getLawyerStats()
+            if (mockResponse.isSuccessful) {
+                _stats.value = mockResponse.body()
+            }
+        } catch (_: Exception) {
+            // Final attempt: Mock API
+            try {
+                val mockResponse = RetrofitClient.mockApi.getLawyerStats()
+                if (mockResponse.isSuccessful) {
+                    _stats.value = mockResponse.body()
+                } else {
+                    _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
+                }
+            } catch (_: Exception) {
+                _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
+            }
+        }
     }
 }

@@ -18,7 +18,8 @@ data class StoryDto(
     @SerializedName("lawyerName")   val lawyerName:   String = "",
     @SerializedName("lawyerAvatar") val lawyerAvatar: String = "",
     @SerializedName("imageUrl")     val imageUrl:     String = "",
-    @SerializedName("expiresAt")    val expiresAt:    String = ""
+    @SerializedName("expiresAt")    val expiresAt:    String = "",
+    @SerializedName("isLive")       val isLive:       Boolean = false
 )
 
 // ─── Reel ─────────────────────────────────────────────────────────────────────
