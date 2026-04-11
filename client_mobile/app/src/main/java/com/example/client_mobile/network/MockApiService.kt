@@ -12,6 +12,7 @@ import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.LikeResponseDto
 import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.NotificationDto
+import com.example.client_mobile.network.dto.RecentConsultationDto
 import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
@@ -112,6 +113,15 @@ interface MockApiService {
      */
     @GET("api/lawyers/me/stats")
     suspend fun getLawyerStats(): Response<LawyerStatsDto>
+
+    /**
+     * GET /api/avocat/consultations/recent — recent consultations list.
+     * Configure this path on Mockable.io to return a JSON array of consultation objects.
+     * If the path is not configured on the mock server this call returns a non-2xx
+     * response, which DashboardRepository handles gracefully (empty state).
+     */
+    @GET("api/avocat/consultations/recent")
+    suspend fun getRecentConsultations(): Response<List<RecentConsultationDto>>
 
     // ── Messages ──────────────────────────────────────────────────────────────
 

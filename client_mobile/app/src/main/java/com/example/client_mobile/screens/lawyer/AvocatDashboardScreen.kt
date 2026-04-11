@@ -38,7 +38,9 @@ import com.example.client_mobile.screens.shared.SkeletonBox
 // Primary: deep forest green  — #2E5D46
 // Accent:  muted gold          — #C5A059
 // Background: soft slate-50    — #F8FAFC
-private val BrandGreen     = Color(0xFF2E5D46)   // Deep forest green — headings, icons, metric values
+private val BrandGreen     = Color(0xFF2E5D46)   // Deep forest green — headings, icons
+private val AppDarkGreen   = Color(0xFF1B3124)   // App dark green   — API metric values
+private val ConsultGreen   = Color(0xFF1B3A2C)   // Client name color
 private val BrandGreenMid  = Color(0xFF3D7A5F)   // Lighter green     — chart line
 private val BrandGold      = Color(0xFFC5A059)   // Muted gold        — badges, accents, "Voir tout"
 private val BrandGoldLight = Color(0xFFFBF5E8)   // Gold-50           — gold badge bg
@@ -64,6 +66,27 @@ private val FallbackRevenue = listOf(
     RevenueMonthDto("Jun", 16200f)
 )
 
+// ─── Date formatter ──────────────────────────────────────────────────────────
+/**
+ * Converts an ISO date string (e.g. "2026-03-15" or "2026-03-15T10:00:00Z")
+ * to a clean French short-date (e.g. "15 Mars").
+ * Falls back to the raw string on any parse error.
+ */
+private fun formatConsultDate(raw: String): String {
+    if (raw.isBlank()) return ""
+    val months = listOf(
+        "Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
+        "Juil", "Août", "Sep", "Oct", "Nov", "Déc"
+    )
+    return try {
+        val datePart = raw.take(10)          // "2026-03-15"
+        val parts    = datePart.split("-")   // ["2026", "03", "15"]
+        val day      = parts[2].trimStart('0').ifEmpty { parts[2] }
+        val month    = months.getOrNull(parts[1].toInt() - 1) ?: parts[1]
+        "$day $month"
+    } catch (_: Exception) { raw }
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 @Composable
 fun AvocatDashboardScreen(
@@ -72,9 +95,11 @@ fun AvocatDashboardScreen(
     stats: LawyerStatsDto? = null,
     revenueMonthly: List<RevenueMonthDto> = emptyList(),
     recentConsultations: List<RecentConsultationDto> = emptyList(),
+    consultationsError: Boolean = false,
     onNavigateToRequests: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
-    onNavigateToCreator: () -> Unit = {}
+    onNavigateToCreator: () -> Unit = {},
+    onRetryConsultations: () -> Unit = {}
 ) {
     val isLoading = stats == null
 
@@ -91,9 +116,11 @@ fun AvocatDashboardScreen(
         item { DashRevenueCard(revenue = revenueMonthly, isLoading = isLoading) }
         item {
             DashConsultationsCard(
-                consultations = recentConsultations,
-                isLoading     = isLoading,
-                onViewAll     = onNavigateToPayments
+                consultations      = recentConsultations,
+                isLoading          = isLoading,
+                consultationsError = consultationsError,
+                onRetry            = onRetryConsultations,
+                onViewAll          = onNavigateToPayments
             )
         }
         item { Spacer(Modifier.height(32.dp)) }
@@ -327,7 +354,7 @@ private fun DashStatCard(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 20.sp,
-                    color = BrandGreen,
+                    color = AppDarkGreen,
                     maxLines = 1
                 )
                 Text(
@@ -496,6 +523,8 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
 private fun DashConsultationsCard(
     consultations: List<RecentConsultationDto>,
     isLoading: Boolean,
+    consultationsError: Boolean = false,
+    onRetry: () -> Unit = {},
     onViewAll: () -> Unit
 ) {
     Surface(
@@ -525,7 +554,7 @@ private fun DashConsultationsCard(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = DashSlate800
+                    color = ConsultGreen
                 )
                 if (!isLoading && consultations.isNotEmpty()) {
                     TextButton(
@@ -551,26 +580,102 @@ private fun DashConsultationsCard(
                         color = Color(0xFFE2E8F0)
                     )
                 }
+                consultationsError -> {
+                    // Track in-flight retry so the button shows a spinner
+                    var isRetrying by remember { mutableStateOf(false) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 28.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.WifiOff,
+                                contentDescription = null,
+                                tint = DashSlate400,
+                                modifier = Modifier.size(36.dp)
+                            )
+                            Text(
+                                "Impossible de charger",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF64748B),
+                                fontFamily = FontFamily.Serif
+                            )
+                            Text(
+                                "Vérifiez votre connexion internet.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF94A3B8),
+                                textAlign = TextAlign.Center
+                            )
+                            // Gold « Réessayer » button
+                            OutlinedButton(
+                                onClick = {
+                                    isRetrying = true
+                                    onRetry()
+                                },
+                                enabled = !isRetrying,
+                                shape = RoundedCornerShape(50.dp),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp, BrandGold
+                                ),
+                                contentPadding = PaddingValues(
+                                    horizontal = 20.dp, vertical = 8.dp
+                                )
+                            ) {
+                                if (isRetrying) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        strokeWidth = 2.dp,
+                                        color = BrandGold
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Default.Refresh,
+                                        contentDescription = null,
+                                        tint = BrandGold,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    "Réessayer",
+                                    fontSize = 13.sp,
+                                    color = BrandGold,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                    // Reset local spinner when the error clears (retry succeeded)
+                    LaunchedEffect(consultationsError) {
+                        if (!consultationsError) isRetrying = false
+                    }
+                }
                 consultations.isEmpty() -> Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp),
+                        .padding(vertical = 28.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            Icons.Default.EventBusy,
+                            Icons.Default.CalendarMonth,
                             contentDescription = null,
                             tint = DashSlate400,
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier.size(36.dp)
                         )
                         Text(
                             "Aucune consultation récente",
-                            fontSize = 13.sp,
-                            color = DashSlate400,
+                            fontSize = 14.sp,
+                            color = Color(0xFF64748B),
                             fontFamily = FontFamily.Serif
                         )
                     }
@@ -593,76 +698,106 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
     val statusText = consultation.status.ifBlank { "—" }
     val (statusColor, statusBg, statusBorder) = when {
         statusText.contains("term",    ignoreCase = true) ||
-        statusText.contains("compl",   ignoreCase = true) -> Triple(DashGreen,  DashGreenBg,    Color.Transparent)
+        statusText.contains("compl",   ignoreCase = true) -> Triple(DashGreen,  DashGreenBg,  Color.Transparent)
         statusText.contains("attente", ignoreCase = true) ||
-        statusText.contains("pend",    ignoreCase = true)  -> Triple(DashAmber,  DashAmberBg,    DashAmberBorder)
-        else                                               -> Triple(DashRed,    DashRoseBg,     Color.Transparent)
+        statusText.contains("pend",    ignoreCase = true)  -> Triple(BrandGold,  BrandGold.copy(alpha = 0.12f), BrandGold.copy(alpha = 0.35f))
+        else                                               -> Triple(DashRed,    DashRoseBg,   Color.Transparent)
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // ── Avatar initials circle ─────────────────────────────────────
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(42.dp)
                 .clip(CircleShape)
-                .background(BrandGreen.copy(alpha = 0.10f)),
+                .background(BrandGreen.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = consultation.clientName.firstOrNull()?.uppercase() ?: "?",
+                text = consultation.clientName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
+                fontSize = 16.sp,
                 color = BrandGreen
             )
         }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        // ── Name + case + status pill ───────────────────────────────
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
             Text(
                 text = consultation.clientName.ifBlank { "Client" },
                 fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
-                color = DashSlate800,
+                color = ConsultGreen,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            // Show "Case · Date" when both fields are available; fall back gracefully
+            val consultSubtitle = buildString {
+                if (consultation.legalCase.isNotBlank()) append(consultation.legalCase)
+                val fd = formatConsultDate(consultation.date)
+                if (fd.isNotBlank()) {
+                    if (isNotEmpty()) append("  ·  ")
+                    append(fd)
+                }
+            }.ifBlank { "—" }
             Text(
-                text = consultation.legalCase.ifBlank { consultation.date },
+                text = consultSubtitle,
                 fontSize = 11.sp,
                 color = DashSlate400,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        }
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            if (consultation.price > 0f) {
-                Text(
-                    text = "%.0f MAD".format(consultation.price),
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = BrandGreen
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(50.dp),
-                color = statusBg,
-                border = if (statusBorder != Color.Transparent)
-                    androidx.compose.foundation.BorderStroke(0.5.dp, statusBorder) else null
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = statusText,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = statusColor,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                )
+                // Status pill
+                Surface(
+                    shape = RoundedCornerShape(50.dp),
+                    color = statusBg,
+                    border = if (statusBorder != Color.Transparent)
+                        androidx.compose.foundation.BorderStroke(0.5.dp, statusBorder) else null
+                ) {
+                    Text(
+                        text = statusText,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                    )
+                }
+                // Price
+                if (consultation.price > 0f) {
+                    Text(
+                        text = "· %.0f MAD".format(consultation.price),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DashSlate400
+                    )
+                }
             }
+        }
+        // ── Gold action button (Video/Call) ──────────────────────────
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(BrandGold.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.VideoCall,
+                contentDescription = "Démarrer la consultation",
+                tint = BrandGold,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
@@ -674,20 +809,18 @@ private fun ConsultationSkeletonRow() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        SkeletonBox(modifier = Modifier.size(38.dp), shape = CircleShape)
+        // Avatar skeleton
+        SkeletonBox(modifier = Modifier.size(42.dp), shape = CircleShape)
+        // Text lines + pill skeleton
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             SkeletonBox(modifier = Modifier.fillMaxWidth(0.55f).height(12.dp))
-            SkeletonBox(modifier = Modifier.fillMaxWidth(0.35f).height(10.dp))
-        }
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            SkeletonBox(modifier = Modifier.width(56.dp).height(12.dp))
+            SkeletonBox(modifier = Modifier.fillMaxWidth(0.40f).height(10.dp))
             SkeletonBox(
-                modifier = Modifier.width(44.dp).height(10.dp),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.width(52.dp).height(8.dp),
+                shape = RoundedCornerShape(50.dp)
             )
         }
+        // Action button skeleton
+        SkeletonBox(modifier = Modifier.size(36.dp), shape = CircleShape)
     }
 }

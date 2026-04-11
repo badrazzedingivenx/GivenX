@@ -45,6 +45,24 @@ object RetrofitClient {
     /** Active base URL — Mockable.io mock or local Express. */
     val BASE_URL: String = if (USE_MOCK_SERVER) MOCK_URL else LOCAL_BASE_URL
 
+    /**
+     * Exposed so other layers (Repository, etc.) can adapt behaviour:
+     *   true  → hitting Mockable.io  — not all endpoints may be configured
+     *   false → hitting local/prod Express server
+     */
+    val isMockMode: Boolean = USE_MOCK_SERVER
+
+    init {
+        Log.d("GivenX-Config", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        Log.d("GivenX-Config", "  API mode  : ${if (USE_MOCK_SERVER) "MOCK (Mockable.io)" else "REAL (Express)"}")
+        Log.d("GivenX-Config", "  BASE_URL  : $BASE_URL")
+        if (!USE_MOCK_SERVER && BASE_URL.contains("localhost")) {
+            Log.e("GivenX-Config", "  ⚠ BASE_URL contains 'localhost' — Android Emulator cannot reach")
+            Log.e("GivenX-Config", "    the host machine via 'localhost'. Use 10.0.2.2 instead.")
+        }
+        Log.d("GivenX-Config", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    }
+
     // ── Auth interceptor – adds: Authorization: Bearer <token> ───────────────
 
     private val authInterceptor = Interceptor { chain ->
@@ -73,9 +91,9 @@ object RetrofitClient {
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
-            .connectTimeout(60, TimeUnit.SECONDS)  // extra slack for cold mock startup
-            .readTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
             .build()
     }
 

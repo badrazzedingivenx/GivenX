@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.lawyer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.LawyerProfileDto
@@ -44,6 +45,10 @@ class LawyerDashboardViewModel : ViewModel() {
     private val _recentConsultations = MutableStateFlow<List<RecentConsultationDto>>(emptyList())
     val recentConsultations: StateFlow<List<RecentConsultationDto>> = _recentConsultations
 
+    /** true only when the network call failed AND there is no cached data to show. */
+    private val _consultationsError = MutableStateFlow(false)
+    val consultationsError: StateFlow<Boolean> = _consultationsError
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
@@ -53,6 +58,11 @@ class LawyerDashboardViewModel : ViewModel() {
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
+
+    /** Retry fetching consultations after a network failure. Called from the 'Réessayer' button. */
+    fun retryConsultations() {
+        viewModelScope.launch { fetchRecentConsultations() }
+    }
 
     fun clearError() { _errorMessage.value = null; _isError.value = false }
 
@@ -151,11 +161,20 @@ class LawyerDashboardViewModel : ViewModel() {
     }
 
     private suspend fun fetchRecentConsultations() {
-        // GET /api/lawyers/me/consultations/recent
-        // Status values drive the color in ConsultationRow:
-        //   "terminé" / "completed" → Green
-        //   "en attente" / "pending" → Amber
-        //   anything else           → Red
-        _recentConsultations.value = repository.fetchRecentConsultations()
+        // GET /api/avocat/consultations/recent (primary) / GET /api/lawyers/me/consultations/recent (fallback)
+        // Status values drive the pill color in ConsultationRow:
+        //   "terminé" / "completed" → Green pill
+        //   "en attente" / "pending" → Gold pill
+        //   anything else           → Rose pill
+        _consultationsError.value = false
+        try {
+            _recentConsultations.value = repository.fetchRecentConsultations()
+        } catch (e: Exception) {
+            Log.e("GivenX-API", "[Consultations] fetch failed: ${e.message}", e)
+            // Only surface the error banner if we have no cached data to display
+            if (_recentConsultations.value.isEmpty()) {
+                _consultationsError.value = true
+            }
+        }
     }
 }

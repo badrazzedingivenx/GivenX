@@ -80,6 +80,7 @@ fun LawyerDashboardHost(
     val lawyerStats              by dashboardViewModel.stats.collectAsStateWithLifecycle()
     val revenueMonthly           by dashboardViewModel.revenueMonthly.collectAsStateWithLifecycle()
     val recentConsultations      by dashboardViewModel.recentConsultations.collectAsStateWithLifecycle()
+    val consultationsError       by dashboardViewModel.consultationsError.collectAsStateWithLifecycle()
 
     val displayName      = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }   ?: fullName
     val displaySpeciality = lawyerProfile?.speciality?.takeIf { it.isNotBlank() } ?: speciality
@@ -230,14 +231,16 @@ fun LawyerDashboardHost(
             ) {
                 composable(LawyerTab.Home.route) {
                     AvocatDashboardScreen(
-                        paddingValues       = paddingValues,
-                        profile             = lawyerProfile,
-                        stats               = lawyerStats,
-                        revenueMonthly      = revenueMonthly,
-                        recentConsultations = recentConsultations,
-                        onNavigateToRequests = onNavigateToRequests,
-                        onNavigateToPayments = onNavigateToPayments,
-                        onNavigateToCreator  = onNavigateToCreator
+                        paddingValues           = paddingValues,
+                        profile                 = lawyerProfile,
+                        stats                   = lawyerStats,
+                        revenueMonthly          = revenueMonthly,
+                        recentConsultations     = recentConsultations,
+                        consultationsError      = consultationsError,
+                        onNavigateToRequests    = onNavigateToRequests,
+                        onNavigateToPayments    = onNavigateToPayments,
+                        onNavigateToCreator     = onNavigateToCreator,
+                        onRetryConsultations    = { dashboardViewModel.retryConsultations() }
                     )
                 }
                 composable(LawyerTab.Messages.route) {

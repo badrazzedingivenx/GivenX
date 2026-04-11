@@ -84,9 +84,13 @@ interface HaqApiService {
     @GET("api/lawyers/me/revenue/monthly")
     suspend fun getLawyerRevenueMonthly(): Response<ApiResponse<List<RevenueMonthDto>>>
 
-    /** GET /api/lawyers/me/consultations/recent — returns latest consultations. */
+    /** GET /api/lawyers/me/consultations/recent — legacy endpoint kept as fallback. */
     @GET("api/lawyers/me/consultations/recent")
     suspend fun getRecentConsultations(): Response<ApiResponse<List<RecentConsultationDto>>>
+
+    /** GET /api/avocat/consultations/recent — primary consultations endpoint. */
+    @GET("api/avocat/consultations/recent")
+    suspend fun getAvocatConsultationsRecent(): Response<ApiResponse<List<RecentConsultationDto>>>
 
     // ── User Profile ─────────────────────────────────────────────────────────
 
