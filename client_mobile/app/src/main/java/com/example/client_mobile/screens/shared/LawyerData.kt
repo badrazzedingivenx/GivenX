@@ -21,6 +21,7 @@ data class LawyerItem(
     val bio: String,
     val isVerified: Boolean,
     val domaine: String,
+    val avatarUrl: String = "",
     val imageUri: Uri? = null
 )
 
@@ -69,10 +70,12 @@ data class LegalStory(
 
 // ─── User Session ─────────────────────────────────────────────────────────────
 object UserSession {
-    var name by mutableStateOf("Karim Bennani")
-    var email by mutableStateOf("karim.bennani@email.com")
-    var phone by mutableStateOf("+212 6 12 34 56 78")
-    var address by mutableStateOf("12, Rue Hassan II, Casablanca")
+    var name by mutableStateOf("")
+    var email by mutableStateOf("")
+    var phone by mutableStateOf("")
+    var address by mutableStateOf("")
+    /** CDN URL returned by the API (populated after login and profile fetch). */
+    var avatarUrl by mutableStateOf("")
     var profileImageUri by mutableStateOf<Uri?>(null)
 
     fun updateProfile(newName: String, newEmail: String, newPhone: String, newAddress: String, newImageUri: Uri?) {
@@ -86,32 +89,21 @@ object UserSession {
 
 // ─── Lawyer Session / Repository ──────────────────────────────────────────────
 object LawyerSession {
-    var fullName by mutableStateOf("Maître Yassine El Amrani")
-    var title by mutableStateOf("Avocat au Barreau de Casablanca")
-    var email by mutableStateOf("y.elamrani@cabinetyassine.ma")
-    var phone by mutableStateOf("+212 6 61 23 45 67")
-    var address by mutableStateOf("34, Bd Zerktouni, Casablanca")
-    var bio by mutableStateOf("Maître El Amrani est spécialisé en droit pénal with plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation.")
+    var fullName by mutableStateOf("")
+    var title by mutableStateOf("")
+    var email by mutableStateOf("")
+    var phone by mutableStateOf("")
+    var address by mutableStateOf("")
+    var bio by mutableStateOf("")
+    var avatarUrl by mutableStateOf("")
     var profileImageUri by mutableStateOf<Uri?>(null)
-    val specializations = mutableStateListOf("Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Fiscal", "Contentieux Commercial")
+    val specializations = mutableStateListOf<String>()
 
-    val clients = mutableStateListOf(
-        ClientItem("1", "Karim Bennani", "Dernier message il y a 5 min", "Actif"),
-        ClientItem("2", "Sara Alaoui", "RDV confirmé pour demain", "Actif"),
-        ClientItem("3", "Mohammed Fassi", "Appel téléphonique prévu", "En attente")
-    )
+    val clients = mutableStateListOf<ClientItem>()
 
-    val requests = mutableStateListOf(
-        RequestItem("1", "Hassan Tazi", "Litige Immobilier", "Aujourd'hui", "Nouveau", "Besoin d'un conseil pour un bail commercial.", "600 MAD"),
-        RequestItem("2", "Nadia Mansouri", "Divorce", "Hier", "Nouveau", "Demande de renseignement sur la procédure de divorce.", "400 MAD"),
-        RequestItem("3", "Omar Zaki", "Droit du Travail", "2 jours", "Nouveau", "Licenciement abusif, demande de calcul d'indemnités.", "800 MAD")
-    )
+    val requests = mutableStateListOf<RequestItem>()
 
-    val payments = mutableStateListOf(
-        PaymentItem("1", "Karim Bennani", "500 MAD", "Aujourd'hui", "Reçu", "Carte Bancaire"),
-        PaymentItem("2", "Nadia Mansouri", "400 MAD", "Hier", "Reçu", "Virement"),
-        PaymentItem("3", "Sara Alaoui", "500 MAD", "Il y a 2 jours", "En attente", "Lien de paiement envoyé")
-    )
+    val payments = mutableStateListOf<PaymentItem>()
 
     fun acceptRequest(requestId: String) {
         val request = requests.find { it.id == requestId }
@@ -171,12 +163,7 @@ data class VaultDocument(
 )
 
 object DocumentRepository {
-    val documents = mutableStateListOf(
-        VaultDocument(1L, "Contrat de Bail.pdf",     "20 Fev 2025", Icons.Default.Description),
-        VaultDocument(2L, "Piece d'Identite.jpg",    "15 Jan 2025", Icons.Default.Badge),
-        VaultDocument(3L, "Attestation Travail.pdf", "10 Jan 2025", Icons.Default.Work),
-        VaultDocument(4L, "Jugement Tribunal.pdf",   "03 Dec 2024", Icons.Default.Gavel)
-    )
+    val documents = mutableStateListOf<VaultDocument>()
 
     fun add(name: String) {
         val ext  = name.substringAfterLast('.', "").lowercase()
@@ -199,11 +186,7 @@ object DocumentRepository {
 }
 
 // ─── Sample Lawyers (For consistency) ─────────────────────────────────────────
-val sampleLawyers = listOf(
-    LawyerItem("1", "Maître Yassine El Amrani", "Droit Pénal", "Casablanca", 4.9f, 127, 12, "...", true, "Droit Pénal"),
-    LawyerItem("2", "Maître Sara Benali", "Droit de la Famille", "Rabat", 4.8f, 94, 9, "...", true, "Droit Civil")
-)
-val lawyerFilterDomaines = listOf("Tous", "Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Immobilier", "Droit du Travail", "Droit Fiscal")
+val sampleLawyers = emptyList<LawyerItem>()
 
 // ─── Creator Data Models (Lawyer → Social Content) ────────────────────────────
 
@@ -278,4 +261,5 @@ object CreatorRepository {
 
     fun deleteReel(id: Long)  { reels.removeAll  { it.id == id } }
     fun deleteStory(id: Long) { stories.removeAll { it.id == id } }
+    fun deleteLive(id: Long)  { liveSessions.removeAll { it.id == id } }
 }

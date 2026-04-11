@@ -54,7 +54,9 @@ enum class MediaPostType { Story, Reel }
 fun MediaPickerFlow(
     postType:    MediaPostType,
     onPublished: () -> Unit,          // called when publish completes
-    onCancel:    () -> Unit
+    onCancel:    () -> Unit,
+    lawyerName:  String = "",
+    specialty:   String = ""
 ) {
     val context = LocalContext.current
 
@@ -182,13 +184,13 @@ fun MediaPickerFlow(
             // Commit to shared state
             if (postType == MediaPostType.Story) {
                 CreatorRepository.postStory(
-                    lawyerName = LawyerSession.fullName,
-                    specialty  = LawyerSession.title
+                    lawyerName = lawyerName,
+                    specialty  = specialty
                 )
             } else {
                 CreatorRepository.uploadReel(
-                    lawyerName = LawyerSession.fullName,
-                    specialty  = LawyerSession.title,
+                    lawyerName = lawyerName,
+                    specialty  = specialty,
                     title      = caption.ifBlank { "Conseil juridique" }
                 )
             }

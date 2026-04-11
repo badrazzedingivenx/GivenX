@@ -19,6 +19,15 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.example.client_mobile.services.DossierData
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -47,16 +56,10 @@ data class LegalStory(
     val id: Int,
     val lawyerName: String,
     val specialty: String,
-    val hasNewStory: Boolean = true
+    val hasNewStory: Boolean = true,
+    val isLive: Boolean = false
 )
 
-private val sampleStories = listOf(
-    LegalStory(1, "M. Amina C.",   "Pénal",    hasNewStory = true),
-    LegalStory(2, "M. Khalid T.",  "Affaires", hasNewStory = true),
-    LegalStory(3, "M. Sara B.",    "Famille",  hasNewStory = false),
-    LegalStory(4, "M. Nadia M.",   "Travail",  hasNewStory = true),
-    LegalStory(5, "M. Yassine R.", "Pénal",    hasNewStory = false),
-)
 
 // ─── User Dashboard Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,44 +79,69 @@ internal fun UserCasesTabContent(
     onNavigateToMessages: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
     onNavigateToFacturation: () -> Unit = {},
-    onNavigateToDossier: (String) -> Unit = {}
+    onNavigateToDossier: (String) -> Unit = {},
+    dashboardViewModel: UserDashboardViewModel = viewModel(),
+    documentViewModel: DocumentViewModel       = viewModel()
 ) {
-    val scrollState = rememberScrollState()
+    val scrollState       = rememberScrollState()
+    val firstNameState    by dashboardViewModel.firstName.collectAsStateWithLifecycle()
+    val dossiersState     by dashboardViewModel.dossiers.collectAsStateWithLifecycle()
+    val appointmentsState by dashboardViewModel.appointments.collectAsStateWithLifecycle()
+    val billingSummary    by dashboardViewModel.billing.collectAsStateWithLifecycle()
 
-    val caseSteps = listOf(
-        CaseStep("Soumis", "15 Jan", isDone = true, isActive = false),
-        CaseStep("Examen", "22 Jan", isDone = true, isActive = false),
-        CaseStep("En cours", "30 Jan", isDone = false, isActive = true),
-        CaseStep("Résolu", "--", isDone = false, isActive = false)
-    )
+    // Map first appointment DTO → AppointmentItem used by UpcomingAppointmentCard
+    val upcomingAppointmentItem = appointmentsState?.firstOrNull()?.let { dto ->
+        AppointmentItem(
+            lawyerName = dto.lawyerName,
+            speciality = dto.specialty.ifBlank { "Avocat" },
+            date       = dto.date,
+            time       = dto.time
+        )
+    }
 
-    val appointment = AppointmentItem(
-        lawyerName = "Maître Yassine",
-        speciality = "Droit Pénal",
-        date = "Mardi 7 Avril",
-        time = "10:30"
-    )
-
-    val documents = DocumentRepository.documents.take(3)
-
-    val paidAmount = 2400f
-    val pendingAmount = 800f
-    val total = paidAmount + pendingAmount
+    // DocumentRepository is populated by DocumentViewModel on init
+    @Suppress("UNUSED_EXPRESSION") documentViewModel  // ensure ViewModel is alive
+    val documents     = DocumentRepository.documents.take(3)
+    val paidAmount    = billingSummary?.paidAmount    ?: 0f
+    val pendingAmount = billingSummary?.pendingAmount ?: 0f
+    val total         = if (paidAmount + pendingAmount > 0f) paidAmount + pendingAmount else 1f
+    val isRefreshing  by dashboardViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val storiesState  by dashboardViewModel.stories.collectAsStateWithLifecycle()
 
     var viewingStoryIndex by remember { mutableIntStateOf(-1) }
-    val allStories = CreatorRepository.stories.map { cs ->
+    // API stories come first; lawyer-side creator stories appended
+    val allStories = (storiesState?.map { dto ->
+        LegalStory(
+            id          = dto.id.hashCode(),
+            lawyerName  = dto.lawyerName,
+            specialty   = "",
+            hasNewStory = true,
+            isLive      = dto.isLive
+        )
+    } ?: emptyList()) + CreatorRepository.stories.map { cs ->
         LegalStory(
             id          = cs.id.toInt(),
             lawyerName  = cs.lawyerName,
             specialty   = cs.specialty,
-            hasNewStory = cs.hasNewStory
+            hasNewStory = cs.hasNewStory,
+            isLive      = false
         )
-    } + sampleStories
+    }
 
-    Column(
+    @OptIn(ExperimentalMaterial3Api::class)
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh    = {
+            dashboardViewModel.fetch()
+            documentViewModel.fetch()
+        },
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
+    ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
             .padding(horizontal = 20.dp)
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -122,9 +150,14 @@ internal fun UserCasesTabContent(
 
         // ── Greeting ──────────────────────────────────────────────────
         Column {
-            // UserSession.name is mutableStateOf — recompose on profile update
-            val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
-            val greeting = if (displayName.isNotEmpty()) "Bonjour, $displayName 👋" else "Bonjour 👋"
+            val greeting = when {
+                firstNameState == null        -> "Bonjour 👋"
+                firstNameState!!.isNotBlank() -> "Bonjour, ${firstNameState!!} 👋"
+                else -> {
+                    val local = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
+                    if (local.isNotBlank()) "Bonjour, $local 👋" else "Bonjour 👋"
+                }
+            }
             Text(
                 text = greeting,
                 fontSize = 26.sp,
@@ -261,23 +294,72 @@ internal fun UserCasesTabContent(
                 }
 
                 // ── Case Status Timeline ───────────────────────────────────────
-                DashCard {
-                    SectionHeader(title = "État du Dossier", actionLabel = "Voir tout", onAction = { onNavigateToDossier("HAQ-2024-0312") })
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Affaire N° HAQ-2024-0312",
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = AppGoldColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(18.dp))
-                    CaseStatusTimeline(steps = caseSteps)
+                when {
+                    dossiersState == null -> {
+                        // Loading skeleton for the dossier card
+                        DashCard {
+                            DossierLoadingSkeleton()
+                        }
+                    }
+                    dossiersState!!.isEmpty() -> {
+                        DashCard {
+                            SectionHeader(title = "État du Dossier")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Aucun dossier actif pour le moment.",
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = AppDarkGreen.copy(alpha = 0.55f)
+                            )
+                        }
+                    }
+                    else -> {
+                        val d = dossiersState!!.first()
+                        DashCard {
+                            SectionHeader(
+                                title = "État du Dossier",
+                                actionLabel = "Voir tout",
+                                onAction = { onNavigateToDossier(d.id) }
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Affaire N° ${d.caseNumber}",
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = AppGoldColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                            CaseStatusTimeline(steps = dossierToSteps(d))
+                        }
+                    }
                 }
 
                 // ── Upcoming Appointment ───────────────────────────────────────
                 SectionHeader(title = "Prochain Rendez-vous")
-                UpcomingAppointmentCard(appointment = appointment)
+                when {
+                    appointmentsState == null -> {
+                        DashCard {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().height(72.dp),
+                                contentAlignment = Alignment.Center
+                            ) { CircularProgressIndicator(color = AppDarkGreen, modifier = Modifier.size(26.dp)) }
+                        }
+                    }
+                    upcomingAppointmentItem != null -> {
+                        UpcomingAppointmentCard(appointment = upcomingAppointmentItem)
+                    }
+                    else -> {
+                        DashCard {
+                            Text(
+                                "Aucun rendez-vous à venir.",
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = AppDarkGreen.copy(alpha = 0.55f)
+                            )
+                        }
+                    }
+                }
 
                 // ── Document Vault ─────────────────────────────────────────────
                 SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
@@ -298,7 +380,8 @@ internal fun UserCasesTabContent(
                 BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
 
                 Spacer(modifier = Modifier.height(20.dp))
-    }
+    }  // end Column
+    }  // end PullToRefreshBox
 
     if (viewingStoryIndex >= 0) {
         StoryViewerModal(
@@ -306,6 +389,61 @@ internal fun UserCasesTabContent(
             startIndex = viewingStoryIndex,
             onDismiss  = { viewingStoryIndex = -1 }
         )
+    }
+}
+
+// ─── Dossier helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Converts a [DossierData.progress] value (0–100) to the four
+ * fixed CaseStep entries used by the timeline widget.
+ */
+private fun dossierToSteps(d: com.example.client_mobile.services.DossierData): List<CaseStep> {
+    val p = d.progress
+    return listOf(
+        CaseStep("Soumis",    "15 Jan", isDone = p > 0,  isActive = p in 1..24),
+        CaseStep("Examen",    "22 Jan", isDone = p > 25, isActive = p in 25..49),
+        CaseStep("En cours",  "30 Jan", isDone = p > 50, isActive = p in 50..74),
+        CaseStep("Résolu",    "--",     isDone = p > 75, isActive = p in 75..100)
+    )
+}
+
+@Composable
+private fun DossierLoadingSkeleton() {
+    val shimmer = rememberInfiniteTransition(label = "dossierSkeleton")
+    val alpha by shimmer.animateFloat(
+        initialValue  = 0.20f,
+        targetValue   = 0.45f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+        label         = "dossierAlpha"
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            modifier = Modifier
+                .width(140.dp).height(14.dp)
+                .clip(RoundedCornerShape(7.dp))
+                .background(AppDarkGreen.copy(alpha = alpha))
+        )
+        Box(
+            modifier = Modifier
+                .width(200.dp).height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(AppGoldColor.copy(alpha = alpha))
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            repeat(4) {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(AppDarkGreen.copy(alpha = alpha))
+                )
+            }
+        }
     }
 }
 
@@ -650,6 +788,17 @@ fun BillingSummaryCard(paid: Float, pending: Float, total: Float) {
 // ─── Stories Item ─────────────────────────────────────────────────────────────
 @Composable
 fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
+    val infiniteTransition = rememberInfiniteTransition(label = "live_pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -661,7 +810,11 @@ fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
             shape    = CircleShape,
             border   = BorderStroke(
                 width = 2.5.dp,
-                color = if (story.hasNewStory) AppGoldColor else Color.Gray.copy(alpha = 0.35f)
+                color = when {
+                    story.isLive -> Color.Red
+                    story.hasNewStory -> AppGoldColor
+                    else -> Color.Gray.copy(alpha = 0.35f)
+                }
             ),
             color = AppDarkGreen.copy(alpha = 0.07f)
         ) {
@@ -669,10 +822,29 @@ fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
                 Icon(
                     Icons.Default.Person,
                     contentDescription = null,
-                    tint = if (story.hasNewStory) AppGoldColor else Color.Gray.copy(alpha = 0.55f),
+                    tint = when {
+                        story.isLive -> Color.Red.copy(alpha = pulseAlpha)
+                        story.hasNewStory -> AppGoldColor
+                        else -> Color.Gray.copy(alpha = 0.55f)
+                    },
                     modifier = Modifier.size(26.dp)
                 )
-                if (story.hasNewStory) {
+                if (story.isLive) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .offset(y = 2.dp)
+                            .background(Color.Red, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            "LIVE",
+                            color = Color.White,
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else if (story.hasNewStory) {
                     Box(
                         modifier = Modifier
                             .size(14.dp)
@@ -695,8 +867,8 @@ fun StoriesItem(story: LegalStory, onClick: () -> Unit = {}) {
             text = story.lawyerName,
             fontFamily = FontFamily.Serif,
             fontSize = 10.sp,
-            fontWeight = if (story.hasNewStory) FontWeight.Bold else FontWeight.Normal,
-            color = if (story.hasNewStory) AppDarkGreen else Color.Gray,
+            fontWeight = if (story.hasNewStory || story.isLive) FontWeight.Bold else FontWeight.Normal,
+            color = if (story.isLive) Color.Red else if (story.hasNewStory) AppDarkGreen else Color.Gray,
             textAlign = TextAlign.Center,
             maxLines = 2
         )

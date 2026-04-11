@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.IntOffset
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
@@ -47,23 +50,21 @@ data class LiveChatMessage(
     val id: String = java.util.UUID.randomUUID().toString()
 )
 
-private val sampleLiveSessions = listOf(
-    LiveSession(1, "Maître Amina Chraibi",   "Droit Pénal",     "Vos droits lors d'une garde à vue",          1240, isLive = true),
-    LiveSession(2, "Maître Sara Benali",      "Droit Famille",   "Q&A : Divorce & garde d'enfants",              876, isLive = true),
-    LiveSession(3, "Maître Khalid Tazi",      "Droit Affaires",  "Comment créer votre SARL en 2026",             532, isLive = false),
-    LiveSession(4, "Maître Nadia Mansouri",   "Droit du Travail","Licenciement : défendez-vous !",               1087, isLive = true),
-)
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
+fun LiveSessionsScreen(
+    paddingValues: PaddingValues = PaddingValues(),
+    viewModel: LiveViewModel = viewModel()
+) {
     var activeSession by remember { mutableStateOf<LiveSession?>(null) }
+    val apiLives      by viewModel.lives.collectAsStateWithLifecycle()
+    val isRefreshing  by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
-    // Merge lawyer-created live sessions from CreatorRepository into the feed
     val creatorLive = CreatorRepository.liveSessions.map { cl ->
         LiveSession(
-            id      = cl.id.toInt(),
+            id         = cl.id.toInt(),
             lawyerName = cl.lawyerName,
             specialty  = cl.specialty,
             topic      = cl.topic,
@@ -71,8 +72,7 @@ fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
             isLive     = cl.isLive
         )
     }
-    val allLive    = creatorLive + sampleLiveSessions.filter { it.isLive }
-    val allReplays = sampleLiveSessions.filter { !it.isLive }
+    val allLive = creatorLive + (apiLives ?: emptyList())
 
     if (activeSession != null) {
         LiveRoomView(
@@ -80,35 +80,39 @@ fun LiveSessionsScreen(paddingValues: PaddingValues = PaddingValues()) {
             onLeave  = { activeSession = null }
         )
     } else {
-        LazyColumn(
-            modifier        = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding  = PaddingValues(vertical = 12.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = { viewModel.fetch() },
+            modifier     = Modifier.fillMaxSize()
         ) {
-            item {
-                val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
-                Text(
-                    text = if (displayName.isNotEmpty()) "Bonjour, $displayName 👋" else "Bonjour 👋",
-                    fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp, color = AppDarkGreen
-                )
-                Text("Sessions en direct", fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp, color = AppDarkGreen.copy(alpha = 0.55f))
-            }
+            LazyColumn(
+                modifier            = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding      = PaddingValues(vertical = 12.dp)
+            ) {
+                item {
+                    val displayName = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
+                    Text(
+                        text = if (displayName.isNotEmpty()) "Bonjour, $displayName 👋" else "Bonjour 👋",
+                        fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp, color = AppDarkGreen
+                    )
+                    Text(
+                        "Sessions en direct",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 13.sp,
+                        color = AppDarkGreen.copy(alpha = 0.55f)
+                    )
+                }
 
-            // ── Live now section ──────────────────────────────────────────
-            item { SectionHeader(title = "🔴 En direct") }
-            items(allLive) { session ->
-                LiveSessionCard(session = session, onClick = { activeSession = session })
-            }
+                // ── Live now section ──────────────────────────────────────
+                item { SectionHeader(title = "🔴 En direct") }
+                items(allLive) { session ->
+                    LiveSessionCard(session = session, onClick = { activeSession = session })
+                }
 
-            // ── Replays ───────────────────────────────────────────────────
-            item { SectionHeader(title = "Rediffusions") }
-            items(allReplays) { session ->
-                LiveSessionCard(session = session, onClick = { activeSession = session })
+                item { Spacer(Modifier.height(8.dp)) }
             }
-
-            item { Spacer(Modifier.height(8.dp)) }
         }
     }
 }

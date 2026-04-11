@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 private data class BillingInvoice(
     val number: String,
@@ -33,16 +35,26 @@ private data class BillingInvoice(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BillingScreen(onBack: () -> Unit = {}) {
-    val paidAmount    = 2400f
-    val pendingAmount = 800f
-    val total         = paidAmount + pendingAmount
+fun BillingScreen(
+    onBack: () -> Unit = {},
+    viewModel: BillingViewModel = viewModel()
+) {
+    val summary by viewModel.summary.collectAsStateWithLifecycle()
+    val isLoading = summary == null
 
-    val invoices = listOf(
-        BillingInvoice("FAC-2025-001", "Maitre Yassine El Amrani", "1 200 MAD", "Payee",      true),
-        BillingInvoice("FAC-2025-002", "Maitre Sara Benali",       "1 200 MAD", "Payee",      true),
-        BillingInvoice("FAC-2025-003", "Maitre Khalid Tazi",       "800 MAD",   "En attente", false)
-    )
+    val paidAmount    = summary?.paidAmount    ?: 0f
+    val pendingAmount = summary?.pendingAmount ?: 0f
+    val total         = if (paidAmount + pendingAmount > 0f) paidAmount + pendingAmount else 1f
+
+    val invoices = summary?.invoices?.map { dto ->
+        BillingInvoice(
+            number     = dto.number,
+            lawyerName = dto.lawyerName,
+            amount     = "${dto.amount.toInt()} MAD",
+            status     = dto.status,
+            isPaid     = dto.isPaid
+        )
+    } ?: emptyList()
 
     Scaffold(
         topBar = {
@@ -70,7 +82,15 @@ fun BillingScreen(onBack: () -> Unit = {}) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
-                item {
+                if (isLoading) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = AppDarkGreen)
+                        }
+                    }
+                } else {
+                    item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
@@ -118,11 +138,12 @@ fun BillingScreen(onBack: () -> Unit = {}) {
                         }
                     }
                 }
-                item { SectionHeader(title = "Historique des Factures") }
-                items(invoices.size) { idx ->
-                    InvoiceCard(invoice = invoices[idx])
-                }
-                item { Spacer(modifier = Modifier.height(8.dp)) }
+                    item { SectionHeader(title = "Historique des Factures") }
+                    items(invoices.size) { idx ->
+                        InvoiceCard(invoice = invoices[idx])
+                    }
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                }  // end else
             }
         }
     }

@@ -24,14 +24,20 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentVaultScreen(onBack: () -> Unit = {}) {
+fun DocumentVaultScreen(
+    onBack: () -> Unit = {},
+    viewModel: DocumentViewModel = viewModel()
+) {
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-    // ── Single source of truth from shared DocumentRepository ──────────────
+    // ── Driven by DocumentRepository which is populated by DocumentViewModel ─
     val documents = DocumentRepository.documents
 
     var searchQuery        by remember { mutableStateOf("") }
@@ -49,7 +55,7 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
         AddDocumentDialog(
             onDismiss = { showAddDialog = false },
             onConfirm = { name ->
-                if (name.isNotBlank()) DocumentRepository.add(name)
+                if (name.isNotBlank()) viewModel.add(name)
                 showAddDialog = false
             }
         )
@@ -60,7 +66,7 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
             currentName = doc.name,
             onDismiss   = { editTarget = null },
             onConfirm   = { newName ->
-                if (newName.isNotBlank()) DocumentRepository.rename(doc.id, newName)
+                if (newName.isNotBlank()) viewModel.rename(doc.id, newName)
                 editTarget = null
             }
         )
@@ -71,7 +77,7 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
             documentName = doc.name,
             onDismiss    = { deleteTarget = null },
             onConfirm    = {
-                DocumentRepository.delete(doc.id)
+                viewModel.delete(doc.id)
                 deleteTarget = null
             }
         )
@@ -178,7 +184,16 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
                 }
 
                 // ── Document cards ────────────────────────────────────────
-                if (filtered.isEmpty()) {
+                if (isLoading) {
+                    item {
+                        Box(
+                            modifier         = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = AppDarkGreen)
+                        }
+                    }
+                } else if (filtered.isEmpty()) {
                     item {
                         Box(
                             modifier          = Modifier

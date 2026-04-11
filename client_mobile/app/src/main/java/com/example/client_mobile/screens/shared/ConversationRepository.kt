@@ -16,14 +16,11 @@ data class ChatMessage(
 
 data class Conversation(
     val id: String,
-    val lawyerId: String,
-    val lawyerName: String,
-    val lawyerSpecialty: String,
-    val clientName: String,
+    val otherPartyName: String,
     val lastMessage: String = "",
-    val lastTimestamp: String = "",
-    val unreadCountForLawyer: Int = 0,
-    val unreadCountForUser: Int = 0
+    val timestamp: String = "",
+    val unreadCount: Int = 0,
+    val avatarUrl: String = ""
 )
 
 // ─── Conversation Repository ──────────────────────────────────────────────────
@@ -38,20 +35,16 @@ object ConversationRepository {
         return messageMap.getOrPut(conversationId) { mutableStateListOf() }
     }
 
-    /** Find existing conversation or create a new one. */
+    /** Find existing conversation or create a new one locally. */
     fun getOrCreate(
         lawyerId: String,
         lawyerName: String,
-        lawyerSpecialty: String,
         clientName: String
     ): Conversation {
         val id = "${clientName.replace(" ", "_")}_$lawyerId"
         return conversations.find { it.id == id } ?: Conversation(
             id = id,
-            lawyerId = lawyerId,
-            lawyerName = lawyerName,
-            lawyerSpecialty = lawyerSpecialty,
-            clientName = clientName
+            otherPartyName = lawyerName
         ).also { conversations.add(it) }
     }
 
@@ -66,7 +59,7 @@ object ConversationRepository {
                 isFromUser = true
             )
         )
-        updateMeta(conversationId, content, time, incrementLawyerUnread = true)
+        updateMeta(conversationId, content, time)
     }
 
     fun sendLawyerMessage(conversationId: String, content: String, senderName: String) {
@@ -80,33 +73,46 @@ object ConversationRepository {
                 isFromUser = false
             )
         )
-        updateMeta(conversationId, content, time, incrementLawyerUnread = false)
+        updateMeta(conversationId, content, time)
     }
 
-    fun markReadByLawyer(conversationId: String) {
+    fun markRead(conversationId: String) {
         val idx = conversations.indexOfFirst { it.id == conversationId }
-        if (idx >= 0) conversations[idx] = conversations[idx].copy(unreadCountForLawyer = 0)
+        if (idx >= 0) conversations[idx] = conversations[idx].copy(unreadCount = 0)
     }
 
-    fun markReadByUser(conversationId: String) {
-        val idx = conversations.indexOfFirst { it.id == conversationId }
-        if (idx >= 0) conversations[idx] = conversations[idx].copy(unreadCountForUser = 0)
+    /**
+     * Merges API conversations into the list.
+     * API items are placed at the front; any locally-created conversation whose id
+     * is not yet in the API response is appended after.
+     */
+    fun replaceFromApi(items: List<Conversation>) {
+        val apiIds = items.map { it.id }.toSet()
+        val localOnly = conversations.filter { it.id !in apiIds }
+        conversations.clear()
+        conversations.addAll(items)
+        conversations.addAll(localOnly)
     }
 
-    private fun updateMeta(
-        conversationId: String,
-        content: String,
-        time: String,
-        incrementLawyerUnread: Boolean
-    ) {
+    /**
+     * Replaces (or seeds) the message list for [conversationId] with [items].
+     * Locally-sent messages that are not yet returning from the API are kept.
+     */
+    fun replaceMessagesFromApi(conversationId: String, items: List<ChatMessage>) {
+        val existing = getMessages(conversationId)
+        val apiIds   = items.map { it.id }.toSet()
+        val localOnly = existing.filter { it.id !in apiIds }
+        existing.clear()
+        existing.addAll(items)
+        existing.addAll(localOnly)
+    }
+
+    private fun updateMeta(conversationId: String, content: String, time: String) {
         val idx = conversations.indexOfFirst { it.id == conversationId }
         if (idx >= 0) {
-            val old = conversations[idx]
-            conversations[idx] = old.copy(
+            conversations[idx] = conversations[idx].copy(
                 lastMessage = content,
-                lastTimestamp = time,
-                unreadCountForLawyer = if (incrementLawyerUnread) old.unreadCountForLawyer + 1 else old.unreadCountForLawyer,
-                unreadCountForUser = if (!incrementLawyerUnread) old.unreadCountForUser + 1 else old.unreadCountForUser
+                timestamp = time
             )
         }
     }

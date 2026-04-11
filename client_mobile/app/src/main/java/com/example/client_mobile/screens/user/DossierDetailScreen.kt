@@ -14,7 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +25,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.client_mobile.network.DossierApiRepository
+import com.example.client_mobile.services.DossierData
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 
@@ -59,103 +68,71 @@ data class DossierCase(
     val documentIds: List<Long>
 )
 
-// ─── Sample Repository ────────────────────────────────────────────────────────
+// ─── Detail ViewModel ────────────────────────────────────────────────────────
 
-object DossierRepository {
+sealed interface DossierDetailState {
+    object Loading  : DossierDetailState
+    object NotFound : DossierDetailState
+    data class Success(val dossierCase: DossierCase) : DossierDetailState
+}
 
-    val cases = listOf(
-        DossierCase(
-            id = "HAQ-2024-0312",
-            caseNumber = "HAQ-2024-0312",
-            category = "Droit de la Famille",
-            status = "En cours",
-            statusContainerColor = Color(0xFFD4AF37).copy(alpha = 0.15f),
-            statusTextColor = Color(0xFFD4AF37),
-            openingDate = "15 Janvier 2025",
-            lawyerId = "1",
-            lawyerName = "Maître Yassine El Amrani",
-            lawyerSpecialty = "Droit Pénal",
-            steps = listOf(
-                DossierStep(
-                    title = "Soumis",
-                    subtitle = "Dossier reçu et enregistré",
-                    date = "15 Jan",
-                    isDone = true,
-                    isActive = false
-                ),
-                DossierStep(
-                    title = "Analyse",
-                    subtitle = "Documents vérifiés par le cabinet",
-                    date = "22 Jan",
-                    isDone = true,
-                    isActive = false
-                ),
-                DossierStep(
-                    title = "Plaidoirie",
-                    subtitle = "Document approuvé par l'avocat",
-                    date = "28 Jan",
-                    isDone = true,
-                    isActive = false
-                ),
-                DossierStep(
-                    title = "En cours",
-                    subtitle = "En attente de la date d'audience",
-                    date = "30 Jan",
-                    isDone = false,
-                    isActive = true
-                ),
-                DossierStep(
-                    title = "Décision",
-                    subtitle = "En attente du jugement",
-                    date = "--",
-                    isDone = false,
-                    isActive = false
-                ),
-                DossierStep(
-                    title = "Clôturé",
-                    subtitle = "Dossier résolu",
-                    date = "--",
-                    isDone = false,
-                    isActive = false
-                )
-            ),
-            recentActions = listOf(
-                DossierAction(
-                    description = "Document approuvé par l'avocat",
-                    author = "Maître Yassine",
-                    date = "30 Jan 2025",
-                    icon = Icons.Default.CheckCircle
-                ),
-                DossierAction(
-                    description = "Date d'audience demandée au tribunal",
-                    author = "Maître Yassine",
-                    date = "27 Jan 2025",
-                    icon = Icons.Default.Gavel
-                ),
-                DossierAction(
-                    description = "Nouvelle pièce ajoutée: Attestation Travail",
-                    author = "Vous",
-                    date = "24 Jan 2025",
-                    icon = Icons.Default.UploadFile
-                ),
-                DossierAction(
-                    description = "Consultation initiale effectuée",
-                    author = "Maître Yassine",
-                    date = "20 Jan 2025",
-                    icon = Icons.Default.Forum
-                ),
-                DossierAction(
-                    description = "Dossier ouvert et assigné",
-                    author = "Système HAQ",
-                    date = "15 Jan 2025",
-                    icon = Icons.Default.FolderOpen
-                )
-            ),
-            documentIds = listOf(1L, 3L, 4L)
-        )
+class DossierDetailViewModel : ViewModel() {
+
+    private val _state = MutableStateFlow<DossierDetailState>(DossierDetailState.Loading)
+    val state: StateFlow<DossierDetailState> = _state
+
+    fun fetchById(dossierDocId: String) {
+        _state.value = DossierDetailState.Loading
+        viewModelScope.launch {
+            try {
+                val data = DossierApiRepository.getDossierById(dossierDocId)
+                _state.value = if (data != null)
+                    DossierDetailState.Success(data.toCase())
+                else
+                    DossierDetailState.NotFound
+            } catch (e: Exception) {
+                _state.value = DossierDetailState.NotFound
+            }
+        }
+    }
+}
+
+// ─── Firestore → UI Converter ─────────────────────────────────────────────────
+
+private fun statusColors(status: String): Pair<Color, Color> = when (status.trim()) {
+    "En cours"   -> Color(0xFFD4AF37).copy(alpha = 0.15f) to Color(0xFFD4AF37)
+    "En attente" -> Color(0xFF2196F3).copy(alpha = 0.15f) to Color(0xFF2196F3)
+    "Clôturé"   -> Color(0xFF4CAF50).copy(alpha = 0.15f) to Color(0xFF4CAF50)
+    "Résolu"    -> Color(0xFF4CAF50).copy(alpha = 0.15f) to Color(0xFF4CAF50)
+    else         -> Color(0xFF9E9E9E).copy(alpha = 0.15f) to Color(0xFF9E9E9E)
+}
+
+private fun DossierData.toCase(): DossierCase {
+    val p = progress
+    val (bgColor, textColor) = statusColors(status)
+    val steps = listOf(
+        DossierStep("Soumis",     "Dossier reçu et enregistré",         openingDate.ifBlank { "--" }, p > 0,   p in 1..15),
+        DossierStep("Analyse",    "Documents vérifiés par le cabinet",  "--",                         p > 25,  p in 16..40),
+        DossierStep("Plaidoirie", "Document approuvé par l'avocat",     "--",                         p > 50,  p in 41..65),
+        DossierStep("En cours",   "En attente de la date d'audience",   "--",                         p > 75,  p in 66..85),
+        DossierStep("Décision",   "En attente du jugement",             "--",                         p > 90,  p in 86..95),
+        DossierStep("Clôturé",    "Dossier résolu",                     "--",                         p >= 100, p == 100)
     )
-
-    fun getById(id: String): DossierCase? = cases.find { it.id == id }
+    return DossierCase(
+        id                   = id,
+        caseNumber           = caseNumber.ifBlank { id },
+        category             = category.ifBlank { "—" },
+        status               = status.ifBlank { "—" },
+        statusContainerColor = bgColor,
+        statusTextColor      = textColor,
+        openingDate          = openingDate.ifBlank { "—" },
+        lawyerId             = lawyerId,
+        lawyerName           = lawyerName.ifBlank { "—" },
+        lawyerSpecialty      = lawyerSpecialty.ifBlank { "—" },
+        steps                = steps,
+        recentActions        = emptyList(),
+        documentIds          = emptyList()
+    )
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -167,8 +144,9 @@ fun DossierDetailScreen(
     onBack: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {}
 ) {
-    val dossier = DossierRepository.getById(caseId) ?: DossierRepository.cases.first()
-    val associatedDocs = DocumentRepository.documents.filter { it.id in dossier.documentIds }
+    val vm: DossierDetailViewModel = viewModel()
+    LaunchedEffect(caseId) { vm.fetchById(caseId) }
+    val screenState by vm.state.collectAsStateWithLifecycle()
 
     DashBoardBackground {
         Scaffold(
@@ -200,134 +178,160 @@ fun DossierDetailScreen(
             containerColor = Color.Transparent
         ) { paddingValues ->
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
+            when (val s = screenState) {
+                is DossierDetailState.Loading ->
+                    Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = AppDarkGreen, strokeWidth = 2.5.dp)
+                    }
 
-                // ── Case Information Card ─────────────────────────────────
-                item {
-                    DashCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
+                is DossierDetailState.NotFound ->
+                    Box(
+                        Modifier.fillMaxSize().padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Affaire N°",
-                                    fontSize = 11.sp,
-                                    fontFamily = FontFamily.Serif,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    text = dossier.caseNumber,
-                                    fontSize = 17.sp,
-                                    fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
-                                    color = AppGoldColor
-                                )
-                            }
-                            StatusChip(
-                                label = dossier.status,
-                                containerColor = dossier.statusContainerColor,
-                                textColor = dossier.statusTextColor
+                            Icon(
+                                Icons.Default.FolderOff,
+                                contentDescription = null,
+                                tint = AppDarkGreen.copy(alpha = 0.30f),
+                                modifier = Modifier.size(64.dp)
                             )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.07f))
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(20.dp)
-                        ) {
-                            CaseInfoTile(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.Balance,
-                                label = "Catégorie",
-                                value = dossier.category
+                            Text(
+                                "Dossier introuvable",
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = AppDarkGreen
                             )
-                            CaseInfoTile(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.CalendarToday,
-                                label = "Ouvert le",
-                                value = dossier.openingDate
+                            Text(
+                                "Ce dossier n'existe pas ou vous n'y avez pas accès.",
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 13.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 32.dp)
                             )
+                            Button(
+                                onClick = onBack,
+                                colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                                shape = RoundedCornerShape(14.dp)
+                            ) { Text("Retour", fontFamily = FontFamily.Serif, color = Color.White) }
                         }
                     }
-                }
 
-                // ── Detailed Timeline ─────────────────────────────────────
-                item {
-                    SectionHeader(title = "Historique du Dossier")
-                }
-                item {
-                    DashCard {
-                        dossier.steps.forEachIndexed { index, step ->
-                            DossierTimelineRow(
-                                step = step,
-                                isLast = index == dossier.steps.lastIndex
-                            )
-                        }
-                    }
-                }
+                is DossierDetailState.Success -> {
+                    val dossier = s.dossierCase
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        item { Spacer(modifier = Modifier.height(4.dp)) }
 
-                // ── Recent Actions ────────────────────────────────────────
-                item {
-                    SectionHeader(title = "Dernières Actions")
-                }
-                item {
-                    DashCard {
-                        dossier.recentActions.forEachIndexed { index, action ->
-                            DossierActionRow(action = action)
-                            if (index < dossier.recentActions.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 10.dp),
-                                    color = AppDarkGreen.copy(alpha = 0.07f)
-                                )
-                            }
-                        }
-                    }
-                }
+                        // ── Case Information Card ─────────────────────────────────
+                        item {
+                            DashCard {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Affaire N°",
+                                            fontSize = 11.sp,
+                                            fontFamily = FontFamily.Serif,
+                                            color = Color.Gray
+                                        )
+                                        Text(
+                                            text = dossier.caseNumber,
+                                            fontSize = 17.sp,
+                                            fontFamily = FontFamily.Serif,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AppGoldColor
+                                        )
+                                    }
+                                    StatusChip(
+                                        label = dossier.status,
+                                        containerColor = dossier.statusContainerColor,
+                                        textColor = dossier.statusTextColor
+                                    )
+                                }
 
-                // ── Associated Documents ──────────────────────────────────
-                if (associatedDocs.isNotEmpty()) {
-                    item {
-                        SectionHeader(title = "Pièces Jointes")
-                    }
-                    item {
-                        DashCard {
-                            associatedDocs.forEachIndexed { index, doc ->
-                                DocumentVaultItem(doc = doc)
-                                if (index < associatedDocs.lastIndex) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 10.dp),
-                                        color = AppDarkGreen.copy(alpha = 0.07f)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.07f))
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                                ) {
+                                    CaseInfoTile(
+                                        modifier = Modifier.weight(1f),
+                                        icon = Icons.Default.Balance,
+                                        label = "Catégorie",
+                                        value = dossier.category
+                                    )
+                                    CaseInfoTile(
+                                        modifier = Modifier.weight(1f),
+                                        icon = Icons.Default.CalendarToday,
+                                        label = "Ouvert le",
+                                        value = dossier.openingDate
                                     )
                                 }
                             }
                         }
+
+                        // ── Detailed Timeline ─────────────────────────────────────
+                        item { SectionHeader(title = "Historique du Dossier") }
+                        item {
+                            DashCard {
+                                dossier.steps.forEachIndexed { index, step ->
+                                    DossierTimelineRow(
+                                        step = step,
+                                        isLast = index == dossier.steps.lastIndex
+                                    )
+                                }
+                            }
+                        }
+
+                        // ── Recent Actions ────────────────────────────────────────
+                        if (dossier.recentActions.isNotEmpty()) {
+                            item { SectionHeader(title = "Dernières Actions") }
+                            item {
+                                DashCard {
+                                    dossier.recentActions.forEachIndexed { index, action ->
+                                        DossierActionRow(action = action)
+                                        if (index < dossier.recentActions.lastIndex) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(vertical = 10.dp),
+                                                color = AppDarkGreen.copy(alpha = 0.07f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Lawyer Contact ────────────────────────────────────────
+                        if (dossier.lawyerName.isNotBlank() && dossier.lawyerName != "—") {
+                            item { SectionHeader(title = "Votre Avocat") }
+                            item {
+                                LawyerContactCard(
+                                    dossier = dossier,
+                                    onNavigateToChat = onNavigateToChat
+                                )
+                            }
+                        }
+
+                        item { Spacer(modifier = Modifier.height(20.dp)) }
                     }
                 }
-
-                // ── Lawyer Contact ────────────────────────────────────────
-                item {
-                    SectionHeader(title = "Votre Avocat")
-                }
-                item {
-                    LawyerContactCard(
-                        dossier = dossier,
-                        onNavigateToChat = onNavigateToChat
-                    )
-                }
-
-                item { Spacer(modifier = Modifier.height(20.dp)) }
             }
         }
     }
@@ -541,11 +545,9 @@ private fun LawyerContactCard(
 
         Button(
             onClick = {
-                val lawyer = sampleLawyers.find { it.id == dossier.lawyerId } ?: sampleLawyers.first()
                 val conv = ConversationRepository.getOrCreate(
-                    lawyerId = dossier.lawyerId,
-                    lawyerName = lawyer.name,
-                    lawyerSpecialty = lawyer.specialty,
+                    lawyerId   = dossier.lawyerId.ifBlank { dossier.id },
+                    lawyerName = dossier.lawyerName,
                     clientName = UserSession.name
                 )
                 onNavigateToChat(conv.id)

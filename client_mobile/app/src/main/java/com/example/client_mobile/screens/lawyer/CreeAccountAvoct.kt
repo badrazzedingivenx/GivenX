@@ -25,14 +25,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
 
 @Composable
 fun CreeAvocatScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -59,6 +63,17 @@ fun CreeAvocatScreen(
     var confirmPasswordError by remember { mutableStateOf(false) }
     var addressError by remember { mutableStateOf(false) }
     var specialityError by remember { mutableStateOf(false) }
+
+    val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
+    val isLoading = registerState is AuthViewModel.RegisterUiState.Loading
+    val authError = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
+
+    LaunchedEffect(registerState) {
+        if (registerState is AuthViewModel.RegisterUiState.Success) {
+            authViewModel.resetRegisterState()
+            onNavigateToHome()
+        }
+    }
 
     val darkGreen = Color(0xFF1B3124)
 
@@ -250,15 +265,43 @@ fun CreeAvocatScreen(
                             specialityError = speciality.isBlank()
 
                             if (!fullNameError && !emailError && !phoneError && !passwordError && !confirmPasswordError && !addressError && !specialityError) {
-                                // Logic for API call will go here
-                                onNavigateToHome()
+                                authViewModel.register(
+                                    fullName   = fullName,
+                                    email      = email,
+                                    password   = password,
+                                    phone      = phone,
+                                    role       = "lawyer",
+                                    speciality = speciality
+                                )
                             }
                         },
+                        enabled = !isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                         shape = RoundedCornerShape(25.dp),
                         modifier = Modifier.fillMaxWidth().height(55.dp).offset(y = (-45).dp)
                     ) {
-                        Text("S'inscrire", fontSize = 18.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = Color.White,
+                                strokeWidth = 2.5.dp
+                            )
+                        } else {
+                            Text("S'inscrire", fontSize = 18.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                    authError?.let { err ->
+                        Text(
+                            text = err,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Serif,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = (-40).dp)
+                                .padding(bottom = 4.dp)
+                        )
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth().offset(y = (-40).dp),

@@ -1,9 +1,15 @@
 package com.example.client_mobile.screens.shared
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -39,6 +46,25 @@ import com.example.client_mobile.R
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 val AppDarkGreen = Color(0xFF1B3124)
 val AppGoldColor = Color(0xFFD4AF37)
+
+// ─── Skeleton Loader ──────────────────────────────────────────────────────────
+@Composable
+fun SkeletonBox(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp)
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue  = 0.08f,
+        targetValue   = 0.22f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "skeletonAlpha"
+    )
+    Box(modifier = modifier.clip(shape).background(AppDarkGreen.copy(alpha = alpha)))
+}
 
 // ─── Shared Background ────────────────────────────────────────────────────────
 @Composable
@@ -290,11 +316,6 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
         ) {
             tabs.forEachIndexed { index, (icon, label) ->
                 val selected = selectedTab == index
-                val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.20f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "userTabScale_$index"
-                )
                 val indicatorWidth by animateDpAsState(
                     targetValue = if (selected) 16.dp else 0.dp,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -311,7 +332,7 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
                         imageVector = icon,
                         contentDescription = label,
                         tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp).scale(iconScale)
+                        modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = label,
@@ -336,22 +357,20 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 
 // ─── Navigation Route Tokens ──────────────────────────────────────────────────
 sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,   "Accueil")
-    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,   "Messages")
-    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups, "Clients")
-    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person, "Profil")
-    companion object { val all get() = listOf(Home, Messages, Clients, Profile) }
+    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,        "Tableau")
+    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups,      "Clients")
+    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,        "Messages")
+    data object Creator  : LawyerTab("lawyer_creator",  Icons.Default.AutoAwesome, "Studio")
+    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person,      "Profil")
+    companion object { val all: List<LawyerTab> by lazy { listOf(Home, Clients, Creator, Messages, Profile) } }
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home     : UserTab("user_home",      Icons.Default.Home,          "Accueil")
-    data object Cases    : UserTab("user_cases",     Icons.Default.Assignment,    "Dossiers")
-    data object Matching : UserTab("user_matching",  Icons.Default.Favorite,      "Matching")
-    data object Reels    : UserTab("user_reels",     Icons.Default.PlayCircle,    "Reels")
-    data object Live     : UserTab("user_live",      Icons.Default.LiveTv,        "Live")
-    data object Messages : UserTab("user_messages",  Icons.Default.Chat,          "Messages")
-    data object Profile  : UserTab("user_profile",   Icons.Default.Person,        "Profil")
-    companion object { val all get() = listOf(Home, Cases, Matching, Reels, Live) }
+    data object Home       : UserTab("user_home",        Icons.Default.Home,        "Accueil")
+    data object Networking : UserTab("user_networking",  Icons.Default.PeopleAlt,   "Réseaux")
+    data object Vault      : UserTab("user_vault",       Icons.Default.Shield,      "Coffre")
+    data object Profile    : UserTab("user_profile",     Icons.Default.Person,      "Profil")
+    companion object { val all: List<UserTab> by lazy { listOf(Home, Networking, Vault, Profile) } }
 }
 
 // ─── Lawyer Nav Bottom Bar ─────────────────────────────────────────────────────
@@ -360,59 +379,117 @@ fun LawyerNavBottomBar(
     currentRoute: String?,
     onNavigateTo: (LawyerTab) -> Unit
 ) {
-    Surface(
+    // The outer Box must be tall enough for the pill (72dp) + the raised
+    // Creator button overhang above it (28dp) + bottom safe spacing (12dp).
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .height(70.dp),
-        shape = RoundedCornerShape(25.dp),
-        color = AppDarkGreen,
-        shadowElevation = 8.dp
+            .height(112.dp)
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+        // ── Pill ──────────────────────────────────────────────────────────────
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .align(Alignment.BottomCenter),
+            shape = RoundedCornerShape(28.dp),
+            color = AppDarkGreen,
+            shadowElevation = 16.dp
         ) {
-            LawyerTab.all.forEach { tab ->
-                val selected = currentRoute == tab.route
-                val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.20f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "lawyerTabScale_${tab.route}"
-                )
-                val indicatorWidth by animateDpAsState(
-                    targetValue = if (selected) 16.dp else 0.dp,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "lawyerTabIndicator_${tab.route}"
-                )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { onNavigateTo(tab) }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.label,
-                        tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp).scale(iconScale)
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LawyerTab.all.forEach { tab ->
+                    if (tab is LawyerTab.Creator) {
+                        // Empty gap reserved for the raised center button
+                        Spacer(modifier = Modifier.width(60.dp))
+                        return@forEach
+                    }
+                    val selected = currentRoute == tab.route
+                    val dotAlpha by animateFloatAsState(
+                        targetValue = if (selected) 1f else 0f,
+                        animationSpec = tween(200),
+                        label = "dot_${tab.route}"
                     )
-                    Text(
-                        text = tab.label,
-                        color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    val iconAlpha by animateFloatAsState(
+                        targetValue = if (selected) 1f else 0.45f,
+                        animationSpec = tween(200),
+                        label = "icon_${tab.route}"
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Box(
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                         modifier = Modifier
-                            .height(3.dp)
-                            .width(indicatorWidth)
-                            .clip(CircleShape)
-                            .background(AppGoldColor)
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable(enabled = !selected) { onNavigateTo(tab) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Icon(
+                            imageVector = tab.icon,
+                            contentDescription = tab.label,
+                            tint = if (selected) AppGoldColor
+                                   else Color.White.copy(alpha = iconAlpha),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
+                        // Active dot indicator — fades in/out
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(AppGoldColor.copy(alpha = dotAlpha))
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── Raised Creator center button ───────────────────────────────────────
+        val creatorSelected    = currentRoute == LawyerTab.Creator.route
+        val creatorInteraction = remember { MutableInteractionSource() }
+        val creatorPressed     by creatorInteraction.collectIsPressedAsState()
+        val creatorScale by animateFloatAsState(
+            targetValue = when {
+                creatorPressed  -> 0.91f
+                creatorSelected -> 1.10f
+                else            -> 1f
+            },
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness    = Spring.StiffnessMediumLow
+            ),
+            label = "creatorScale"
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .scale(creatorScale)
+                .clip(CircleShape)
+                .clickable(
+                    interactionSource = creatorInteraction,
+                    indication        = null,
+                    enabled           = !creatorSelected
+                ) { onNavigateTo(LawyerTab.Creator) }
+        ) {
+            Surface(
+                modifier      = Modifier.size(60.dp),
+                shape         = CircleShape,
+                color         = AppGoldColor,
+                shadowElevation = if (creatorSelected) 4.dp else 12.dp,
+                border        = BorderStroke(3.dp, Color.White)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector        = Icons.Default.AutoAwesome,
+                        contentDescription = "Studio",
+                        tint               = AppDarkGreen,
+                        modifier           = Modifier.size(28.dp)
                     )
                 }
             }
@@ -442,11 +519,6 @@ fun UserNavBottomBar(
         ) {
             UserTab.all.forEach { tab ->
                 val selected = currentRoute == tab.route
-                val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.20f else 1f,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "userNavTabScale_${tab.route}"
-                )
                 val indicatorWidth by animateDpAsState(
                     targetValue = if (selected) 16.dp else 0.dp,
                     animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -456,17 +528,18 @@ fun UserNavBottomBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .weight(1f)             // each tab claims exactly 1/5 of the bar width
+                        .weight(1f)             // each tab claims exactly 1/4 of the bar width
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(20.dp))
-                        .clickable { onNavigateTo(tab) }
+                        // Guard: skip navigation when the tab is already active
+                        .clickable(enabled = !selected) { onNavigateTo(tab) }
                         .padding(vertical = 6.dp)
                 ) {
                     Icon(
                         imageVector = tab.icon,
                         contentDescription = tab.label,
                         tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp).scale(iconScale)
+                        modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = tab.label,
@@ -499,6 +572,7 @@ fun ProfileTextField(
     label: String,
     leadingIcon: ImageVector,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String = "",
     singleLine: Boolean = true,
@@ -521,6 +595,7 @@ fun ProfileTextField(
                     modifier = Modifier.size(20.dp)
                 )
             },
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             isError = isError,

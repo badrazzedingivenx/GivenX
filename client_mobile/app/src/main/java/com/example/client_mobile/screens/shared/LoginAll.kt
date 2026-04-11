@@ -1,5 +1,6 @@
 package com.example.client_mobile.screens.shared
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +29,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
 
 @Composable
@@ -35,14 +39,36 @@ fun LoginScreen(
     userType: String,
     onNavigateToSignup: (String) -> Unit,
     onNavigateToLawyerHome: () -> Unit,
-    onNavigateToUserHome: () -> Unit
+    onNavigateToUserHome: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf(false) }
-    
+
+    val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
+    val isLoading = loginState is AuthViewModel.LoginUiState.Loading
+    val authError = (loginState as? AuthViewModel.LoginUiState.Error)?.message
+    val context   = LocalContext.current
+
+    // Show Toast on every new error, then keep inline text as well
+    LaunchedEffect(authError) {
+        if (!authError.isNullOrBlank()) {
+            Toast.makeText(context, authError, Toast.LENGTH_LONG).show()
+        }
+ }
+
+    LaunchedEffect(loginState) {
+        if (loginState is AuthViewModel.LoginUiState.Success) {
+            authViewModel.proceedToDashboard(
+                onLawyer = onNavigateToLawyerHome,
+                onClient = onNavigateToUserHome
+            )
+        }
+    }
+
     val darkGreen = Color(0xFF1B3124)
 
     Box(
@@ -105,7 +131,8 @@ fun LoginScreen(
                         placeholder = "E-mail",
                         leadingIcon = Icons.Default.Email,
                         isError = emailError,
-                        errorMessage = "Veuillez saisir votre e-mail"
+                        errorMessage = "Veuillez saisir votre e-mail",
+                        keyboardType = KeyboardType.Email
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
@@ -134,33 +161,48 @@ fun LoginScreen(
                             .clickable { /* Action */ }
                     )
                     Spacer(modifier = Modifier.height(35.dp))
+                    // Auth error banner
+                    authError?.let { err ->
+                        Text(
+                            text = err,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Serif,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        )
+                    }
                     Button(
                         onClick = {
                             emailError = email.isBlank()
                             passwordError = password.isBlank()
-                            
-                            if (!emailError && !passwordError) {
-                                // Logic for API call will go here
-                                if (userType == "lawyer") {
-                                    onNavigateToLawyerHome()
-                                } else {
-                                    onNavigateToUserHome()
-                                }
-                            }
+                            if (emailError || passwordError) return@Button
+                            authViewModel.login(email, password, userType)
                         },
+                        enabled = !isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                         shape = RoundedCornerShape(25.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(55.dp)
                     ) {
-                        Text(
-                            text = "Se connecter",
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = Color.White,
+                                strokeWidth = 2.5.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Se connecter",
+                                fontSize = 18.sp,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(25.dp))
                     Row(
@@ -199,7 +241,8 @@ fun CustomInputField(
     errorMessage: String = "",
     isPassword: Boolean = false,
     isPasswordVisible: Boolean = false,
-    onVisibilityToggle: (() -> Unit)? = null
+    onVisibilityToggle: (() -> Unit)? = null,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val darkGreen = Color(0xFF1B3124)
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -220,7 +263,7 @@ fun CustomInputField(
                 }
             },
             visualTransformation = if (isPassword && !isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = if (isPassword) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions.Default,
+            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(25.dp),
             singleLine = true,
