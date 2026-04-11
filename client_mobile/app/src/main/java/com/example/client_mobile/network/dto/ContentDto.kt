@@ -14,12 +14,15 @@ data class SaveConsultationRequest(
 // Matches: GET /api/stories
 // [{"id":"story_001","lawyerName":"Me. Yassine Alaoui","lawyerAvatar":"...","imageUrl":"...","expiresAt":"..."}]
 data class StoryDto(
-    @SerializedName("id")           val id:           String = "",
-    @SerializedName("lawyerName")   val lawyerName:   String = "",
-    @SerializedName("lawyerAvatar") val lawyerAvatar: String = "",
-    @SerializedName("imageUrl")     val imageUrl:     String = "",
-    @SerializedName("expiresAt")    val expiresAt:    String = "",
-    @SerializedName("isLive")       val isLive:       Boolean = false
+    @SerializedName("id")           val id:           String  = "",
+    @SerializedName("lawyerName")   val lawyerName:   String  = "",
+    @SerializedName("lawyerAvatar") val lawyerAvatar: String  = "",
+    @SerializedName("imageUrl")     val imageUrl:     String  = "",
+    @SerializedName("expiresAt")    val expiresAt:    String  = "",
+    @SerializedName("isLive")       val isLive:       Boolean = false,
+    // Analytics fields (may be absent in mock — defaults apply)
+    @SerializedName("views")        val views:        Int     = 0,
+    @SerializedName("timeLeft")     val timeLeft:     String  = ""
 )
 
 // ─── Reel ─────────────────────────────────────────────────────────────────────
@@ -30,7 +33,13 @@ data class ReelDto(
     @SerializedName("videoUrl")   val videoUrl:   String = "",
     @SerializedName("lawyerName") val lawyerName: String = "",
     @SerializedName("likes")      val likes:      Int    = 0,
-    @SerializedName("caption")    val caption:    String = ""
+    @SerializedName("caption")    val caption:    String = "",
+    // Analytics fields (may be absent in mock — defaults apply)
+    @SerializedName("title")      val title:      String = "",
+    @SerializedName("views")      val views:      Int    = 0,
+    @SerializedName("duration")   val duration:   String = "",
+    /** "up" | "down" | "" */
+    @SerializedName("trend")      val trend:      String = ""
 )
 
 // ─── Like response ────────────────────────────────────────────────────────────
@@ -87,5 +96,9 @@ data class LiveDto(
     @SerializedName("title")        val title:        String = "",
     @SerializedName("lawyerName")   val lawyerName:   String = "",
     @SerializedName("viewersCount") val viewersCount: Int    = 0,
-    @SerializedName("thumbnail")    val thumbnail:    String = ""
+    @SerializedName("thumbnail")    val thumbnail:    String = "",
+    // Analytics fields (may be absent in mock — defaults apply)
+    @SerializedName("participants") val participants: Int    = 0,
+    /** "LIVE" | "Scheduled" | "" */
+    @SerializedName("status")       val status:       String = ""
 )

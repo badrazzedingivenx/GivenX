@@ -60,18 +60,25 @@ fun AvocatProfile(
     val isRefreshing   by dashboardViewModel.isRefreshing.collectAsStateWithLifecycle()
     val isError        by dashboardViewModel.isError.collectAsStateWithLifecycle()
 
-    // API fields override the passed-in fallback params
-    val displayName    = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }      ?: fullName
+    // API fields override the passed-in fallback params, then fall back to
+    // LawyerSession (populated at login) so the contact card is never empty.
+    val displayName    = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }      ?: fullName.takeIf { it.isNotBlank() } ?: LawyerSession.fullName
     val displayTitle   = lawyerProfile?.let {
         buildString {
             if (it.speciality.isNotBlank())     append(it.speciality)
             if (it.barAssociation.isNotBlank()) append(" — Barreau de ${it.barAssociation}")
         }.takeIf { s -> s.isNotBlank() }
-    } ?: title
-    val displayEmail   = lawyerProfile?.email?.takeIf { it.isNotBlank() }         ?: email
-    val displayPhone   = lawyerProfile?.phone?.takeIf { it.isNotBlank() }         ?: phone
-    val displayAddress = lawyerProfile?.address?.takeIf { it.isNotBlank() }       ?: address
-    val displayBio     = lawyerProfile?.bio?.takeIf { it.isNotBlank() }           ?: bio
+    } ?: title.takeIf { it.isNotBlank() } ?: LawyerSession.title
+    val displayEmail   = lawyerProfile?.email?.takeIf { it.isNotBlank() }
+        ?: email.takeIf { it.isNotBlank() }
+        ?: LawyerSession.email
+    val displayPhone   = lawyerProfile?.phone?.takeIf { it.isNotBlank() }
+        ?: phone.takeIf { it.isNotBlank() }
+        ?: LawyerSession.phone
+    val displayAddress = lawyerProfile?.address?.takeIf { it.isNotBlank() }
+        ?: address.takeIf { it.isNotBlank() }
+        ?: LawyerSession.address
+    val displayBio     = lawyerProfile?.bio?.takeIf { it.isNotBlank() }           ?: bio.takeIf { it.isNotBlank() } ?: LawyerSession.bio
     val specializations = lawyerProfile?.specializations?.takeIf { it.isNotEmpty() }
         ?: emptyList()
 
@@ -217,11 +224,11 @@ fun AvocatProfile(
                 item { SectionHeader(title = "Contact") }
                 item {
                     DashCard {
-                        LawyerInfoRow(Icons.Default.Email, "E-mail", displayEmail)
+                        LawyerInfoRow(Icons.Default.Email, "E-mail", displayEmail, isLoading = isRefreshing && displayEmail.isBlank())
                         LawyerDivider()
-                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", displayPhone)
+                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", displayPhone, isLoading = isRefreshing && displayPhone.isBlank())
                         LawyerDivider()
-                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", displayAddress, isLast = true)
+                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", displayAddress, isLast = true, isLoading = isRefreshing && displayAddress.isBlank())
                     }
                 }
 
@@ -712,7 +719,8 @@ private fun LawyerInfoRow(
     icon: ImageVector,
     label: String,
     value: String,
-    isLast: Boolean = false
+    isLast: Boolean = false,
+    isLoading: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -742,15 +750,24 @@ private fun LawyerInfoRow(
                 fontSize = 11.sp,
                 color = AppDarkGreen.copy(alpha = 0.50f)
             )
-            Text(
-                text = value,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                color = AppDarkGreen,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (isLoading) {
+                Text(
+                    text = "Chargement...",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 13.sp,
+                    color = AppDarkGreen.copy(alpha = 0.35f)
+                )
+            } else {
+                Text(
+                    text = value.ifBlank { "—" },
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    color = if (value.isBlank()) AppDarkGreen.copy(alpha = 0.35f) else AppDarkGreen,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

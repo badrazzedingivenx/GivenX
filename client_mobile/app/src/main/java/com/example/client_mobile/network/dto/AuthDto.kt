@@ -98,7 +98,7 @@ data class UserDto(
     // ── Lawyer-only fields (populated when role == "lawyer") ─────────────────
     @SerializedName("bar_number")  val barNumber:   String = "",
     @SerializedName("barNumber")   val barNumberCamel: String = "",
-    @SerializedName("specialty")   val specialty:   String = ""
+    @SerializedName(value = "specialty", alternate = ["speciality"]) val specialty: String = ""
 ) {
     /** Effective bar number (supports both snake_case and camelCase). */
     fun effectiveBarNumber(): String = barNumber.ifBlank { barNumberCamel }

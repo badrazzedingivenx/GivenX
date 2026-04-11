@@ -12,6 +12,7 @@ data class DossierData(
     val lawyerId: String = "",
     val lawyerName: String = "",
     val lawyerSpecialty: String = "",
+    val clientName: String = "",
     /** 0–100 progress value (maps to CaseStep activeIndex in UI) */
     val progress: Int = 0
 )

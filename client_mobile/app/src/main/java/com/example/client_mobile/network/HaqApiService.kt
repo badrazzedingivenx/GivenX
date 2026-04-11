@@ -16,6 +16,7 @@ import com.example.client_mobile.network.dto.SaveConsultationRequest
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
+import com.example.client_mobile.network.dto.UpdateDossierStatusRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
 import retrofit2.Response
@@ -118,7 +119,15 @@ interface HaqApiService {
     suspend fun getDossierById(
         @Path("id") id: String
     ): Response<ApiResponse<DossierDto>>
-
+    /**
+     * PATCH /api/dossiers/{id}/status
+     * Updates the status of a dossier (lawyer only — enforced server-side via JWT).
+     */
+    @PATCH("api/dossiers/{id}/status")
+    suspend fun updateDossierStatus(
+        @Path("id") id: String,
+        @Body request: UpdateDossierStatusRequest
+    ): Response<ApiResponse<DossierDto>>
     // ── Consultations ─────────────────────────────────────────────────────────
 
     /**

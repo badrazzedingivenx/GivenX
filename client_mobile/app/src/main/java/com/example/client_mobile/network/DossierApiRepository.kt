@@ -1,6 +1,7 @@
 package com.example.client_mobile.network
 
 import com.example.client_mobile.network.dto.DossierDto
+import com.example.client_mobile.network.dto.UpdateDossierStatusRequest
 import com.example.client_mobile.services.DossierData
 
 /**
@@ -22,6 +23,7 @@ object DossierApiRepository {
         lawyerId        = lawyerId,
         lawyerName      = lawyerName,
         lawyerSpecialty = lawyerSpecialty,
+        clientName      = clientName,
         progress        = progress
     )
 
@@ -32,19 +34,31 @@ object DossierApiRepository {
      * (JWT-based, no explicit userId required).
      * Falls back to the userId-based endpoint if [userId] is provided.
      */
-    suspend fun getDossiersForCurrentUser(userId: String? = null): List<DossierData> = try {
-        val response = if (userId.isNullOrBlank()) {
-            RetrofitClient.haqApi.getMyDossiers()
-        } else {
-            RetrofitClient.haqApi.getDossiers(userId)
-        }
-        if (response.isSuccessful) {
-            response.body()?.data?.map { it.toDomain() } ?: emptyList()
-        } else {
+    suspend fun getDossiersForCurrentUser(userId: String? = null): List<DossierData> {
+        // ── Step 1: try the real API (wrapped ApiResponse) ────────────────────
+        try {
+            val response = if (userId.isNullOrBlank()) {
+                RetrofitClient.haqApi.getMyDossiers()
+            } else {
+                RetrofitClient.haqApi.getDossiers(userId)
+            }
+            if (response.isSuccessful && response.body()?.success == true) {
+                val list = response.body()?.data?.map { it.toDomain() } ?: emptyList()
+                if (list.isNotEmpty()) return list
+            }
+        } catch (_: Exception) { /* fall through to mock */ }
+
+        // ── Step 2: fallback to mock API (flat list, no wrapper) ──────────────
+        return try {
+            val mockResponse = RetrofitClient.mockApi.getDossiers()
+            if (mockResponse.isSuccessful) {
+                mockResponse.body()?.map { it.toDomain() } ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (_: Exception) {
             emptyList()
         }
-    } catch (_: Exception) {
-        emptyList()
     }
 
     // ── Single fetch ──────────────────────────────────────────────────────────
@@ -58,5 +72,18 @@ object DossierApiRepository {
         if (response.isSuccessful) response.body()?.data?.toDomain() else null
     } catch (_: Exception) {
         null
+    }
+
+    // ── Status update ─────────────────────────────────────────────────────────
+
+    /**
+     * PATCH /api/dossiers/{id}/status — updates the dossier's status (lawyer only).
+     * Returns true if the server accepted the change, false on any error.
+     */
+    suspend fun updateDossierStatus(id: String, status: String): Boolean = try {
+        val response = RetrofitClient.haqApi.updateDossierStatus(id, UpdateDossierStatusRequest(status))
+        response.isSuccessful && response.body()?.success == true
+    } catch (_: Exception) {
+        false
     }
 }

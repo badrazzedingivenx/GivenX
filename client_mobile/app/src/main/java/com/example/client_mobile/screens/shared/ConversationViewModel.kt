@@ -68,11 +68,12 @@ class ConversationViewModel : ViewModel() {
                             )
                         }
                     )
-                } else {
-                    _isError.value = ConversationRepository.conversations.isEmpty()
-                    _errorMessage.value = "Impossible de charger les conversations."
                 }
+                // dtos == null means the API responded but had no usable data (e.g. 404).
+                // Keep whatever is already in the repository and show an empty list — not
+                // a "no connection" error, because we did reach the server.
             } catch (_: Exception) {
+                // Genuine network failure (no internet, timeout, etc.)
                 _isError.value = ConversationRepository.conversations.isEmpty()
                 _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
             } finally {

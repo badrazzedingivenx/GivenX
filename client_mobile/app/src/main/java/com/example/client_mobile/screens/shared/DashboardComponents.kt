@@ -331,12 +331,13 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 
 // ─── Navigation Route Tokens ──────────────────────────────────────────────────
 sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,       "Tableau")
-    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,       "Messages")
-    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups,     "Clients")
+    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,        "Tableau")
+    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups,      "Clients")
+    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,        "Messages")
     data object Creator  : LawyerTab("lawyer_creator",  Icons.Default.AutoAwesome, "Studio")
-    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person,     "Profil")
-    companion object { val all: List<LawyerTab> by lazy { listOf(Home, Messages, Clients, Creator, Profile) } }
+    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person,      "Profil")
+    // Creator is accessible via FAB only — not shown in the bottom bar
+    companion object { val all: List<LawyerTab> by lazy { listOf(Home, Clients, Messages, Profile) } }
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
@@ -378,7 +379,8 @@ fun LawyerNavBottomBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .clickable { onNavigateTo(tab) }
+                        // Guard: skip navigation when the tab is already active
+                        .clickable(enabled = !selected) { onNavigateTo(tab) }
                         .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
                     Icon(
@@ -439,10 +441,11 @@ fun UserNavBottomBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .weight(1f)             // each tab claims exactly 1/5 of the bar width
+                        .weight(1f)             // each tab claims exactly 1/4 of the bar width
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(20.dp))
-                        .clickable { onNavigateTo(tab) }
+                        // Guard: skip navigation when the tab is already active
+                        .clickable(enabled = !selected) { onNavigateTo(tab) }
                         .padding(vertical = 6.dp)
                 ) {
                     Icon(

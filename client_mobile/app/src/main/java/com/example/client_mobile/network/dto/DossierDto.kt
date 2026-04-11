@@ -16,5 +16,11 @@ data class DossierDto(
     @SerializedName(value = "lawyerId",        alternate = ["lawyer_id"])   val lawyerId:       String = "",
     @SerializedName(value = "lawyerName",      alternate = ["lawyer_name"]) val lawyerName:     String = "",
     @SerializedName(value = "lawyerSpecialty", alternate = ["lawyer_specialty"]) val lawyerSpecialty: String = "",
+    @SerializedName(value = "clientName",      alternate = ["client_name"]) val clientName:     String = "",
     @SerializedName(value = "progress")                                    val progress:        Int    = 0
+)
+
+/** Request body for PATCH /api/dossiers/{id}/status */
+data class UpdateDossierStatusRequest(
+    @SerializedName("status") val status: String
 )

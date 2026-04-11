@@ -6,6 +6,7 @@ import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
+import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.screens.shared.Conversation
 import com.example.client_mobile.screens.shared.ConversationRepository
 
@@ -23,6 +24,14 @@ object MainRepository {
     suspend fun getReels(): List<ReelDto> {
         val response = RetrofitClient.mockApi.getReels()
         return if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
+    }
+
+    /** Fetches the story feed from GET /api/stories. */
+    suspend fun getStories(): List<StoryDto> {
+        return try {
+            val response = RetrofitClient.mockApi.getStories()
+            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
+        } catch (_: Exception) { emptyList() }
     }
 
     /**

@@ -226,7 +226,8 @@ fun UserDashboardHost(
                     onNavigateToProfile()
                 } else {
                     innerNavController.navigate(tab.route) {
-                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                        // Pop back to HomeTab without destroying its saved state
+                        popUpTo(UserTab.Home.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }

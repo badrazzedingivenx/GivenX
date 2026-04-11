@@ -131,7 +131,7 @@ fun AppNavigation() {
         // 5. Lawyer Home / Profile
         composable("LawyerHome") {
             LawyerDashboardHost(
-                onNavigateToProfile = { navController.navigate("AvocatProfile") },
+                onNavigateToProfile = { navController.navigate("AvocatProfile") { launchSingleTop = true } },
                 onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToRequests = { navController.navigate("LawyerRequests") },
@@ -163,7 +163,7 @@ fun AppNavigation() {
         // 6. User Home / Profile
         composable("UserHome") {
             UserDashboardHost(
-                onNavigateToProfile = { navController.navigate("UserProfile") },
+                onNavigateToProfile = { navController.navigate("UserProfile") { launchSingleTop = true } },
                 onNavigateToAbout = { navController.navigate("About") },
                 onNavigateToLawyerDetail = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
                 onNavigateToCategory = { domaine ->

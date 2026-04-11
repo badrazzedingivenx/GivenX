@@ -49,6 +49,7 @@ import coil.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.network.dto.LawyerStatsDto
+import com.example.client_mobile.services.DossierData
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class ScheduleItem(val clientName: String, val time: String, val type: String)
@@ -204,7 +205,8 @@ fun LawyerDashboardHost(
                     onNavigateToProfile()
                 } else {
                     innerNavController.navigate(tab.route) {
-                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                        // Pop back to HomeTab without destroying its saved state
+                        popUpTo(LawyerTab.Home.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
@@ -342,14 +344,23 @@ fun PaymentCard(payment: PaymentItem) {
 // ─── Clients Management Tab ──────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
+private fun LawyerClientsTabContent(
+    paddingValues: PaddingValues,
+    clientsViewModel: LawyerClientsViewModel = viewModel()
+) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Tous") }
-    val filters = listOf("Tous", "Actif", "Paiement en attente", "Clôturé")
+    val filters = listOf("Tous", "En cours", "Clôturé", "En attente")
 
-    val filteredClients = LawyerSession.clients.filter {
-        (selectedFilter == "Tous" || it.status == selectedFilter) &&
-        (it.name.contains(searchQuery, ignoreCase = true))
+    val dossiers     by clientsViewModel.dossiers.collectAsStateWithLifecycle()
+    val isLoading    by clientsViewModel.isLoading.collectAsStateWithLifecycle()
+    val isRefreshing by clientsViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isError      by clientsViewModel.isError.collectAsStateWithLifecycle()
+
+    val filtered = dossiers.filter { d ->
+        (selectedFilter == "Tous" || d.status.contains(selectedFilter, ignoreCase = true)) &&
+        (d.clientNameDisplay().contains(searchQuery, ignoreCase = true) ||
+         d.caseNumber.contains(searchQuery, ignoreCase = true))
     }
 
     Column(
@@ -366,7 +377,7 @@ private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Rechercher un client…", fontSize = 14.sp, fontFamily = FontFamily.Serif) },
+            placeholder = { Text("Rechercher un dossier…", fontSize = 14.sp, fontFamily = FontFamily.Serif) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = AppDarkGreen.copy(alpha = 0.4f)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -381,7 +392,7 @@ private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Filter Row
+        // Filter chips
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(filters) { filter ->
                 FilterChip(
@@ -400,74 +411,166 @@ private fun LawyerClientsTabContent(paddingValues: PaddingValues) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f)
+        // Loading bar (initial load only)
+        if (isLoading) {
+            LinearProgressIndicator(
+                modifier   = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                color      = AppGoldColor,
+                trackColor = AppDarkGreen.copy(alpha = 0.2f)
+            )
+        }
+
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = { clientsViewModel.refresh() },
+            modifier     = Modifier.weight(1f)
         ) {
-            if (filteredClients.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                        Text("Aucun client trouvé.", color = Color.Gray, fontFamily = FontFamily.Serif)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when {
+                    isError && dossiers.isEmpty() -> item {
+                        NoConnectionScreen(
+                            onRetry  = { clientsViewModel.fetch() },
+                            modifier = Modifier.fillParentMaxSize()
+                        )
+                    }
+                    filtered.isEmpty() -> item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 60.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.Groups,
+                                    contentDescription = null,
+                                    tint = AppDarkGreen.copy(alpha = 0.25f),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = if (searchQuery.isBlank() && selectedFilter == "Tous")
+                                        "Aucun dossier client."
+                                    else
+                                        "Aucun résultat pour cette recherche.",
+                                    color = Color.Gray,
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+                    else -> items(filtered) { dossier ->
+                        DossierClientCard(dossier)
                     }
                 }
-            } else {
-                items(filteredClients) { client ->
-                    ClientCard(client)
-                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
-            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
 
+/** Derives a display name from the dossier — uses clientName, then lawyerName, then the case number prefix. */
+private fun DossierData.clientNameDisplay(): String {
+    if (clientName.isNotBlank()) return clientName
+    if (lawyerName.isNotBlank()) return lawyerName
+    // Fallback: first segment of caseNumber is used as a short identifier
+    // e.g. "HAQ-2024-0312" → "HAQ"
+    return caseNumber.substringBefore("-").ifBlank { caseNumber }
+}
+
 @Composable
-fun ClientCard(client: ClientItem) {
-    DashCard(onClick = { /* Detail client */ }) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(AppDarkGreen.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = client.name.first().toString(),
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = AppDarkGreen
-                )
-            }
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = client.name,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = AppDarkGreen
-                )
-                Text(
-                    text = client.lastAction,
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-            StatusChip(
-                label = client.status,
-                containerColor = when(client.status) {
-                    "Actif" -> Color(0xFFE8F5E9)
-                    "Paiement en attente" -> Color(0xFFFFF3E0)
-                    else -> Color(0xFFF5F5F5)
-                },
-                textColor = when(client.status) {
-                    "Actif" -> Color(0xFF2E7D32)
-                    "Paiement en attente" -> Color(0xFFE65100)
-                    else -> Color(0xFF616161)
+fun DossierClientCard(dossier: DossierData) {
+    val clientName = dossier.clientNameDisplay()
+    val initial    = clientName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+
+    DashCard {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // ── Top row: avatar + name + status ──────────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(AppDarkGreen.copy(alpha = 0.10f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text       = initial,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 18.sp,
+                        color      = AppDarkGreen
+                    )
                 }
-            )
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text       = clientName,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 15.sp,
+                        color      = AppDarkGreen
+                    )
+                    Text(
+                        text       = dossier.caseNumber.ifBlank { dossier.id },
+                        fontFamily = FontFamily.Serif,
+                        fontSize   = 12.sp,
+                        color      = AppDarkGreen.copy(alpha = 0.55f)
+                    )
+                }
+                val statusColor = when {
+                    dossier.status.equals("En cours",  ignoreCase = true) -> Color(0xFF1565C0) to Color(0xFFE3F2FD)
+                    dossier.status.equals("Clôturé",   ignoreCase = true) -> Color(0xFF2E7D32) to Color(0xFFE8F5E9)
+                    dossier.status.equals("En attente",ignoreCase = true) -> Color(0xFFE65100) to Color(0xFFFFF3E0)
+                    else -> Color(0xFF616161) to Color(0xFFF5F5F5)
+                }
+                StatusChip(
+                    label          = dossier.status.ifBlank { "—" },
+                    containerColor = statusColor.second,
+                    textColor      = statusColor.first
+                )
+            }
+
+            // ── Category + progress ───────────────────────────────────────────
+            if (dossier.category.isNotBlank()) {
+                Text(
+                    text       = dossier.category,
+                    fontFamily = FontFamily.Serif,
+                    fontSize   = 12.sp,
+                    color      = AppDarkGreen.copy(alpha = 0.60f)
+                )
+            }
+            if (dossier.progress > 0) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text       = "Avancement",
+                            fontFamily = FontFamily.Serif,
+                            fontSize   = 11.sp,
+                            color      = AppDarkGreen.copy(alpha = 0.55f)
+                        )
+                        Text(
+                            text       = "${dossier.progress}%",
+                            fontFamily = FontFamily.Serif,
+                            fontSize   = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = AppDarkGreen
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress   = { dossier.progress / 100f },
+                        modifier   = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+                        color      = AppGoldColor,
+                        trackColor = AppDarkGreen.copy(alpha = 0.12f)
+                    )
+                }
+            }
         }
     }
 }
@@ -475,16 +578,44 @@ fun ClientCard(client: ClientItem) {
 // ─── Requests Management Screen ──────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LawyerRequestsScreen(onBack: () -> Unit) {
-    val requests = LawyerSession.requests
+fun LawyerRequestsScreen(
+    onBack: () -> Unit,
+    viewModel: LawyerDemandsViewModel = viewModel()
+) {
+    val pending      by viewModel.pending.collectAsStateWithLifecycle()
+    val isLoading    by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val actionError  by viewModel.actionError.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(actionError) {
+        if (!actionError.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(actionError!!)
+            viewModel.clearActionError()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Nouvelles Demandes", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AppDarkGreen) },
+                title = {
+                    Text(
+                        "Nouvelles Demandes",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 18.sp,
+                        color      = AppDarkGreen
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Retour",
+                            tint = AppDarkGreen
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
@@ -493,102 +624,154 @@ fun LawyerRequestsScreen(onBack: () -> Unit) {
         containerColor = Color.Transparent
     ) { paddingValues ->
         DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
+            androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh    = { viewModel.refresh() },
+                modifier     = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
-                
-                val newRequests = requests.filter { it.status == "Nouveau" }
-                val processedRequests = requests.filter { it.status != "Nouveau" }
-
-                if (newRequests.isNotEmpty()) {
-                    item { Text("À traiter (${newRequests.size})", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen) }
-                    items(newRequests) { request ->
-                        RequestCard(
-                            request = request,
-                            onAccept = { LawyerSession.acceptRequest(request.id) },
-                            onDecline = { LawyerSession.declineRequest(request.id) }
-                        )
+                when {
+                    isLoading -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = AppDarkGreen)
+                        }
+                    }
+                    pending.isEmpty() -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector        = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint               = AppDarkGreen.copy(alpha = 0.35f),
+                                    modifier           = Modifier.size(56.dp)
+                                )
+                                Text(
+                                    "Aucune demande en attente",
+                                    fontFamily = FontFamily.Serif,
+                                    color      = AppDarkGreen.copy(alpha = 0.55f),
+                                    fontSize   = 15.sp
+                                )
+                                TextButton(onClick = { viewModel.refresh() }) {
+                                    Text("Actualiser", color = AppDarkGreen)
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier            = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            item { Spacer(modifier = Modifier.height(4.dp)) }
+                            item {
+                                Text(
+                                    "À traiter (${pending.size})",
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    color      = AppDarkGreen
+                                )
+                            }
+                            items(pending, key = { it.id }) { dossier ->
+                                DemandCard(
+                                    dossier   = dossier,
+                                    onAccept  = { viewModel.accept(dossier.id) },
+                                    onDecline = { viewModel.reject(dossier.id) }
+                                )
+                            }
+                            item { Spacer(modifier = Modifier.height(24.dp)) }
+                        }
                     }
                 }
-
-                if (processedRequests.isNotEmpty()) {
-                    item { Text("Historique", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen.copy(alpha = 0.5f)) }
-                    items(processedRequests) { request ->
-                        RequestCard(
-                            request = request,
-                            onAccept = {},
-                            onDecline = {}
-                        )
-                    }
-                }
-                
-                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
         }
     }
 }
 
 @Composable
-fun RequestCard(request: RequestItem, onAccept: () -> Unit, onDecline: () -> Unit) {
+fun DemandCard(dossier: DossierData, onAccept: () -> Unit, onDecline: () -> Unit) {
+    val clientDisplay = dossier.clientName.ifBlank { dossier.clientNameDisplay() }
     DashCard {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(request.clientName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppDarkGreen)
+            // ── Top row: client name + status ─────────────────────────────────
+            Row(
+                verticalAlignment      = Alignment.CenterVertically,
+                horizontalArrangement  = Arrangement.SpaceBetween,
+                modifier               = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    clientDisplay,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 16.sp,
+                    color      = AppDarkGreen
+                )
                 StatusChip(
-                    label = request.status,
-                    containerColor = when(request.status) {
-                        "Nouveau" -> Color(0xFFE3F2FD)
-                        "Accepté (Attente Paiement)" -> Color(0xFFFFF3E0)
-                        "Payé" -> Color(0xFFE8F5E9)
-                        "Refusé" -> Color(0xFFFFF1F1)
-                        else -> Color(0xFFF5F5F5)
-                    },
-                    textColor = when(request.status) {
-                        "Nouveau" -> Color(0xFF1976D2)
-                        "Accepté (Attente Paiement)" -> Color(0xFFE65100)
-                        "Payé" -> Color(0xFF2E7D32)
-                        "Refusé" -> Color(0xFFD32F2F)
-                        else -> Color(0xFF616161)
-                    }
+                    label          = dossier.status.ifBlank { "En attente" },
+                    containerColor = Color(0xFFE3F2FD),
+                    textColor      = Color(0xFF1976D2)
                 )
             }
-            Text(request.topic, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = AppGoldColor)
-            Text(request.description, fontSize = 13.sp, color = Color.Gray, lineHeight = 18.sp)
-            Text("Honoraires proposés: ${request.amount}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppDarkGreen)
-            
-            if (request.status == "Nouveau") {
-                HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.05f))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(
-                        onClick = onAccept,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Text("Accepter & Devis", fontSize = 11.sp, color = Color.White)
-                    }
-                    OutlinedButton(
-                        onClick = onDecline,
-                        modifier = Modifier.weight(0.5f),
-                        border = BorderStroke(1.dp, Color(0xFFD32F2F).copy(alpha = 0.5f)),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Text("Refuser", fontSize = 11.sp, color = Color(0xFFD32F2F))
-                    }
+            // ── Category ──────────────────────────────────────────────────────
+            if (dossier.category.isNotBlank()) {
+                Text(
+                    dossier.category,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize   = 14.sp,
+                    color      = AppGoldColor
+                )
+            }
+            // ── Case number + date ────────────────────────────────────────────
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    dossier.caseNumber.ifBlank { dossier.id },
+                    fontSize = 12.sp,
+                    color    = AppDarkGreen.copy(alpha = 0.55f)
+                )
+                if (dossier.openingDate.isNotBlank()) {
+                    Text(
+                        dossier.openingDate,
+                        fontSize = 12.sp,
+                        color    = Color.Gray
+                    )
                 }
-            } else {
-                Text("Date: ${request.date}", fontSize = 11.sp, color = Color.Gray)
+            }
+            // ── Action buttons ────────────────────────────────────────────────
+            HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.05f))
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick          = onAccept,
+                    modifier         = Modifier.weight(1f),
+                    colors           = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                    shape            = RoundedCornerShape(10.dp),
+                    contentPadding   = PaddingValues(0.dp)
+                ) {
+                    Text("Accepter", fontSize = 12.sp, color = Color.White)
+                }
+                OutlinedButton(
+                    onClick          = onDecline,
+                    modifier         = Modifier.weight(0.6f),
+                    border           = BorderStroke(1.dp, Color(0xFFD32F2F).copy(alpha = 0.5f)),
+                    shape            = RoundedCornerShape(10.dp),
+                    contentPadding   = PaddingValues(0.dp)
+                ) {
+                    Text("Refuser", fontSize = 12.sp, color = Color(0xFFD32F2F))
+                }
             }
         }
     }
 }
+
 
 // ─── Lawyer Home Tab Content ──────────────────────────────────────────────────
 @Composable
