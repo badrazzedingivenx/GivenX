@@ -6,6 +6,8 @@ import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
+import com.example.client_mobile.network.dto.RecentConsultationDto
+import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.screens.shared.LawyerSession
 import com.google.gson.Gson
 import kotlinx.coroutines.async
@@ -25,6 +27,9 @@ import kotlinx.coroutines.launch
  */
 class LawyerDashboardViewModel : ViewModel() {
 
+    /** Service layer — all API calls go through the repository. */
+    private val repository = DashboardRepository()
+
     /** null = loading, non-null = fetched (may be empty on error) */
     private val _profile = MutableStateFlow<LawyerProfileDto?>(null)
     val profile: StateFlow<LawyerProfileDto?> = _profile
@@ -32,6 +37,12 @@ class LawyerDashboardViewModel : ViewModel() {
     /** null = loading, non-null = fetched */
     private val _stats = MutableStateFlow<LawyerStatsDto?>(null)
     val stats: StateFlow<LawyerStatsDto?> = _stats
+
+    private val _revenueMonthly = MutableStateFlow<List<RevenueMonthDto>>(emptyList())
+    val revenueMonthly: StateFlow<List<RevenueMonthDto>> = _revenueMonthly
+
+    private val _recentConsultations = MutableStateFlow<List<RecentConsultationDto>>(emptyList())
+    val recentConsultations: StateFlow<List<RecentConsultationDto>> = _recentConsultations
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
@@ -55,10 +66,14 @@ class LawyerDashboardViewModel : ViewModel() {
                 return@launch
             }
             _isRefreshing.value = true
-            val profileJob = async { fetchProfile() }
-            val statsJob   = async { fetchStats() }
+            // fetchStats() also populates _revenueMonthly from the embedded
+            // monthly_revenue array, so no separate revenue job is needed.
+            val profileJob       = async { fetchProfile() }
+            val statsJob         = async { fetchStats() }
+            val consultationsJob = async { fetchRecentConsultations() }
             profileJob.await()
             statsJob.await()
+            consultationsJob.await()
             _isRefreshing.value = false
         }
     }
@@ -85,7 +100,7 @@ class LawyerDashboardViewModel : ViewModel() {
     // ── Private fetchers ──────────────────────────────────────────────────────
 
     private suspend fun fetchProfile() {
-        // ── Step 1: seed from login cache so the screen renders instantly ────
+        // Step 1: seed from login cache so the screen renders instantly
         if (_profile.value == null) {
             val cached = TokenManager.getLawyerJson()
             if (cached != null) {
@@ -97,45 +112,15 @@ class LawyerDashboardViewModel : ViewModel() {
             }
         }
 
-        // ── Step 2: refresh from network in the background ────────────────────
-        try {
-            // Priority: Real API (wrapped ApiResponse)
-            val response = RetrofitClient.haqApi.getLawyerProfile()
-            if (response.isSuccessful && response.body()?.success == true) {
-                val dto = response.body()?.data
-                if (dto != null) {
-                    _profile.value = dto
-                    syncLawyerSession(dto)
-                    TokenManager.saveLawyerJson(Gson().toJson(dto))
-                }
-                return
-            }
-            // Fallback: Mock API (flat JSON)
-            val mockResponse = RetrofitClient.mockApi.getLawyerProfile()
-            if (mockResponse.isSuccessful) {
-                val dto = mockResponse.body()
-                if (dto != null) {
-                    _profile.value = dto
-                    syncLawyerSession(dto)
-                    TokenManager.saveLawyerJson(Gson().toJson(dto))
-                }
-            }
-        } catch (_: Exception) {
-            try {
-                val mockResponse = RetrofitClient.mockApi.getLawyerProfile()
-                if (mockResponse.isSuccessful) {
-                    val dto = mockResponse.body()
-                    if (dto != null) {
-                        _profile.value = dto
-                        syncLawyerSession(dto)
-                        TokenManager.saveLawyerJson(Gson().toJson(dto))
-                    }
-                } else {
-                    if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
-                }
-            } catch (_: Exception) {
-                if (_profile.value == null) { _isError.value = true; _errorMessage.value = "Erreur réseau. Vérifiez votre connexion." }
-            }
+        // Step 2: refresh from network via repository
+        val dto = repository.fetchProfile()
+        if (dto != null) {
+            _profile.value = dto
+            syncLawyerSession(dto)
+            TokenManager.saveLawyerJson(Gson().toJson(dto))
+        } else if (_profile.value == null) {
+            _isError.value = true
+            _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
         }
     }
 
@@ -154,30 +139,23 @@ class LawyerDashboardViewModel : ViewModel() {
     }
 
     private suspend fun fetchStats() {
-        try {
-            // Priority: Real API
-            val response = RetrofitClient.haqApi.getLawyerStats()
-            if (response.isSuccessful && response.body()?.success == true) {
-                _stats.value = response.body()?.data
-                return
-            }
-            // Fallback: Mock API
-            val mockResponse = RetrofitClient.mockApi.getLawyerStats()
-            if (mockResponse.isSuccessful) {
-                _stats.value = mockResponse.body()
-            }
-        } catch (_: Exception) {
-            // Final attempt: Mock API
-            try {
-                val mockResponse = RetrofitClient.mockApi.getLawyerStats()
-                if (mockResponse.isSuccessful) {
-                    _stats.value = mockResponse.body()
-                } else {
-                    _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
-                }
-            } catch (_: Exception) {
-                _errorMessage.value = "Erreur réseau. Vérifiez votre connexion."
-            }
+        val stats = repository.fetchStats()
+        _stats.value = stats
+        if (stats != null) {
+            // The stats response embeds the monthly_revenue array — use it as
+            // the primary source so we save a separate network round-trip.
+            _revenueMonthly.value = repository.fetchRevenueMonthly(
+                statsEmbedded = stats.monthlyRevenue
+            )
         }
+    }
+
+    private suspend fun fetchRecentConsultations() {
+        // GET /api/lawyers/me/consultations/recent
+        // Status values drive the color in ConsultationRow:
+        //   "terminé" / "completed" → Green
+        //   "en attente" / "pending" → Amber
+        //   anything else           → Red
+        _recentConsultations.value = repository.fetchRecentConsultations()
     }
 }

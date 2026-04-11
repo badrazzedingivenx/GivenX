@@ -136,12 +136,7 @@ fun AppNavigation() {
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToRequests = { navController.navigate("LawyerRequests") },
                 onNavigateToPayments = { navController.navigate("LawyerPayments") },
-                onLogout = {
-                    UserService.signOut()
-                    navController.navigate("Login/lawyer") {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onNavigateToCreator  = { navController.navigate("LawyerCreatorStudio") { launchSingleTop = true } }
             )
         }
 
@@ -153,10 +148,20 @@ fun AppNavigation() {
             LawyerPaymentsScreen(onBack = { navController.popBackStack() })
         }
 
+        composable("LawyerCreatorStudio") {
+            LawyerCreatorManagementScreen(onBack = { navController.popBackStack() })
+        }
+
         composable("AvocatProfile") {
             AvocatProfile(
                 onBack = { navController.popBackStack() },
-                onNavigateToEdit = { navController.navigate("EditLawyerProfile") }
+                onNavigateToEdit = { navController.navigate("EditLawyerProfile") },
+                onLogout = {
+                    UserService.signOut()
+                    navController.navigate("Login/lawyer") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 

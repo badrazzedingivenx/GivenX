@@ -11,6 +11,8 @@ import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.ReelDto
+import com.example.client_mobile.network.dto.RecentConsultationDto
+import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.network.dto.RenameDocumentRequest
 import com.example.client_mobile.network.dto.SaveConsultationRequest
 import com.example.client_mobile.network.dto.SendMessageRequest
@@ -77,6 +79,14 @@ interface HaqApiService {
     /** GET /api/lawyers/me/stats — returns dashboard KPIs for the lawyer. */
     @GET("api/lawyers/me/stats")
     suspend fun getLawyerStats(): Response<ApiResponse<LawyerStatsDto>>
+
+    /** GET /api/lawyers/me/revenue/monthly — returns 6-month revenue history. */
+    @GET("api/lawyers/me/revenue/monthly")
+    suspend fun getLawyerRevenueMonthly(): Response<ApiResponse<List<RevenueMonthDto>>>
+
+    /** GET /api/lawyers/me/consultations/recent — returns latest consultations. */
+    @GET("api/lawyers/me/consultations/recent")
+    suspend fun getRecentConsultations(): Response<ApiResponse<List<RecentConsultationDto>>>
 
     // ── User Profile ─────────────────────────────────────────────────────────
 

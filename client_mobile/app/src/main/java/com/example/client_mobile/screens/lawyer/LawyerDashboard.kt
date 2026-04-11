@@ -68,17 +68,18 @@ fun LawyerDashboardHost(
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToRequests: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
-    onLogout: () -> Unit = {},
+    onNavigateToCreator: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Collect API data — profile overrides the passed-in params when available
     val lawyerProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
-    val lawyerStats   by dashboardViewModel.stats.collectAsStateWithLifecycle()
+    val lawyerStats              by dashboardViewModel.stats.collectAsStateWithLifecycle()
+    val revenueMonthly           by dashboardViewModel.revenueMonthly.collectAsStateWithLifecycle()
+    val recentConsultations      by dashboardViewModel.recentConsultations.collectAsStateWithLifecycle()
 
     val displayName      = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }   ?: fullName
     val displaySpeciality = lawyerProfile?.speciality?.takeIf { it.isNotBlank() } ?: speciality
@@ -125,8 +126,7 @@ fun LawyerDashboardHost(
             val onMessagesRoute = currentRoute == LawyerTab.Messages.route
             CenterAlignedTopAppBar(
                 navigationIcon = {
-                    val onCreatorRoute = currentRoute == LawyerTab.Creator.route
-                    if (onMessagesRoute || onCreatorRoute) {
+                    if (onMessagesRoute) {
                         IconButton(onClick = { innerNavController.popBackStack() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -146,18 +146,15 @@ fun LawyerDashboardHost(
                             color = AppDarkGreen
                         )
                     } else {
-
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_app),
+                            contentDescription = "Haqqi",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.height(68.dp)
+                        )
                     }
                 },
                 actions = {
-                    // ── Logout button ────────────────────────────────────────
-                    IconButton(onClick = { showLogoutDialog = true }) {
-                        Icon(
-                            Icons.Default.Logout,
-                            contentDescription = "Déconnexion",
-                            tint = Color(0xFFEF4444)
-                        )
-                    }
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
                     IconButton(onClick = onNavigateToNotifications) {
                         BadgedBox(
@@ -212,11 +209,10 @@ fun LawyerDashboardHost(
         },
         bottomBar = {
             LawyerNavBottomBar(currentRoute = currentRoute) { tab ->
-                if (tab is LawyerTab.Profile) {
-                    onNavigateToProfile()
-                } else {
-                    innerNavController.navigate(tab.route) {
-                        // Pop back to HomeTab without destroying its saved state
+                when (tab) {
+                    is LawyerTab.Profile -> onNavigateToProfile()
+                    is LawyerTab.Creator -> onNavigateToCreator()
+                    else -> innerNavController.navigate(tab.route) {
                         popUpTo(LawyerTab.Home.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
@@ -233,16 +229,15 @@ fun LawyerDashboardHost(
                 startDestination = LawyerTab.Home.route
             ) {
                 composable(LawyerTab.Home.route) {
-                    LawyerHomeTabContent(
-                        paddingValues = paddingValues,
-                        fullName = displayName,
-                        speciality = displaySpeciality,
-                        profileImageUri = profileImageUri,
-                        isMasculine = isMasculine,
-                        stats = lawyerStats,
+                    AvocatDashboardScreen(
+                        paddingValues       = paddingValues,
+                        profile             = lawyerProfile,
+                        stats               = lawyerStats,
+                        revenueMonthly      = revenueMonthly,
+                        recentConsultations = recentConsultations,
                         onNavigateToRequests = onNavigateToRequests,
                         onNavigateToPayments = onNavigateToPayments,
-                        onNavigateToCreator = { innerNavController.navigate(LawyerTab.Creator.route) }
+                        onNavigateToCreator  = onNavigateToCreator
                     )
                 }
                 composable(LawyerTab.Messages.route) {
@@ -255,11 +250,7 @@ fun LawyerDashboardHost(
                 composable(LawyerTab.Clients.route) {
                     LawyerClientsTabContent(paddingValues = paddingValues)
                 }
-                composable(LawyerTab.Creator.route) {
-                    LawyerCreatorManagementScreen(
-                        onBack = { innerNavController.navigate(LawyerTab.Home.route) }
-                    )
-                }
+
             }
         }
     }
@@ -290,54 +281,6 @@ fun LawyerDashboardHost(
                 }
             )
         }
-    }
-
-    // ── Logout Confirmation Dialog ────────────────────────────────────────────
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            icon = {
-                Icon(
-                    Icons.Default.Logout,
-                    contentDescription = null,
-                    tint = Color(0xFFEF4444),
-                    modifier = Modifier.size(28.dp)
-                )
-            },
-            title = {
-                Text(
-                    "Déconnexion",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen
-                )
-            },
-            text = {
-                Text(
-                    "Voulez-vous vraiment vous déconnecter ?",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutDialog = false
-                        onLogout()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
-                ) {
-                    Text("Déconnecter", color = Color.White)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Annuler", color = AppDarkGreen)
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(20.dp)
-        )
     }
 }
 

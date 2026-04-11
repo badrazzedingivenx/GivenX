@@ -53,6 +53,7 @@ fun AvocatProfile(
     profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
     onNavigateToEdit: () -> Unit = {},
+    onLogout: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
     val lawyerProfile  by dashboardViewModel.profile.collectAsStateWithLifecycle()
@@ -354,7 +355,7 @@ fun AvocatProfile(
             },
             confirmButton = {
                 Button(
-                    onClick = { showLogOutDialog = false; onBack() },
+                    onClick = { showLogOutDialog = false; onLogout() },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
                 ) {

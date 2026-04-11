@@ -96,17 +96,17 @@ fun UserDashboardHost(
 
     Scaffold(
         topBar = {
-            val onMatchingRoute = currentRoute == UserTab.Matching.route
-            val showTitleBar    = onMatchingRoute
+            val onNetworkingRoute = currentRoute == UserTab.Networking.route
+            val showTitleBar    = onNetworkingRoute
             val titleBarText    = when {
-                onMatchingRoute -> "Matching"
+                onNetworkingRoute -> "Réseaux"
                 else            -> ""
             }
             CenterAlignedTopAppBar(
                 navigationIcon = {
                     if (showTitleBar) {
                         IconButton(onClick = {
-                            if (onMatchingRoute) {
+                            if (onNetworkingRoute) {
                                 innerNavController.navigate(UserTab.Home.route) {
                                     popUpTo(innerNavController.graph.startDestinationId)
                                     launchSingleTop = true
@@ -249,8 +249,8 @@ fun UserDashboardHost(
                         onNavigateToCategory = onNavigateToCategory
                     )
                 }
-                composable(UserTab.Matching.route) {
-                    LegalMatchingScreen(paddingValues = paddingValues)
+                composable(UserTab.Networking.route) {
+                    NetworkingScreen(paddingValues = paddingValues)
                 }
                 composable(UserTab.Vault.route) {
                     UserCasesTabContent(

@@ -723,76 +723,7 @@ private fun formatNumber(n: Int): String = when {
     else           -> n.toString()
 }
 
-// ─── Legacy composables preserved for navigation backward-compat ──────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LawyerCreatorManagementScreen(
-    onBack: () -> Unit
-) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Stories", "Reels", "Lives")
-
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Gestion Créateur",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
-            )
-        },
-        containerColor = Color(0xFFF8F9FA)
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.White,
-                contentColor = AppDarkGreen,
-                indicator = { tabPositions ->
-                    with(TabRowDefaults) {
-                        SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = AppGoldColor
-                        )
-                    }
-                }
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = {
-                            Text(
-                                title,
-                                fontSize = 14.sp,
-                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    )
-                }
-            }
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                when (selectedTab) {
-                    0 -> StoriesList()
-                    1 -> ReelsList()
-                    2 -> LivesList()
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun StoriesList() {
