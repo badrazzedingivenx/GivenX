@@ -135,7 +135,13 @@ fun AppNavigation() {
                 onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToRequests = { navController.navigate("LawyerRequests") },
-                onNavigateToPayments = { navController.navigate("LawyerPayments") }
+                onNavigateToPayments = { navController.navigate("LawyerPayments") },
+                onLogout = {
+                    UserService.signOut()
+                    navController.navigate("Login/lawyer") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 

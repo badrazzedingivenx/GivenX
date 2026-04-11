@@ -703,7 +703,7 @@ private fun EmptyInlineNote(message: String) {
             verticalAlignment  = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(Icons.Default.InfoOutline, contentDescription = null,
+            Icon(Icons.Default.Info, contentDescription = null,
                 tint = StudioAccent, modifier = Modifier.size(18.dp))
             Text(
                 message,
@@ -724,20 +724,6 @@ private fun formatNumber(n: Int): String = when {
 }
 
 // ─── Legacy composables preserved for navigation backward-compat ──────────────
-
-@Composable
-fun EmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, message: String) {
-    Column(
-        modifier            = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(message, color = Color.Gray, fontSize = 16.sp)
-    }
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -774,10 +760,12 @@ fun LawyerCreatorManagementScreen(
                 containerColor = Color.White,
                 contentColor = AppDarkGreen,
                 indicator = { tabPositions ->
-                    SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = AppGoldColor
-                    )
+                    with(TabRowDefaults) {
+                        SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = AppGoldColor
+                        )
+                    }
                 }
             ) {
                 tabs.forEachIndexed { index, title ->

@@ -68,11 +68,13 @@ fun LawyerDashboardHost(
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToRequests: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
+    onLogout: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Collect API data — profile overrides the passed-in params when available
     val lawyerProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
@@ -123,7 +125,8 @@ fun LawyerDashboardHost(
             val onMessagesRoute = currentRoute == LawyerTab.Messages.route
             CenterAlignedTopAppBar(
                 navigationIcon = {
-                    if (onMessagesRoute) {
+                    val onCreatorRoute = currentRoute == LawyerTab.Creator.route
+                    if (onMessagesRoute || onCreatorRoute) {
                         IconButton(onClick = { innerNavController.popBackStack() }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -147,6 +150,14 @@ fun LawyerDashboardHost(
                     }
                 },
                 actions = {
+                    // ── Logout button ────────────────────────────────────────
+                    IconButton(onClick = { showLogoutDialog = true }) {
+                        Icon(
+                            Icons.Default.Logout,
+                            contentDescription = "Déconnexion",
+                            tint = Color(0xFFEF4444)
+                        )
+                    }
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
                     IconButton(onClick = onNavigateToNotifications) {
                         BadgedBox(
@@ -279,6 +290,54 @@ fun LawyerDashboardHost(
                 }
             )
         }
+    }
+
+    // ── Logout Confirmation Dialog ────────────────────────────────────────────
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Logout,
+                    contentDescription = null,
+                    tint = Color(0xFFEF4444),
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    "Déconnexion",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen
+                )
+            },
+            text = {
+                Text(
+                    "Voulez-vous vraiment vous déconnecter ?",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                ) {
+                    Text("Déconnecter", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Annuler", color = AppDarkGreen)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 }
 
