@@ -1,7 +1,8 @@
 import "./Header.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 function Header() {
+  const navigate = useNavigate();
 
   return (
 
@@ -26,7 +27,7 @@ function Header() {
 
       <div className="actions">
         <button className="start">ابدأ مجاناً</button>
-        <button className="dashboard-btn">لوحتي</button>
+        <button className="dashboard-btn" onClick={() => navigate('/dashboard')}>لوحتي</button>
         <div className="notifications">
           <span className="bell">🔔</span>
           <span className="notif-dot"></span>

@@ -62,7 +62,8 @@
 
 .chat-title {
   font-weight: 800;
-  color: #1D633B; /* Deep Green */
+  color: #1D633B;
+  /* Deep Green */
   font-size: 16px;
 }
 
@@ -125,11 +126,13 @@
 }
 
 .mock-send {
-  background: #1D633B; /* Deep Green */
+  background: #1D633B;
+  /* Deep Green */
   color: white;
   width: 32px;
   height: 32px;
-  border-radius: 50%; /* Circular button */
+  border-radius: 50%;
+  /* Circular button */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,7 +157,8 @@
 /* --- PRICING SECTION --- */
 .pricing-section {
   padding: 100px 5%;
-  background: #F5F5F0; /* Light cream/beige requested */
+  background: #F5F5F0;
+  /* Light cream/beige requested */
   text-align: center;
   font-family: 'Tajawal', sans-serif;
 }
@@ -178,21 +182,22 @@
 
 .pricing-card {
   background: white;
-  border-radius: 16px; /* 16px as requested */
+  border-radius: 16px;
+  /* 16px as requested */
   padding: 28px 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
   cursor: pointer;
 }
 
 .pricing-card.side:hover {
   transform: translateY(-8px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
   border-color: #14532D;
 }
 
@@ -201,7 +206,8 @@
 }
 
 .pricing-card.featured {
-  background: #14532D; /* Forest Green requested */
+  background: #14532D;
+  /* Forest Green requested */
   color: white;
   transform: scale(1.08);
   box-shadow: 0 25px 60px rgba(20, 83, 45, 0.15);
@@ -218,7 +224,8 @@
   top: -16px;
   left: 50%;
   transform: translateX(-50%);
-  background: #D97706; /* Accent Orange requested */
+  background: #D97706;
+  /* Accent Orange requested */
   color: white;
   padding: 6px 24px;
   border-radius: 30px;
@@ -251,7 +258,8 @@
   font-size: 50px;
   font-weight: 800;
   line-height: 1;
-  font-family: 'Playfair Display', serif; /* High-end serif for prices */
+  font-family: 'Playfair Display', serif;
+  /* High-end serif for prices */
 }
 
 .price-currency {
@@ -321,8 +329,10 @@
 .btn-pricing-gold {
   width: 100%;
   padding: 14px;
-  background: #D97706; /* Accent Orange */
-  color: white; /* White text on orange */
+  background: #D97706;
+  /* Accent Orange */
+  color: white;
+  /* White text on orange */
   border: none;
   border-radius: 12px;
   font-weight: 800;
@@ -344,6 +354,7 @@
     max-width: 450px;
     gap: 40px;
   }
+
   .pricing-card.featured {
     transform: scale(1);
   }
@@ -436,6 +447,7 @@
   font-size: 14.5px;
   cursor: pointer;
   transition: 0.3s;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -546,36 +558,44 @@
 
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 columns on desktop */
-  gap: 25px; /* Tighter gap for more columns */
-  max-width: 1300px; /* Slightly wider to accommodate 4 columns */
+  grid-template-columns: repeat(4, 1fr);
+  /* 4 columns on desktop */
+  gap: 25px;
+  /* Tighter gap for more columns */
+  max-width: 1300px;
+  /* Slightly wider to accommodate 4 columns */
   margin: 0 auto;
 }
 
 .service-card {
-  background: #F5F2EA; /* Soft beige requested */
+  background: #F5F2EA;
+  /* Soft beige requested */
   padding: 35px 25px;
-  border-radius: 20px; /* 20px as requested */
+  border-radius: 20px;
+  /* 20px as requested */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid rgba(0,0,0,0.02);
+  border: 1px solid rgba(0, 0, 0, 0.02);
   position: relative;
   cursor: pointer;
 }
 
 .service-card:hover {
   transform: translateY(-5px);
-  background: white; /* White bg on hover */
-  border: 2px solid #1D633B; /* 2px Forest Green border on hover */
-  box-shadow: 0 15px 40px rgba(0,0,0,0.06);
+  background: white;
+  /* White bg on hover */
+  border: 2px solid #1D633B;
+  /* 2px Forest Green border on hover */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
 }
 
 .service-icon {
   width: 54px;
   height: 54px;
-  background: #e9e9e9; /* Light gray background for icon container */
+  background: #e9e9e9;
+  /* Light gray background for icon container */
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -587,13 +607,15 @@
 .service-title {
   font-size: 19px;
   font-weight: 800;
-  color: #1D633B; /* Deep Forest Green */
+  color: #1D633B;
+  /* Deep Forest Green */
   margin-bottom: 12px;
 }
 
 .service-desc {
   font-size: 13.5px;
-  color: #4b6354; /* Muted gray/green for description */
+  color: #4b6354;
+  /* Muted gray/green for description */
   line-height: 1.5;
   margin-bottom: 25px;
   flex-grow: 1;
@@ -609,10 +631,26 @@
 }
 
 /* Tag Variants */
-.service-tag.price { background: #fdf2f2; color: #1D633B; border: 1px solid rgba(29,99,59,0.1); }
-.service-tag.new { background: #fffbeb; color: #1D633B; }
-.service-tag.b2b { background: #f0f9ff; color: #1D633B; }
-.service-tag.soon { background: #f8fafc; color: #1D633B; }
+.service-tag.price {
+  background: #fdf2f2;
+  color: #1D633B;
+  border: 1px solid rgba(29, 99, 59, 0.1);
+}
+
+.service-tag.new {
+  background: #fffbeb;
+  color: #1D633B;
+}
+
+.service-tag.b2b {
+  background: #f0f9ff;
+  color: #1D633B;
+}
+
+.service-tag.soon {
+  background: #f8fafc;
+  color: #1D633B;
+}
 
 /* SIgnature Highlight */
 .sig-highlight {
@@ -630,6 +668,7 @@
   .services-grid {
     grid-template-columns: 1fr;
   }
+
   .section-title {
     font-size: 32px;
   }

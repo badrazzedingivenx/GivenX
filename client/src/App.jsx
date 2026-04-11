@@ -12,6 +12,7 @@ import Following from "./pages/Following";
 import TopicPage from "./pages/TopicPage";
 import Lawyers from "./pages/Lawyers";
 import DiscoverPage from "./pages/DiscoverPage";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/topic/:name" element={<TopicPage />} />
         <Route path="/lawyers" element={<Lawyers />} />
         <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );

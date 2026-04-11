@@ -61,6 +61,7 @@
   transition: 0.25s;
   font-family: 'Tajawal', sans-serif;
   text-align: right;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(8px);
 }
 
@@ -347,6 +348,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.65);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
