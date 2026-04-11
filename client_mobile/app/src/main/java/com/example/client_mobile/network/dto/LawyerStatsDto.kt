@@ -61,10 +61,11 @@ data class RevenueMonthDto(
 
 // ─── GET /api/avocat/consultations/recent ───────────────────────────────────────────
 data class RecentConsultationDto(
-    @SerializedName("id")                                                                              val id:         String = "",
-    @SerializedName(value = "client_name",  alternate = ["clientName"])                               val clientName: String = "",
-    @SerializedName(value = "legal_case",   alternate = ["legalCase", "category", "case_title"])     val legalCase:  String = "",
-    @SerializedName("date")                                                                            val date:       String = "",
-    @SerializedName("price")                                                                           val price:      Float  = 0f,
-    @SerializedName("status")                                                                          val status:     String = ""
+
+    @SerializedName("id")                                                          val id:         String = "",
+    @SerializedName(value = "client_name", alternate = ["clientName"])                     val clientName: String = "",
+    @SerializedName(value = "legal_case",  alternate = ["legalCase", "category"])          val legalCase:  String = "",
+    @SerializedName("date")                                                         val date:       String = "",
+    @SerializedName("price")                                                        val price:      Float  = 0f,
+    @SerializedName("status")                                                       val status:     String = ""
 )
