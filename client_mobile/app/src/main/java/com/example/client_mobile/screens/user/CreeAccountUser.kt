@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
+import com.example.client_mobile.screens.shared.AuthViewModel
 
 @Composable
 fun CreeUserScreen(

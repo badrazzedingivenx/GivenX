@@ -202,7 +202,7 @@ internal fun UserCasesTabContent(
                 )
                 QuickActionButton(
                     modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Chat,
+                    icon = Icons.AutoMirrored.Filled.Chat,
                     label = "Messagerie",
                     onClick = onNavigateToMessages
                 )
@@ -222,23 +222,72 @@ internal fun UserCasesTabContent(
         }
 
         // ── Case Status Timeline ───────────────────────────────────────
-        DashCard {
-            SectionHeader(title = "État du Dossier", actionLabel = "Voir tout") {}
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Affaire N° HAQ-2024-0312",
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Serif,
-                color = AppGoldColor,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(18.dp))
-            CaseStatusTimeline(steps = caseSteps)
+        when {
+            dossiersState == null -> {
+                // Loading skeleton for the dossier card
+                DashCard {
+                    DossierLoadingSkeleton()
+                }
+            }
+            dossiersState!!.isEmpty() -> {
+                DashCard {
+                    SectionHeader(title = "État du Dossier")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Aucun dossier actif pour le moment.",
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppDarkGreen.copy(alpha = 0.55f)
+                    )
+                }
+            }
+            else -> {
+                val d = dossiersState!!.first()
+                DashCard {
+                    SectionHeader(
+                        title = "État du Dossier",
+                        actionLabel = "Voir tout",
+                        onAction = { onNavigateToDossier(d.id) }
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Affaire N° ${d.caseNumber}",
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppGoldColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    CaseStatusTimeline(steps = dossierToSteps(d))
+                }
+            }
         }
 
         // ── Upcoming Appointment ───────────────────────────────────────
         SectionHeader(title = "Prochain Rendez-vous")
-        UpcomingAppointmentCard(appointment = appointment)
+        when {
+            appointmentsState == null -> {
+                DashCard {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(72.dp),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator(color = AppDarkGreen, modifier = Modifier.size(26.dp)) }
+                }
+            }
+            upcomingAppointmentItem != null -> {
+                UpcomingAppointmentCard(appointment = upcomingAppointmentItem)
+            }
+            else -> {
+                DashCard {
+                    Text(
+                        "Aucun rendez-vous à venir.",
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppDarkGreen.copy(alpha = 0.55f)
+                    )
+                }
+            }
+        }
 
         // ── Document Vault ─────────────────────────────────────────────
         SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
@@ -258,128 +307,7 @@ internal fun UserCasesTabContent(
         SectionHeader(title = "Résumé de Facturation")
         BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
 
-                // ── Quick Actions ──────────────────────────────────────────────
-                DashCard {
-                    SectionHeader(title = "Actions rapides")
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.Event,
-                            label = "Consulter",
-                            onClick = onNavigateToConsulter
-                        )
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.AutoMirrored.Filled.Chat,
-                            label = "Messagerie",
-                            onClick = onNavigateToMessages
-                        )
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.CloudUpload,
-                            label = "Documents",
-                            onClick = onNavigateToDocuments
-                        )
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.MonetizationOn,
-                            label = "Facturation",
-                            onClick = onNavigateToFacturation
-                        )
-                    }
-                }
-
-                // ── Case Status Timeline ───────────────────────────────────────
-                when {
-                    dossiersState == null -> {
-                        // Loading skeleton for the dossier card
-                        DashCard {
-                            DossierLoadingSkeleton()
-                        }
-                    }
-                    dossiersState!!.isEmpty() -> {
-                        DashCard {
-                            SectionHeader(title = "État du Dossier")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Aucun dossier actif pour le moment.",
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppDarkGreen.copy(alpha = 0.55f)
-                            )
-                        }
-                    }
-                    else -> {
-                        val d = dossiersState!!.first()
-                        DashCard {
-                            SectionHeader(
-                                title = "État du Dossier",
-                                actionLabel = "Voir tout",
-                                onAction = { onNavigateToDossier(d.id) }
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "Affaire N° ${d.caseNumber}",
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppGoldColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(18.dp))
-                            CaseStatusTimeline(steps = dossierToSteps(d))
-                        }
-                    }
-                }
-
-                // ── Upcoming Appointment ───────────────────────────────────────
-                SectionHeader(title = "Prochain Rendez-vous")
-                when {
-                    appointmentsState == null -> {
-                        DashCard {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().height(72.dp),
-                                contentAlignment = Alignment.Center
-                            ) { CircularProgressIndicator(color = AppDarkGreen, modifier = Modifier.size(26.dp)) }
-                        }
-                    }
-                    upcomingAppointmentItem != null -> {
-                        UpcomingAppointmentCard(appointment = upcomingAppointmentItem)
-                    }
-                    else -> {
-                        DashCard {
-                            Text(
-                                "Aucun rendez-vous à venir.",
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppDarkGreen.copy(alpha = 0.55f)
-                            )
-                        }
-                    }
-                }
-
-                // ── Document Vault ─────────────────────────────────────────────
-                SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
-                DashCard {
-                    documents.forEachIndexed { index, doc ->
-                        DocumentVaultItem(doc = doc)
-                        if (index < documents.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                color = AppDarkGreen.copy(alpha = 0.07f)
-                            )
-                        }
-                    }
-                }
-
-                // ── Billing Summary ────────────────────────────────────────────
-                SectionHeader(title = "Résumé de Facturation")
-                BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
-
-                Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }  // end Column
     }  // end PullToRefreshBox
 
