@@ -61,6 +61,13 @@ data class InboxMessage(
     val isRead: Boolean = false
 )
 
+data class LegalStory(
+    val id: Int,
+    val lawyerName: String,
+    val specialty: String,
+    val hasNewStory: Boolean = true
+)
+
 // ─── User Session ─────────────────────────────────────────────────────────────
 object UserSession {
     var name by mutableStateOf("")

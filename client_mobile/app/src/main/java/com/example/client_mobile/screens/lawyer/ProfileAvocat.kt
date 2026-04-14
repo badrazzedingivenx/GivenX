@@ -382,6 +382,8 @@ private fun LawyerHeaderCard(
     casesWon: Int,
     rating: Float
 ) {
+    val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == fullName }
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
@@ -413,56 +415,75 @@ private fun LawyerHeaderCard(
             ) {
                 // Avatar + verified badge
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    if (avatarUrl.isNotBlank()) {
-                        // CDN URL from API — shown with highest priority
-                        AsyncImage(
-                            model = avatarUrl,
-                            contentDescription = "Photo de profil",
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, AppGoldColor, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else if (profileImageUri != null) {
-                        AsyncImage(
-                            model = profileImageUri,
-                            contentDescription = "Photo de profil",
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, AppGoldColor, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        val initials = fullName
-                            .removePrefix("Maître ")
-                            .split(" ")
-                            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-                            .take(2)
-                            .joinToString("")
-                        // Initials avatar
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            AppGoldColor.copy(alpha = 0.22f),
-                                            AppGoldColor.copy(alpha = 0.06f)
+                    Box(contentAlignment = Alignment.Center) {
+                        // Story ring drawn first (behind avatar in z-order)
+                        if (hasActiveStory) {
+                            Box(
+                                modifier = Modifier
+                                    .size(104.dp)
+                                    .border(3.dp, AppGoldColor, CircleShape)
+                            )
+                        }
+                        // Avatar — API CDN URL > local URI > initials
+                        if (avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Photo de profil",
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .padding(if (hasActiveStory) 6.dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .then(if (!hasActiveStory) Modifier.border(2.dp, AppGoldColor, CircleShape) else Modifier),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else if (profileImageUri != null) {
+                            AsyncImage(
+                                model = profileImageUri,
+                                contentDescription = "Photo de profil",
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .padding(if (hasActiveStory) 6.dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .then(if (!hasActiveStory) Modifier.border(2.dp, AppGoldColor, CircleShape) else Modifier),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            val initials = fullName
+                                .removePrefix("Maître ")
+                                .split(" ")
+                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                .take(2)
+                                .joinToString("")
+                            Box(
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .padding(if (hasActiveStory) 6.dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                AppGoldColor.copy(alpha = 0.22f),
+                                                AppGoldColor.copy(alpha = 0.06f)
+                                            )
                                         )
                                     )
+                                    .then(if (!hasActiveStory) Modifier.border(2.dp, AppGoldColor, CircleShape) else Modifier),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = initials,
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 34.sp,
+                                    color = AppGoldColor
                                 )
-                                .border(2.dp, AppGoldColor, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = initials,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 34.sp,
-                                color = AppGoldColor
+                            }
+                        }
+                        if (hasActiveStory) {
+                            Box(
+                                modifier = Modifier
+                                    .size(104.dp)
+                                    .border(3.dp, AppGoldColor, CircleShape)
                             )
                         }
                     }

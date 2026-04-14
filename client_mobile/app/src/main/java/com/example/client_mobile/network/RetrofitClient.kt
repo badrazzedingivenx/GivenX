@@ -24,10 +24,10 @@ object RetrofitClient {
     // ── Server configuration ──────────────────────────────────────────────────
 
     /** Mockable.io public mock — no API key required */
-    private const val MOCK_URL = "http://demo3674879.mockable.io/"
+    private const val MOCK_URL = "http://demo3674879"
 
     /** Local dev server (Android Emulator → host localhost:3000) */
-    private const val LOCAL_BASE_URL = "http://10.0.2.2:3000/"
+    private const val LOCAL_BASE_URL = "http://10.0.2.2:3001/"
 
     /**
      * Toggle: set true to hit the Mockable.io mock, false for local Express server.
@@ -40,7 +40,7 @@ object RetrofitClient {
      *   cd api_server && npm install && node index.js
      * Then set USE_MOCK_SERVER = false and run the app on an emulator.
      */
-    private const val USE_MOCK_SERVER = true
+    private const val USE_MOCK_SERVER = false
 
     /** Active base URL — Mockable.io mock or local Express. */
     val BASE_URL: String = if (USE_MOCK_SERVER) MOCK_URL else LOCAL_BASE_URL
@@ -80,20 +80,16 @@ object RetrofitClient {
     // ── OkHttp client ─────────────────────────────────────────────────────────
 
     private val okHttpClient: OkHttpClient by lazy {
-        // Routes all OkHttp logs through android.util.Log so they appear in
-        // Logcat under the tag "GivenX-API". Filter with: tag:GivenX-API
         val logging = HttpLoggingInterceptor { message ->
-            Log.d("GivenX-API", message)
+            Log.d("GivenX-API", ">> $message") // Adding prefix to make it easy to find in Logcat
         }.apply {
-            level = HttpLoggingInterceptor.Level.BODY   // full request + response
-            // redactHeader("Authorization")            // uncomment to hide the JWT in logs
+            level = HttpLoggingInterceptor.Level.BODY
         }
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .writeTimeout(10, TimeUnit.SECONDS)
+            .connectTimeout(15, TimeUnit.SECONDS) // Increased timeout for debugging
+            .readTimeout(15, TimeUnit.SECONDS)
             .build()
     }
 
@@ -139,6 +135,7 @@ object RetrofitClient {
     val lawyerApi: LawyerApiService by lazy { create(LawyerApiService::class.java) }
     val authApi:   AuthApiService   by lazy { create(AuthApiService::class.java)   }
     val haqApi:    HaqApiService    by lazy { create(HaqApiService::class.java)    }
+    val legalApi:  LegalApiService  by lazy { create(LegalApiService::class.java)  }
     /** Raw-type service for Postman mock endpoints (no ApiResponse wrapper). */
     val mockApi:   MockApiService   by lazy { create(MockApiService::class.java)   }
 }

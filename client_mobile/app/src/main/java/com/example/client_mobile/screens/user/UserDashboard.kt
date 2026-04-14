@@ -3,13 +3,10 @@ package com.example.client_mobile.screens.user
 import com.example.client_mobile.screens.shared.*
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,14 +31,11 @@ import com.example.client_mobile.services.DossierData
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.client_mobile.R
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
 data class CaseStep(
@@ -154,166 +148,166 @@ internal fun UserCasesTabContent(
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
-                // ── Greeting ───────────────────────────────────────
-                Column {
-                    val greeting = when {
-                        firstNameState == null              -> "Bonjour 👋"
-                        firstNameState!!.isNotBlank()       -> "Bonjour, ${firstNameState!!} 👋"
-                        else -> {
-                            val local = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
-                            if (local.isNotBlank()) "Bonjour, $local 👋" else "Bonjour 👋"
-                        }
-                    }
-                    Text(
-                        text = greeting,
-                        fontSize = 26.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = AppDarkGreen
-                    )
-                    Text(
-                        text = "Comment puis-je vous aider aujourd'hui ?",
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = AppDarkGreen.copy(alpha = 0.60f)
-                    )
+        // ── Greeting ──────────────────────────────────────────────────
+        Column {
+            val greeting = when {
+                firstNameState == null        -> "Bonjour 👋"
+                firstNameState!!.isNotBlank() -> "Bonjour, ${firstNameState!!} 👋"
+                else -> {
+                    val local = UserSession.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: ""
+                    if (local.isNotBlank()) "Bonjour, $local 👋" else "Bonjour 👋"
                 }
+            }
+            Text(
+                text = greeting,
+                fontSize = 26.sp,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                color = AppDarkGreen
+            )
+            Text(
+                text = "Comment puis-je vous aider aujourd'hui ?",
+                fontSize = 14.sp,
+                fontFamily = FontFamily.Serif,
+                color = AppDarkGreen.copy(alpha = 0.60f)
+            )
+        }
 
-                // ── Stories ───────────────────────────────────────────────
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(horizontal = 2.dp)
-                ) {
-                    itemsIndexed(allStories) { index, story ->
-                        StoriesItem(
-                            story   = story,
-                            onClick = { viewingStoryIndex = index }
-                        )
-                    }
-                }
+        // ── Stories ───────────────────────────────────────────────
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp)
+        ) {
+            itemsIndexed(allStories) { index, story ->
+                StoriesItem(
+                    story   = story,
+                    onClick = { viewingStoryIndex = index }
+                )
+            }
+        }
 
-                // ── Quick Actions ──────────────────────────────────────────────
+        // ── Quick Actions ──────────────────────────────────────────────
+        DashCard {
+            SectionHeader(title = "Actions rapides")
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Event,
+                    label = "Consulter",
+                    onClick = onNavigateToConsulter
+                )
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.AutoMirrored.Filled.Chat,
+                    label = "Messagerie",
+                    onClick = onNavigateToMessages
+                )
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.CloudUpload,
+                    label = "Documents",
+                    onClick = onNavigateToDocuments
+                )
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.MonetizationOn,
+                    label = "Facturation",
+                    onClick = onNavigateToFacturation
+                )
+            }
+        }
+
+        // ── Case Status Timeline ───────────────────────────────────────
+        when {
+            dossiersState == null -> {
+                // Loading skeleton for the dossier card
                 DashCard {
-                    SectionHeader(title = "Actions rapides")
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.Event,
-                            label = "Consulter",
-                            onClick = onNavigateToConsulter
-                        )
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.AutoMirrored.Filled.Chat,
-                            label = "Messagerie",
-                            onClick = onNavigateToMessages
-                        )
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.CloudUpload,
-                            label = "Documents",
-                            onClick = onNavigateToDocuments
-                        )
-                        QuickActionButton(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.MonetizationOn,
-                            label = "Facturation",
-                            onClick = onNavigateToFacturation
-                        )
-                    }
+                    DossierLoadingSkeleton()
                 }
-
-                // ── Case Status Timeline ───────────────────────────────────────
-                when {
-                    dossiersState == null -> {
-                        // Loading skeleton for the dossier card
-                        DashCard {
-                            DossierLoadingSkeleton()
-                        }
-                    }
-                    dossiersState!!.isEmpty() -> {
-                        DashCard {
-                            SectionHeader(title = "État du Dossier")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Aucun dossier actif pour le moment.",
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppDarkGreen.copy(alpha = 0.55f)
-                            )
-                        }
-                    }
-                    else -> {
-                        val d = dossiersState!!.first()
-                        DashCard {
-                            SectionHeader(
-                                title = "État du Dossier",
-                                actionLabel = "Voir tout",
-                                onAction = { onNavigateToDossier(d.id) }
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "Affaire N° ${d.caseNumber}",
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppGoldColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(18.dp))
-                            CaseStatusTimeline(steps = dossierToSteps(d))
-                        }
-                    }
-                }
-
-                // ── Upcoming Appointment ───────────────────────────────────────
-                SectionHeader(title = "Prochain Rendez-vous")
-                when {
-                    appointmentsState == null -> {
-                        DashCard {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().height(72.dp),
-                                contentAlignment = Alignment.Center
-                            ) { CircularProgressIndicator(color = AppDarkGreen, modifier = Modifier.size(26.dp)) }
-                        }
-                    }
-                    upcomingAppointmentItem != null -> {
-                        UpcomingAppointmentCard(appointment = upcomingAppointmentItem)
-                    }
-                    else -> {
-                        DashCard {
-                            Text(
-                                "Aucun rendez-vous à venir.",
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.Serif,
-                                color = AppDarkGreen.copy(alpha = 0.55f)
-                            )
-                        }
-                    }
-                }
-
-                // ── Document Vault ─────────────────────────────────────────────
-                SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
+            }
+            dossiersState!!.isEmpty() -> {
                 DashCard {
-                    documents.forEachIndexed { index, doc ->
-                        DocumentVaultItem(doc = doc)
-                        if (index < documents.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                color = AppDarkGreen.copy(alpha = 0.07f)
-                            )
-                        }
-                    }
+                    SectionHeader(title = "État du Dossier")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Aucun dossier actif pour le moment.",
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppDarkGreen.copy(alpha = 0.55f)
+                    )
                 }
+            }
+            else -> {
+                val d = dossiersState!!.first()
+                DashCard {
+                    SectionHeader(
+                        title = "État du Dossier",
+                        actionLabel = "Voir tout",
+                        onAction = { onNavigateToDossier(d.id) }
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Affaire N° ${d.caseNumber}",
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppGoldColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    CaseStatusTimeline(steps = dossierToSteps(d))
+                }
+            }
+        }
 
-                // ── Billing Summary ────────────────────────────────────────────
-                SectionHeader(title = "Résumé de Facturation")
-                BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
+        // ── Upcoming Appointment ───────────────────────────────────────
+        SectionHeader(title = "Prochain Rendez-vous")
+        when {
+            appointmentsState == null -> {
+                DashCard {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(72.dp),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator(color = AppDarkGreen, modifier = Modifier.size(26.dp)) }
+                }
+            }
+            upcomingAppointmentItem != null -> {
+                UpcomingAppointmentCard(appointment = upcomingAppointmentItem)
+            }
+            else -> {
+                DashCard {
+                    Text(
+                        "Aucun rendez-vous à venir.",
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = AppDarkGreen.copy(alpha = 0.55f)
+                    )
+                }
+            }
+        }
 
-                Spacer(modifier = Modifier.height(20.dp))
+        // ── Document Vault ─────────────────────────────────────────────
+        SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
+        DashCard {
+            documents.forEachIndexed { index, doc ->
+                DocumentVaultItem(doc = doc)
+                if (index < documents.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 10.dp),
+                        color = AppDarkGreen.copy(alpha = 0.07f)
+                    )
+                }
+            }
+        }
+
+        // ── Billing Summary ────────────────────────────────────────────
+        SectionHeader(title = "Résumé de Facturation")
+        BillingSummaryCard(paid = paidAmount, pending = pendingAmount, total = total)
+
+        Spacer(modifier = Modifier.height(20.dp))
     }  // end Column
     }  // end PullToRefreshBox
 

@@ -57,10 +57,13 @@ data class AuthResponse(
     @SerializedName("success")    val success:      Boolean       = false,
     @SerializedName("data")       val data:         AuthLoginData? = null,
     // Legacy mock flat fields
-    @SerializedName("token")      val legacyToken:  String        = "",
+    @SerializedName("token")      val legacyToken:  String?       = null,
     @SerializedName("expires_in") val expiresIn:    Long          = 3600L,
     @SerializedName("role")       val role:         String        = "",
-    @SerializedName("user")       val legacyUser:   UserDto?      = null
+    @SerializedName("user")       val legacyUser:   UserDto?      = null,
+    // New fields directly in response if any
+    @SerializedName("userId")     val userId:       String?       = null,
+    @SerializedName("message")    val message:      String?       = null
 ) {
     /**
      * Looks up [email] in the profiles map and returns the matching entry,
@@ -70,7 +73,7 @@ data class AuthResponse(
         profiles?.get(email.lowercase().trim())
 
     /** JWT — tries nested envelope first, then flat field. */
-    fun effectiveToken(): String  = data?.token?.takeIf { it.isNotBlank() } ?: legacyToken
+    fun effectiveToken(): String? = data?.token?.takeIf { it.isNotBlank() } ?: legacyToken?.takeIf { it.isNotBlank() }
     /** User profile — tries nested envelope first, then flat field. */
     fun effectiveUser():  UserDto? = data?.profile ?: legacyUser
 }
@@ -161,6 +164,8 @@ data class UpdateLawyerProfileRequest(
 /** Nested data body inside the real API's { "success": true, "data": {...} } login envelope. */
 data class AuthLoginData(
     @SerializedName("profile")       val profile:      UserDto? = null,
-    @SerializedName("token")         val token:        String   = "",
-    @SerializedName("refresh_token") val refreshToken: String   = ""
+    @SerializedName("token")         val token:        String?  = null,
+    @SerializedName("refresh_token") val refreshToken: String?  = null,
+    @SerializedName("userId")        val userId:       String?  = null,
+    @SerializedName("message")       val message:      String?  = null
 )

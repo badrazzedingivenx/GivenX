@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.client_mobile.screens.shared.AppDarkGreen
 
 // ─── User Profile Screen ──────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
