@@ -32,7 +32,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
+import coil.compose.AsyncImage
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -58,27 +61,50 @@ fun UserDashboardHost(
     onNavigateToAppointments: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
     onNavigateToFacturation: () -> Unit = {},
-    onNavigateToDossier: (String) -> Unit = {}
+    onNavigateToDossier: (String) -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Live user initials + photo from REST profile
+    val profile by userViewModel.profile.collectAsStateWithLifecycle()
+    val photoUrl = profile?.photoUrl?.takeIf { it.isNotBlank() }
+        ?: profile?.let { "" }  // resolved via UserSession after fetch, see below
+        ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
+    val initials = profile?.let {
+        "${it.firstName} ${it.lastName}".trim()
+            .split(" ")
+            .mapNotNull { w -> w.firstOrNull()?.uppercaseChar() }
+            .take(2)
+            .joinToString("")
+    }.takeIf { !it.isNullOrBlank() }
+
+    val dashboardViewModel: UserDashboardViewModel = viewModel()
+    val dashboardError by dashboardViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(dashboardError) {
+        if (!dashboardError.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(dashboardError!!)
+            dashboardViewModel.clearError()
+        }
+    }
+
     Scaffold(
         topBar = {
-            val onMessagesRoute = currentRoute == UserTab.Messages.route
-            val onMatchingRoute = currentRoute == UserTab.Matching.route
-            val showTitleBar    = onMessagesRoute || onMatchingRoute
+            val onNetworkingRoute = currentRoute == UserTab.Networking.route
+            val showTitleBar    = onNetworkingRoute
             val titleBarText    = when {
-                onMessagesRoute -> "Messages"
-                onMatchingRoute -> "Matching"
+                onNetworkingRoute -> "Réseaux"
                 else            -> ""
             }
             CenterAlignedTopAppBar(
                 navigationIcon = {
                     if (showTitleBar) {
                         IconButton(onClick = {
-                            if (onMatchingRoute) {
+                            if (onNetworkingRoute) {
                                 innerNavController.navigate(UserTab.Home.route) {
                                     popUpTo(innerNavController.graph.startDestinationId)
                                     launchSingleTop = true
@@ -105,11 +131,12 @@ fun UserDashboardHost(
                             color = AppDarkGreen
                         )
                     } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.height(126.dp),
-                            contentScale = ContentScale.Fit
+                        Text(
+                            "GivenX",
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = AppDarkGreen
                         )
                     }
                 },
@@ -146,18 +173,35 @@ fun UserDashboardHost(
                     ) {
                         // Gold-bordered avatar circle
                         Surface(
-                            modifier    = Modifier.fillMaxSize(),
-                            shape       = CircleShape,
-                            color       = AppDarkGreen.copy(alpha = 0.10f),
-                            border      = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
+                            modifier = Modifier.fillMaxSize(),
+                            shape    = CircleShape,
+                            color    = AppDarkGreen.copy(alpha = 0.10f),
+                            border   = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Profil",
-                                    tint       = AppGoldColor,
-                                    modifier   = Modifier.size(20.dp)
-                                )
+                                val resolvedPhoto = profile?.photoUrl?.takeIf { it.isNotBlank() }
+                                    ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
+                                when {
+                                    !resolvedPhoto.isNullOrBlank() -> AsyncImage(
+                                        model              = resolvedPhoto,
+                                        contentDescription = "Profil",
+                                        modifier           = Modifier.fillMaxSize().clip(CircleShape),
+                                        contentScale       = ContentScale.Crop
+                                    )
+                                    !initials.isNullOrBlank() -> Text(
+                                        text       = initials,
+                                        fontFamily = FontFamily.Serif,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize   = 13.sp,
+                                        color      = AppGoldColor
+                                    )
+                                    else -> Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = "Profil",
+                                        tint     = AppGoldColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                         // Online green dot
@@ -165,9 +209,9 @@ fun UserDashboardHost(
                             modifier = Modifier
                                 .size(11.dp)
                                 .align(Alignment.BottomEnd)
-                                .background(Color.White, CircleShape)   // white ring
+                                .background(Color.White, CircleShape)
                                 .padding(2.dp)
-                                .background(Color(0xFF34A853), CircleShape) // green dot
+                                .background(Color(0xFF34A853), CircleShape)
                         )
                     }
                 },
@@ -180,14 +224,16 @@ fun UserDashboardHost(
                     onNavigateToProfile()
                 } else {
                     innerNavController.navigate(tab.route) {
-                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                        // Pop back to HomeTab without destroying its saved state
+                        popUpTo(UserTab.Home.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
                 }
             }
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         DashBoardBackground {
             NavHost(
@@ -201,38 +247,21 @@ fun UserDashboardHost(
                         onNavigateToCategory = onNavigateToCategory
                     )
                 }
-                composable(UserTab.Cases.route) {
+                composable(UserTab.Networking.route) {
+                    NetworkingScreen(paddingValues = paddingValues)
+                }
+                composable(UserTab.Vault.route) {
                     UserCasesTabContent(
                         paddingValues = paddingValues,
                         onNavigateToConsulter = onNavigateToAppointments,
                         onNavigateToMessages = {
-                            innerNavController.navigate(UserTab.Messages.route) {
-                                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            // This might need a different handling now that Messages is not in bottom bar
                         },
                         onNavigateToDocuments = onNavigateToDocuments,
                         onNavigateToFacturation = onNavigateToFacturation,
                         onNavigateToDossier = onNavigateToDossier
                     )
                 }
-                composable(UserTab.Messages.route) {
-                    MessagesInboxScreen(
-                        isLawyer = false,
-                        paddingValues = paddingValues,
-                        onNavigateToChat = onNavigateToChat
-                    )
-                }
-                composable(UserTab.Matching.route) {
-                    LegalMatchingScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Reels.route) {
-                    LegalReelsScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Live.route) {
-                    LiveSessionsScreen(paddingValues = paddingValues)
-                 }
             }
         }
     }

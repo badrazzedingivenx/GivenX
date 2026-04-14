@@ -11,8 +11,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -21,21 +23,69 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 // ─── Messages Inbox Screen ────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesInboxScreen(
     isLawyer: Boolean,
     paddingValues: PaddingValues = PaddingValues(),
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    conversationViewModel: ConversationViewModel = viewModel()
 ) {
-    val conversations = ConversationRepository.conversations
+    val conversations  = ConversationRepository.conversations
+    val isLoading      by conversationViewModel.isLoading.collectAsStateWithLifecycle()
+    val isRefreshing   by conversationViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isError        by conversationViewModel.isError.collectAsStateWithLifecycle()
+    val errorMessage   by conversationViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            conversationViewModel.clearError()
+        }
+    }
+
     DashBoardBackground {
-        MessagesInboxContent(
-            conversations    = conversations,
-            isLawyer         = isLawyer,
-            paddingValues    = paddingValues,
-            onNavigateToChat = onNavigateToChat
+        // ── No-connection full-screen state ───────────────────────────────────
+        if (isError && conversations.isEmpty()) {
+            NoConnectionScreen(
+                onRetry   = { conversationViewModel.refresh() },
+                modifier  = Modifier.padding(paddingValues)
+            )
+            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+            return@DashBoardBackground
+        }
+
+        // ── Loading bar ───────────────────────────────────────────────────────
+        if (isLoading) {
+            LinearProgressIndicator(
+                modifier   = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+                color      = AppGoldColor,
+                trackColor = AppDarkGreen.copy(alpha = 0.2f)
+            )
+        }
+
+        // ── Pull-to-refresh + conversation list ───────────────────────────────
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = { conversationViewModel.refresh() },
+            modifier     = Modifier.fillMaxSize()
+        ) {
+            MessagesInboxContent(
+                conversations    = conversations,
+                isLawyer         = isLawyer,
+                paddingValues    = paddingValues,
+                onNavigateToChat = onNavigateToChat
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier  = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
@@ -114,8 +164,8 @@ private fun ConversationCard(
     isLawyer: Boolean,
     onClick: () -> Unit
 ) {
-    val otherName = if (isLawyer) conversation.clientName else conversation.lawyerName
-    val unreadCount = if (isLawyer) conversation.unreadCountForLawyer else conversation.unreadCountForUser
+    val otherName = conversation.otherPartyName
+    val unreadCount = conversation.unreadCount
     val initials = otherName
         .removePrefix("Maître ")
         .split(" ")
@@ -147,13 +197,21 @@ private fun ConversationCard(
                     .background(AppDarkGreen),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    initials,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = AppGoldColor
-                )
+                if (conversation.avatarUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = conversation.avatarUrl,
+                        contentDescription = otherName,
+                        modifier = Modifier.fillMaxSize().clip(CircleShape)
+                    )
+                } else {
+                    Text(
+                        initials,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = AppGoldColor
+                    )
+                }
             }
 
             Column(
@@ -175,9 +233,9 @@ private fun ConversationCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    if (conversation.lastTimestamp.isNotEmpty()) {
+                    if (conversation.timestamp.isNotEmpty()) {
                         Text(
-                            conversation.lastTimestamp,
+                            conversation.timestamp,
                             fontFamily = FontFamily.Serif,
                             fontSize = 10.sp,
                             color = AppDarkGreen.copy(alpha = 0.40f),
@@ -223,9 +281,9 @@ private fun ConversationCard(
                     }
                 }
 
-                if (!isLawyer && conversation.lawyerSpecialty.isNotEmpty()) {
+                if (!isLawyer && conversation.timestamp.isNotEmpty()) {
                     Text(
-                        conversation.lawyerSpecialty,
+                        conversation.timestamp,
                         fontFamily = FontFamily.Serif,
                         fontSize = 10.sp,
                         color = AppGoldColor.copy(alpha = 0.80f)

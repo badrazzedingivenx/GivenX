@@ -5,6 +5,8 @@ import com.example.client_mobile.screens.shared.*
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.client_mobile.network.dto.LawyerProfileDto
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +45,7 @@ fun EditLawyerProfileScreen(
     initialSpecs: List<String> = listOf("Droit Pénal", "Droit Civil", "Droit des Affaires", "Droit Fiscal", "Contentieux Commercial"),
     initialImageUri: Uri? = null,
     onBack: () -> Unit = {},
-    onSave: (name: String, title: String, email: String, phone: String, address: String, bio: String, specs: List<String>, imageUri: Uri?) -> Unit = { _, _, _, _, _, _, _, _ -> }
+    dashboardViewModel: LawyerDashboardViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     // ── Editable state ────────────────────────────────────────────────────────
     var name    by remember { mutableStateOf(initialName) }
@@ -56,6 +58,21 @@ fun EditLawyerProfileScreen(
 
     val specs = remember { mutableStateListOf(*initialSpecs.toTypedArray()) }
     var newSpec by remember { mutableStateOf("") }
+
+    val currentProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
+
+    LaunchedEffect(currentProfile) {
+        currentProfile?.let {
+            name = it.fullName
+            title = it.speciality
+            email = it.email
+            phone = it.phone
+            address = it.address
+            bio = it.bio
+            specs.clear()
+            specs.addAll(it.specializations)
+        }
+    }
 
     // ── Image Picker Launcher ─────────────────────────────────────────────────
     val launcher = rememberLauncherForActivityResult(
@@ -468,7 +485,20 @@ fun EditLawyerProfileScreen(
                 Button(
                     onClick = {
                         showSaveDialog = false
-                        onSave(name, title, email, phone, address, bio, specs.toList(), selectedImageUri)
+                        currentProfile?.let { base ->
+                            val updated = base.copy(
+                                fullName = name,
+                                speciality = title,
+                                email = email,
+                                phone = phone,
+                                address = address,
+                                bio = bio,
+                                specializations = specs.toList()
+                            )
+                            dashboardViewModel.updateProfile(updated)
+                            // Still sync local session for legacy components
+                            LawyerSession.updateProfile(name, title, email, phone, address, bio, specs.toList(), selectedImageUri)
+                        }
                         onBack()
                     },
                     shape = RoundedCornerShape(12.dp),

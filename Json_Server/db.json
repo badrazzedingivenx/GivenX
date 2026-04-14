@@ -1,0 +1,54 @@
+{
+  "users": [
+    { "id": 1, "email": "jean.dupont@law.com", "password": "password123", "role": "LAWYER" },
+    { "id": 2, "email": "marie.legrand@law.com", "password": "password123", "role": "LAWYER" },
+    { "id": 3, "email": "sofia.ben@law.com", "password": "password123", "role": "LAWYER" },
+    { "id": 4, "email": "marc.villeneuve@law.com", "password": "password123", "role": "LAWYER" },
+    { "id": 5, "email": "luc.bertrand@law.com", "password": "password123", "role": "LAWYER" },
+    { "id": 6, "email": "alice.client@gmail.com", "password": "password123", "role": "CLIENT" },
+    { "id": 7, "email": "robert.brown@yahoo.fr", "password": "password123", "role": "CLIENT" },
+    { "id": 8, "email": "claire.martin@outlook.com", "password": "password123", "role": "CLIENT" },
+    { "id": 9, "email": "pierre.durand@company.com", "password": "password123", "role": "CLIENT" },
+    { "id": 10, "email": "emma.wilson@tech.io", "password": "password123", "role": "CLIENT" }
+  ],
+  "profiles": [
+    { "id": 1, "userId": 1, "full_name": "Jean Dupont", "avatar_url": "https://randomuser.me/api/portraits/men/1.jpg", "phone": "+33 6 12 34 56 78", "role": "LAWYER" },
+    { "id": 2, "userId": 2, "full_name": "Marie Legrand", "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg", "phone": "+33 6 23 45 67 89", "role": "LAWYER" },
+    { "id": 3, "userId": 3, "full_name": "Sofia Benali", "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg", "phone": "+212 6 61 22 33 44", "role": "LAWYER" },
+    { "id": 4, "userId": 4, "full_name": "Marc Villeneuve", "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg", "phone": "+33 6 34 56 78 90", "role": "LAWYER" },
+    { "id": 5, "userId": 5, "full_name": "Luc Bertrand", "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg", "phone": "+33 6 45 67 89 01", "role": "LAWYER" },
+    { "id": 6, "userId": 6, "full_name": "Alice Martin", "avatar_url": "https://randomuser.me/api/portraits/women/6.jpg", "phone": "+33 7 11 22 33 44", "role": "CLIENT" },
+    { "id": 7, "userId": 7, "full_name": "Robert Brown", "avatar_url": "https://randomuser.me/api/portraits/men/7.jpg", "phone": "+33 7 22 33 44 55", "role": "CLIENT" },
+    { "id": 8, "userId": 8, "full_name": "Claire Martin", "avatar_url": "https://randomuser.me/api/portraits/women/8.jpg", "phone": "+33 7 33 44 55 66", "role": "CLIENT" },
+    { "id": 9, "userId": 9, "full_name": "Pierre Durand", "avatar_url": "https://randomuser.me/api/portraits/men/9.jpg", "phone": "+33 7 44 55 66 77", "role": "CLIENT" },
+    { "id": 10, "userId": 10, "full_name": "Emma Wilson", "avatar_url": "https://randomuser.me/api/portraits/women/10.jpg", "phone": "+33 7 55 66 77 88", "role": "CLIENT" }
+  ],
+  "lawyers": [
+    { "id": 1, "profileId": 1, "speciality": "Droit Immobilier", "bar_number": "PAR-12345", "bio": "Spécialiste en transactions immobilières et litiges de copropriété." },
+    { "id": 2, "profileId": 2, "speciality": "Droit de la Famille", "bar_number": "LYO-67890", "bio": "Accompagnement en divorce, garde d'enfants et successions." },
+    { "id": 3, "profileId": 3, "speciality": "Droit Pénal", "bar_number": "CAS-11223", "bio": "Défense pénale et assistance aux victimes d'infractions." },
+    { "id": 4, "profileId": 4, "speciality": "Droit du Travail", "bar_number": "MAR-44556", "bio": "Conseil aux entreprises et défense des salariés aux prud'hommes." },
+    { "id": 5, "profileId": 5, "speciality": "Droit des Affaires", "bar_number": "BOR-77889", "bio": "Accompagnement juridique pour la création et la gestion d'entreprises." }
+  ],
+  "clients": [
+    { "id": 1, "profileId": 6, "company_name": null },
+    { "id": 2, "profileId": 7, "company_name": "Brown Consulting" },
+    { "id": 3, "profileId": 8, "company_name": null },
+    { "id": 4, "profileId": 9, "company_name": "Durand & Co" },
+    { "id": 5, "profileId": 10, "company_name": "Tech Solutions IO" }
+  ],
+  "consultations": [
+    { "id": 1, "clientId": 1, "lawyerId": 1, "date": "2024-06-01T10:00:00Z", "status": "accepted", "subject": "Achat appartement Paris 15" },
+    { "id": 2, "clientId": 2, "lawyerId": 5, "date": "2024-06-05T14:30:00Z", "status": "pending", "subject": "Rédaction contrat de services" },
+    { "id": 3, "clientId": 3, "lawyerId": 2, "date": "2024-06-10T09:00:00Z", "status": "rejected", "subject": "Procédure de divorce" },
+    { "id": 4, "clientId": 4, "lawyerId": 4, "date": "2024-06-15T11:00:00Z", "status": "accepted", "subject": "Licenciement abusif" },
+    { "id": 5, "clientId": 5, "lawyerId": 3, "date": "2024-06-20T16:00:00Z", "status": "pending", "subject": "Plainte pour vol" }
+  ],
+  "documents": [
+    { "id": 1, "clientId": 1, "lawyerId": 1, "title": "Compromis de vente", "file_url": "https://storage.example.com/docs/compromis_v1.pdf", "status": "final" },
+    { "id": 2, "clientId": 2, "lawyerId": 5, "title": "Statuts entreprise", "file_url": "https://storage.example.com/docs/statuts.pdf", "status": "draft" },
+    { "id": 3, "clientId": 4, "lawyerId": 4, "title": "Contrat de travail", "file_url": "https://storage.example.com/docs/contrat_jean.pdf", "status": "signed" },
+    { "id": 4, "clientId": 5, "lawyerId": 3, "title": "Preuve de dépôt de plainte", "file_url": "https://storage.example.com/docs/plainte.pdf", "status": "submitted" },
+    { "id": 5, "clientId": 1, "lawyerId": 1, "title": "Plan de l'immeuble", "file_url": "https://storage.example.com/docs/plan.pdf", "status": "archived" }
+  ]
+}

@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 
 // --- Chat Screen (bidirectional) ----------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,14 +33,18 @@ import androidx.compose.ui.unit.sp
 fun ChatScreen(
     conversationId: String,
     isLawyer: Boolean = false,
-    currentUserName: String = if (isLawyer) "Avocat" else "Karim Bennani",
+    currentUserName: String = if (isLawyer) "Avocat" else UserSession.name.ifBlank { "" },
     onBack: () -> Unit = {}
 ) {
+    // Fetch messages from API on first composition
+    val chatViewModel: ChatViewModel = viewModel(
+        factory = ChatViewModel.Factory(conversationId)
+    )
     val conversation = ConversationRepository.conversations.find { it.id == conversationId }
     val messages = ConversationRepository.getMessages(conversationId)
 
-    val otherName = if (isLawyer) conversation?.clientName ?: "" else conversation?.lawyerName ?: ""
-    val otherSubtitle = if (isLawyer) "Client" else conversation?.lawyerSpecialty ?: ""
+    val otherName = conversation?.otherPartyName ?: ""
+    val otherSubtitle = ""
 
     val initials = otherName
         .removePrefix("Ma�tre ")
@@ -48,10 +55,19 @@ fun ChatScreen(
 
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage by chatViewModel.errorMessage.collectAsStateWithLifecycle()
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            chatViewModel.clearError()
+        }
+    }
 
     LaunchedEffect(conversationId) {
-        if (isLawyer) ConversationRepository.markReadByLawyer(conversationId)
-        else ConversationRepository.markReadByUser(conversationId)
+        if (isLawyer) ConversationRepository.markRead(conversationId)
+        else ConversationRepository.markRead(conversationId)
     }
 
     LaunchedEffect(messages.size) {
@@ -73,13 +89,21 @@ fun ChatScreen(
                                 .background(AppDarkGreen),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                initials,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = AppGoldColor
-                            )
+                            if (conversation?.avatarUrl?.isNotBlank() == true) {
+                                AsyncImage(
+                                    model = conversation.avatarUrl,
+                                    contentDescription = otherName,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
+                                Text(
+                                    initials,
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = AppGoldColor
+                                )
+                            }
                         }
                         Column {
                             Text(
@@ -123,7 +147,8 @@ fun ChatScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         DashBoardBackground {
             Column(
@@ -246,19 +271,11 @@ fun ChatScreen(
                                 onClick = {
                                     val trimmed = messageText.trim()
                                     if (trimmed.isNotEmpty()) {
-                                        if (isLawyer) {
-                                            ConversationRepository.sendLawyerMessage(
-                                                conversationId = conversationId,
-                                                content = trimmed,
-                                                senderName = currentUserName
-                                            )
-                                        } else {
-                                            ConversationRepository.sendUserMessage(
-                                                conversationId = conversationId,
-                                                content = trimmed,
-                                                senderName = currentUserName
-                                            )
-                                        }
+                                        chatViewModel.send(
+                                            text       = trimmed,
+                                            senderName = currentUserName,
+                                            isFromUser = !isLawyer
+                                        )
                                         messageText = ""
                                     }
                                 },
