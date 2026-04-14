@@ -10,7 +10,7 @@ data class LoginRequest(
 )
 
 data class UserDto(
-    @SerializedName("id")       val id:       String? = "",
+    @SerializedName("id")       val id:       Any? = null,
     @SerializedName("email")    val email:    String? = "",
     @SerializedName("role")     val role:     String? = "", // "LAWYER" or "CLIENT"
     
@@ -30,19 +30,19 @@ data class UserDto(
     fun effectiveFullName(): String = (fullName ?: "").ifBlank { "${firstName ?: ""} ${lastName ?: ""}".trim().ifBlank { email ?: "" } }
     fun effectiveAvatarUrl(): String = (avatarUrl ?: "").ifBlank { photoUrl ?: "" }
     fun effectiveBarNumber(): String = barNumber ?: ""
-    fun effectiveId(): String = id ?: ""
+    fun effectiveId(): String = id?.toString() ?: ""
     fun effectiveEmail(): String = email ?: ""
     fun effectiveRole(): String = role ?: ""
 }
 
 data class ProfileDto(
-    @SerializedName("id")        val id:        Int,
-    @SerializedName("userId")    val userId:    Int,
-    @SerializedName("fullName")  val fullName:  String?,
-    @SerializedName("avatarUrl") val avatarUrl: String?,
-    @SerializedName("phone")     val phone:     String?,
-    @SerializedName("role")      val role:      String?,
-    @SerializedName("address")   val address:   String? = ""
+    @SerializedName("id")         val id:        Int,
+    @SerializedName("userId")     val userId:    Int,
+    @SerializedName("full_name")  val fullName:  String?,
+    @SerializedName("avatar_url") val avatarUrl: String?,
+    @SerializedName("phone")      val phone:     String?,
+    @SerializedName("role")       val role:      String?,
+    @SerializedName("address")    val address:   String? = ""
 )
 
 /** Professional details for LAWYER role */

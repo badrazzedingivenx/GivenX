@@ -11,24 +11,29 @@ import com.google.gson.Gson
 object AuthRepository {
 
     suspend fun login(email: String, password: String) {
-        // 1. Authenticate (Find user in the array)
-        val response = RetrofitClient.authApi.login(email.lowercase().trim(), password)
+        // 1. Authenticate (Custom POST /auth/login)
+        val response = RetrofitClient.authApi.login(LoginRequest(email.lowercase().trim(), password))
+        val apiResponse = response.body()
         
-        if (!response.isSuccessful || response.body().isNullOrEmpty()) {
+        if (!response.isSuccessful || apiResponse?.success != true || apiResponse.data?.user == null) {
             throw Exception("Email ou mot de passe incorrect")
         }
 
-        val user = response.body()!![0]
+        val authData = apiResponse.data!!
+        val user = authData.user ?: throw Exception("Données utilisateur manquantes")
         val role = user.effectiveRole()
         
         // Save initial identity
-        TokenManager.saveToken("mock-jwt-token-for-${user.effectiveId()}") 
-        TokenManager.saveUserId(user.effectiveId().toIntOrNull() ?: -1)
+        val userIdStr = user.effectiveId()
+        val userIdInt = userIdStr.toDoubleOrNull()?.toInt() ?: -1
+
+        TokenManager.saveToken(authData.token ?: "mock-jwt-token-for-$userIdStr")
+        TokenManager.saveUserId(userIdInt)
         TokenManager.saveEmail(user.effectiveEmail())
 
         // 2. Fetch Profile (The bridge between User and Role Data)
-        val profileResp = RetrofitClient.authApi.getProfileByUserId(user.effectiveId().toIntOrNull() ?: -1)
-        val profile = profileResp.body()?.firstOrNull() ?: throw Exception("Profil manquant")
+        val profileResp = RetrofitClient.authApi.getProfileByUserId(userIdInt)
+        val profile = profileResp.body()?.data?.firstOrNull() ?: throw Exception("Profil manquant")
         
         TokenManager.saveFullName(profile.fullName ?: "Utilisateur")
         TokenManager.saveAvatarUrl(profile.avatarUrl ?: "")
@@ -36,7 +41,7 @@ object AuthRepository {
         // 3. Resolve Role-Specific Data (Lawyer ID or Client ID)
         if (role == "LAWYER") {
             val lawyerResp = RetrofitClient.authApi.getLawyerByProfileId(profile.id)
-            val lawyer = lawyerResp.body()?.firstOrNull() ?: throw Exception("Détails avocat manquants")
+            val lawyer = lawyerResp.body()?.data?.firstOrNull() ?: throw Exception("Détails avocat manquants")
             
             TokenManager.saveUserType("lawyer")
             TokenManager.saveLawyerId(lawyer.effectiveId())
@@ -56,7 +61,7 @@ object AuthRepository {
             TokenManager.saveLawyerJson(Gson().toJson(legacyUser))
         } else {
             val clientResp = RetrofitClient.authApi.getClientByProfileId(profile.id)
-            val client = clientResp.body()?.firstOrNull() ?: throw Exception("Détails client manquants")
+            val client = clientResp.body()?.data?.firstOrNull() ?: throw Exception("Détails client manquants")
             
             TokenManager.saveUserType("user")
             TokenManager.saveClientId(client.id)

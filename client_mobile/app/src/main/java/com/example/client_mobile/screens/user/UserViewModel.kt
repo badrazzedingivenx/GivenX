@@ -101,18 +101,18 @@ class UserViewModel : ViewModel() {
                 // For json-server, update the profile table
                 val userId = TokenManager.getUserIdInt()
                 val profileResp = RetrofitClient.authApi.getProfileByUserId(userId)
-                val currentProfile = profileResp.body()?.firstOrNull()
+                val currentProfile = profileResp.body()?.data?.firstOrNull()
                 
                 if (currentProfile != null) {
                     val updates = mutableMapOf(
-                        "fullName" to fullName.trim(),
+                        "full_name" to fullName.trim(),
                         "phone" to phone.trim(),
                         "address" to address.trim()
                     )
                     val updateResp = RetrofitClient.authApi.patchProfile(currentProfile.id, updates)
                     
                     if (updateResp.isSuccessful) {
-                        val updatedProfile = updateResp.body()
+                        val updatedProfile = updateResp.body()?.data
                         _profile.value = (_profile.value ?: UserDto()).copy(
                             fullName = updatedProfile?.fullName ?: fullName.trim(),
                             phone = updatedProfile?.phone ?: phone.trim(),
