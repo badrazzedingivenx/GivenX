@@ -1,0 +1,12 @@
+server.post('/api/auth/login', (req, res) => {
+    console.log("Login request received:", req.body); // ضيف هادي
+    const db = router.db;
+    const user = db.get('users').find({ email: req.body.email, password: req.body.password }).value();
+    console.log("User found:", user); // وشوف واش كاين شي نتيجة
+    
+    if (user) {
+        res.status(200).json({ userId: user.id });
+    } else {
+        res.status(401).json({ message: "No user found" });
+    }
+});
