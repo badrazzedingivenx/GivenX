@@ -37,9 +37,9 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = RetrofitClient.mockApi.getChatDetails(conversationId)
-                if (response.isSuccessful) {
-                    val messages = response.body()?.mapIndexed { index, dto ->
+                val response = RetrofitClient.haqApi.getChatDetails(conversationId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val messages = response.body()?.data?.mapIndexed { index, dto ->
                         ChatMessage(
                             id         = dto.id.ifBlank { "${dto.senderId}_${dto.effectiveTime()}_$index" },
                             content    = dto.effectiveContent(),

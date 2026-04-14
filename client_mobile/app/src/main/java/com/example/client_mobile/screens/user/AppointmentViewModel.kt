@@ -22,9 +22,9 @@ class AppointmentViewModel : ViewModel() {
         viewModelScope.launch {
             _appointments.value = null  // trigger loading state
             try {
-                val response = RetrofitClient.mockApi.getAppointments()
-                _appointments.value = if (response.isSuccessful) {
-                    response.body() ?: emptyList()
+                val response = RetrofitClient.haqApi.getMyAppointments()
+                _appointments.value = if (response.isSuccessful && response.body()?.success == true) {
+                    response.body()?.data ?: emptyList()
                 } else {
                     emptyList()
                 }

@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.shared
 
 import android.net.Uri
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -170,7 +171,7 @@ object DocumentRepository {
         val icon = when (ext) {
             "jpg", "jpeg", "png" -> Icons.Default.Image
             "pdf"                -> Icons.Default.PictureAsPdf
-            else                 -> Icons.Default.InsertDriveFile
+            else                 -> Icons.AutoMirrored.Filled.InsertDriveFile
         }
         documents.add(VaultDocument(id = System.currentTimeMillis(), name = name.trim(), addedDate = "Aujourd'hui", icon = icon))
     }

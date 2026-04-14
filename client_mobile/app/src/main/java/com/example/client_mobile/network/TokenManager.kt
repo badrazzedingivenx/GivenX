@@ -62,32 +62,39 @@ object TokenManager {
 
     // ── User ID ───────────────────────────────────────────────────────────────
 
-    fun saveUserId(id: String) = prefs.edit().putString(KEY_USER_ID, id).apply()
+    fun saveUserId(id: Int) = prefs.edit().putInt(KEY_USER_ID, id).apply()
 
-    fun getUserId(): String? = prefs.getString(KEY_USER_ID, null)
+    fun getUserId(): String? = prefs.getInt(KEY_USER_ID, -1).let { if (it == -1) null else it.toString() }
+    fun getUserIdInt(): Int = prefs.getInt(KEY_USER_ID, -1)
 
     // ── Email ─────────────────────────────────────────────────────────────────
 
-    fun saveEmail(email: String) = prefs.edit().putString(KEY_EMAIL, email).apply()
+    fun saveEmail(email: String?) = prefs.edit().putString(KEY_EMAIL, email ?: "").apply()
 
     fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
 
     // ── User type ("user" | "lawyer") ─────────────────────────────────────────
 
-    fun saveUserType(type: String) = prefs.edit().putString(KEY_USER_TYPE, type).apply()
+    fun saveUserType(type: String?) = prefs.edit().putString(KEY_USER_TYPE, type ?: "user").apply()
 
     fun getUserType(): String = prefs.getString(KEY_USER_TYPE, "user") ?: "user"
 
     // ── Full clear (logout) ───────────────────────────────────────────────────
 
-    fun saveFullName(name: String) = prefs.edit().putString(KEY_FULL_NAME, name).apply()
+    fun saveFullName(name: String?) = prefs.edit().putString(KEY_FULL_NAME, name ?: "").apply()
     fun getFullName(): String = prefs.getString(KEY_FULL_NAME, "") ?: ""
 
-    fun saveAvatarUrl(url: String) = prefs.edit().putString(KEY_AVATAR_URL, url).apply()
+    fun saveAvatarUrl(url: String?) = prefs.edit().putString(KEY_AVATAR_URL, url ?: "").apply()
     fun getAvatarUrl(): String = prefs.getString(KEY_AVATAR_URL, "") ?: ""
 
-    fun saveCity(city: String) = prefs.edit().putString(KEY_CITY, city).apply()
-    fun getCity(): String = prefs.getString(KEY_CITY, "") ?: ""
+    private const val KEY_LAWYER_ID = "lawyer_id"
+    private const val KEY_CLIENT_ID = "client_id"
+
+    fun saveLawyerId(id: Int) = prefs.edit().putInt(KEY_LAWYER_ID, id).apply()
+    fun getLawyerId(): Int = prefs.getInt(KEY_LAWYER_ID, -1)
+
+    fun saveClientId(id: Int) = prefs.edit().putInt(KEY_CLIENT_ID, id).apply()
+    fun getClientId(): Int = prefs.getInt(KEY_CLIENT_ID, -1)
 
     // ── Cached user/lawyer JSON (avoids re-fetching profile on every screen open) ──
 

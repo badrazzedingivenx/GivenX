@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the lawyer discovery screen.
- * Data source: GET /api/lawyers via the Postman Mock (RetrofitClient.mockApi).
+ * Data source: GET /api/lawyers via HaqApiService.
  */
 class LawyerListViewModel : ViewModel() {
 
@@ -37,22 +37,15 @@ class LawyerListViewModel : ViewModel() {
         _isRefreshing.value = !initial        // spinner for pull-to-refresh only
         viewModelScope.launch {
             try {
-                // Try HaqApiService first as it's the standard resource API
+                // Use HaqApiService for production-like backend
                 val response = RetrofitClient.haqApi.getLawyers(limit = 100)
                 if (response.isSuccessful && response.body()?.success == true) {
                     _lawyers.value = response.body()?.data?.map { it.toItem() } ?: emptyList()
                 } else {
-                    // Fallback to MockApiService (flat list)
-                    val mockResponse = RetrofitClient.mockApi.getLawyers()
-                    if (mockResponse.isSuccessful) {
-                        _lawyers.value = mockResponse.body()?.map { it.toItem() } ?: emptyList()
-                    } else {
-                        if (_lawyers.value == null) _lawyers.value = emptyList()
-                        _isError.value = true
-                    }
+                    if (_lawyers.value == null) _lawyers.value = emptyList()
+                    _isError.value = true
                 }
             } catch (e: Exception) {
-                // If even the mock fails, try to see if we have cached data or show error
                 if (_lawyers.value == null) _lawyers.value = emptyList()
                 _isError.value = true
             } finally {

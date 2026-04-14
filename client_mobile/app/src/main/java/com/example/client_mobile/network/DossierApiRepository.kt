@@ -43,22 +43,11 @@ object DossierApiRepository {
                 RetrofitClient.haqApi.getDossiers(userId)
             }
             if (response.isSuccessful && response.body()?.success == true) {
-                val list = response.body()?.data?.map { it.toDomain() } ?: emptyList()
-                if (list.isNotEmpty()) return list
+                return response.body()?.data?.map { it.toDomain() } ?: emptyList()
             }
-        } catch (_: Exception) { /* fall through to mock */ }
+        } catch (_: Exception) { }
 
-        // ── Step 2: fallback to mock API (flat list, no wrapper) ──────────────
-        return try {
-            val mockResponse = RetrofitClient.mockApi.getDossiers()
-            if (mockResponse.isSuccessful) {
-                mockResponse.body()?.map { it.toDomain() } ?: emptyList()
-            } else {
-                emptyList()
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
+        return emptyList()
     }
 
     // ── Single fetch ──────────────────────────────────────────────────────────

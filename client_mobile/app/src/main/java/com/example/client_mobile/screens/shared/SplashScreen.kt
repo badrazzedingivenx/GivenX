@@ -78,11 +78,7 @@ fun SplashScreen(
         }
 
         // Token exists — validate it against the server before trusting it
-        val confirmedRole = try {
-            AuthRepository.autoLogin()
-        } catch (_: Exception) {
-            null
-        }
+        val confirmedRole = AuthRepository.autoLogin()
 
         when (confirmedRole) {
             "lawyer" -> onNavigateToLawyerHome()

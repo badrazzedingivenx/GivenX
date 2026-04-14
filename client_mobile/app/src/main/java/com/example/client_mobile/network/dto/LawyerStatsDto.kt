@@ -36,7 +36,6 @@ data class LawyerStatsDto(
     @SerializedName(value = "audiences_today",     alternate = ["audiencesToday"])    val audiencesToday:     Int   = 0,
     @SerializedName(value = "new_requests",        alternate = ["newRequests"])       val newRequests:        Int   = 0,
     @SerializedName(value = "closed_cases",        alternate = ["closedCases"])       val closedCases:        Int   = 0,
-    /** Matches the 'dossiers_gagnes' key returned by the updated Mockable.io endpoint. */
     @SerializedName(value = "dossiers_gagnes",     alternate = ["dossiersGagnes"])    val dossiersGagnes:     Int   = 0,
     @SerializedName(value = "total_revenue_month", alternate = ["totalRevenueMonth"]) val totalRevenueMonth:  Float = 0f,
     @SerializedName(value = "total_revenue_year",  alternate = ["totalRevenueYear"])  val totalRevenueYear:   Float = 0f,

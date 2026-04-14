@@ -1,5 +1,8 @@
 package com.example.client_mobile.network
 
+import com.example.client_mobile.network.dto.ChatMessageApiDto
+import com.example.client_mobile.network.dto.LikeResponseDto
+import com.example.client_mobile.network.dto.NotificationDto
 import com.example.client_mobile.network.dto.AppointmentDto
 import com.example.client_mobile.network.dto.BillingSummaryDto
 import com.example.client_mobile.network.dto.ConversationApiDto
@@ -21,6 +24,9 @@ import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.network.dto.UpdateDossierStatusRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
+import com.example.client_mobile.network.dto.Profile
+import com.example.client_mobile.network.dto.Specialty
+import com.example.client_mobile.network.dto.Consultation
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -196,6 +202,12 @@ interface HaqApiService {
     @GET("conversations")
     suspend fun getMessages(): Response<ApiResponse<List<ConversationApiDto>>>
 
+    /** GET /conversations/{id}/messages — historical messages for a conversation. */
+    @GET("conversations/{id}/messages")
+    suspend fun getChatDetails(
+        @Path("id") conversationId: String
+    ): Response<ApiResponse<List<ChatMessageApiDto>>>
+
     /** POST /conversations/{id}/messages — send a text message in a conversation. */
     @POST("conversations/{id}/messages")
     suspend fun sendMessage(
@@ -220,4 +232,41 @@ interface HaqApiService {
     /** GET /lives — [ { "id": "live_001", "title": "...", "viewersCount": 124 } ] */
     @GET("lives")
     suspend fun getLives(): Response<ApiResponse<List<LiveDto>>>
+
+    /** POST /reels/{id}/like — toggle like on a reel. */
+    @POST("reels/{id}/like")
+    suspend fun likeReel(
+        @Path("id") reelId: String
+    ): Response<ApiResponse<LikeResponseDto>>
+
+    /** GET /notifications — current user's notifications. */
+    @GET("notifications")
+    suspend fun getNotifications(): Response<ApiResponse<List<com.example.client_mobile.network.dto.NotificationDto>>>
+
+    // ── Legal Services (Legacy support/migration) ─────────────────────────────
+
+    @GET("profiles")
+    suspend fun getProfiles(
+        @Query("role") role: String? = null
+    ): Response<ApiResponse<List<Profile>>>
+
+    @POST("consultations")
+    suspend fun createConsultation(
+        @Body consultation: Consultation
+    ): Response<ApiResponse<Consultation>>
+
+    @GET("consultations")
+    suspend fun getConsultations(
+        @Query("client_id") clientId: Int? = null,
+        @Query("lawyer_id") lawyerId: Int? = null
+    ): Response<ApiResponse<List<Consultation>>>
+
+    @GET("specialties")
+    suspend fun getSpecialties(): Response<ApiResponse<List<Specialty>>>
+
+    @PUT("consultations/{id}")
+    suspend fun updateConsultation(
+        @Path("id") id: Int,
+        @Body consultation: Consultation
+    ): Response<ApiResponse<Consultation>>
 }

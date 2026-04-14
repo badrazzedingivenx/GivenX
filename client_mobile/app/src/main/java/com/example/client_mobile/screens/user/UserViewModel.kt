@@ -72,9 +72,9 @@ class UserViewModel : ViewModel() {
         _isFetching.value = true
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.mockApi.getMe()
-                if (response.isSuccessful) {
-                    val dto = response.body() ?: return@launch
+                val response = RetrofitClient.haqApi.getUserProfile()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val dto = response.body()?.data ?: return@launch
                     _profile.value = dto
                     syncSession(dto)
                     TokenManager.saveUserJson(Gson().toJson(dto))
@@ -93,36 +93,35 @@ class UserViewModel : ViewModel() {
      * Sends PATCH /api/auth/me and, on success, updates [profile] directly
      * from the server response — no second fetch required.
      */
-    fun saveProfile(firstName: String, lastName: String, phone: String, address: String) {
+    fun saveProfile(fullName: String, phone: String, address: String) {
         if (!TokenManager.isLoggedIn()) return
         _isSaving.value = true
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.authApi.updateMe(
-                    UpdateProfileRequest(
-                        firstName = firstName.trim(),
-                        lastName  = lastName.trim(),
-                        phone     = phone.trim(),
-                        address   = address.trim()
+                // For json-server, update the profile table
+                val userId = TokenManager.getUserIdInt()
+                val profileResp = RetrofitClient.authApi.getProfileByUserId(userId)
+                val currentProfile = profileResp.body()?.firstOrNull()
+                
+                if (currentProfile != null) {
+                    val updates = mutableMapOf(
+                        "fullName" to fullName.trim(),
+                        "phone" to phone.trim(),
+                        "address" to address.trim()
                     )
-                )
-                if (response.isSuccessful) {
-                    val dto = response.body()
-                    if (dto != null) {
-                        _profile.value = dto
-                        syncSession(dto)
-                    } else {
-                        // Server accepted but returned no body — patch state locally
+                    val updateResp = RetrofitClient.authApi.patchProfile(currentProfile.id, updates)
+                    
+                    if (updateResp.isSuccessful) {
+                        val updatedProfile = updateResp.body()
                         _profile.value = (_profile.value ?: UserDto()).copy(
-                            firstName = firstName.trim(),
-                            lastName  = lastName.trim(),
-                            phone     = phone.trim(),
-                            address   = address.trim()
+                            fullName = updatedProfile?.fullName ?: fullName.trim(),
+                            phone = updatedProfile?.phone ?: phone.trim(),
+                            address = updatedProfile?.address ?: address.trim()
                         )
+                        _updateSuccess.value = true
+                    } else {
+                        _errorMessage.value = "Erreur lors de la mise à jour."
                     }
-                    _updateSuccess.value = true
-                } else {
-                    _errorMessage.value = "Impossible de mettre à jour le profil."
                 }
             } catch (_: Exception) {
                 _errorMessage.value = "Erreur réseau. Réessayez."
@@ -137,9 +136,16 @@ class UserViewModel : ViewModel() {
     private fun syncSession(dto: UserDto) {
         val fullName = dto.effectiveFullName()
         if (fullName.isNotBlank())   UserSession.name     = fullName
-        if (dto.email.isNotBlank())  UserSession.email    = dto.email
-        if (dto.phone.isNotBlank())  UserSession.phone    = dto.phone
-        if (dto.address.isNotBlank()) UserSession.address = dto.address
+        
+        val email = dto.effectiveEmail()
+        if (email.isNotBlank())      UserSession.email    = email
+        
+        val phone = dto.phone ?: ""
+        if (phone.isNotBlank())      UserSession.phone    = phone
+        
+        val address = dto.address ?: ""
+        if (address.isNotBlank())     UserSession.address = address
+
         val avatar = dto.effectiveAvatarUrl()
         if (avatar.isNotBlank())     UserSession.avatarUrl = avatar
     }

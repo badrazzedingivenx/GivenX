@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -296,8 +298,8 @@ fun CompactStatTile(
 fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     val tabs = listOf(
         Pair(Icons.Default.Home, "Accueil"),
-        Pair(Icons.Default.Assignment, "Dossiers"),
-        Pair(Icons.Default.Chat, "Messages"),
+        Pair(Icons.AutoMirrored.Filled.Assignment, "Dossiers"),
+        Pair(Icons.AutoMirrored.Filled.Chat, "Messages"),
         Pair(Icons.Default.Person, "Profil")
     )
     Surface(
@@ -359,7 +361,7 @@ fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
     data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,        "Tableau")
     data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups,      "Clients")
-    data object Messages : LawyerTab("lawyer_messages", Icons.Default.Chat,        "Messages")
+    data object Messages : LawyerTab("lawyer_messages", Icons.AutoMirrored.Filled.Chat,        "Messages")
     data object Creator  : LawyerTab("lawyer_creator",  Icons.Default.AutoAwesome, "Studio")
     data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person,      "Profil")
     companion object { val all: List<LawyerTab> by lazy { listOf(Home, Clients, Creator, Messages, Profile) } }

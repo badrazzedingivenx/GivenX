@@ -20,7 +20,7 @@ data class StoryDto(
     @SerializedName("imageUrl")     val imageUrl:     String  = "",
     @SerializedName("expiresAt")    val expiresAt:    String  = "",
     @SerializedName("isLive")       val isLive:       Boolean = false,
-    // Analytics fields (may be absent in mock — defaults apply)
+    // Analytics fields (defaults apply if absent)
     @SerializedName("views")        val views:        Int     = 0,
     @SerializedName("timeLeft")     val timeLeft:     String  = ""
 )
@@ -34,7 +34,7 @@ data class ReelDto(
     @SerializedName("lawyerName") val lawyerName: String = "",
     @SerializedName("likes")      val likes:      Int    = 0,
     @SerializedName("caption")    val caption:    String = "",
-    // Analytics fields (may be absent in mock — defaults apply)
+    // Analytics fields (defaults apply if absent)
     @SerializedName("title")      val title:      String = "",
     @SerializedName("views")      val views:      Int    = 0,
     @SerializedName("duration")   val duration:   String = "",
@@ -85,7 +85,8 @@ data class NotificationDto(
     @SerializedName("title")       val title:       String  = "",
     @SerializedName("description") val description: String  = "",
     @SerializedName("time")        val time:        String  = "",
-    @SerializedName("isRead")      val isRead:      Boolean = false
+    @SerializedName("isRead")      val isRead:      Boolean = false,
+    @SerializedName("type")        val type:        String  = "CASE_UPDATE"
 )
 
 // ─── Live ─────────────────────────────────────────────────────────────────────
@@ -97,7 +98,7 @@ data class LiveDto(
     @SerializedName("lawyerName")   val lawyerName:   String = "",
     @SerializedName("viewersCount") val viewersCount: Int    = 0,
     @SerializedName("thumbnail")    val thumbnail:    String = "",
-    // Analytics fields (may be absent in mock — defaults apply)
+    // Analytics fields (defaults apply if absent)
     @SerializedName("participants") val participants: Int    = 0,
     /** "LIVE" | "Scheduled" | "" */
     @SerializedName("status")       val status:       String = ""

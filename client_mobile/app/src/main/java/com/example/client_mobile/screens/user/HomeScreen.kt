@@ -70,11 +70,10 @@ fun UserDashboardHost(
 
     // Live user initials + photo from REST profile
     val profile by userViewModel.profile.collectAsStateWithLifecycle()
-    val photoUrl = profile?.photoUrl?.takeIf { it.isNotBlank() }
-        ?: profile?.let { "" }  // resolved via UserSession after fetch, see below
+    val photoUrl = profile?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() }
         ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
-    val initials = profile?.let {
-        "${it.firstName} ${it.lastName}".trim()
+    val initials = profile?.effectiveFullName()?.let {
+        it.trim()
             .split(" ")
             .mapNotNull { w -> w.firstOrNull()?.uppercaseChar() }
             .take(2)

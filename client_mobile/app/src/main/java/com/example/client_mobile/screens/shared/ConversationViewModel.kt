@@ -42,20 +42,10 @@ class ConversationViewModel : ViewModel() {
         val isLawyer = TokenManager.getUserType() == "lawyer"
         viewModelScope.launch {
             try {
-                // Try HaqApiService first, then fallback to mockApi
-                val haqResponse = RetrofitClient.haqApi.getMessages()
-                val dtos = if (haqResponse.isSuccessful && haqResponse.body()?.success == true) {
-                    haqResponse.body()?.data ?: emptyList()
-                } else {
-                    val mockResponse = RetrofitClient.mockApi.getMessages()
-                    if (mockResponse.isSuccessful) {
-                        mockResponse.body() ?: emptyList()
-                    } else {
-                        null
-                    }
-                }
-
-                if (dtos != null) {
+                // Use HaqApiService for production-like backend
+                val response = RetrofitClient.haqApi.getMessages()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val dtos = response.body()?.data ?: emptyList()
                     ConversationRepository.replaceFromApi(
                         dtos.map { dto ->
                             Conversation(
@@ -69,9 +59,6 @@ class ConversationViewModel : ViewModel() {
                         }
                     )
                 }
-                // dtos == null means the API responded but had no usable data (e.g. 404).
-                // Keep whatever is already in the repository and show an empty list — not
-                // a "no connection" error, because we did reach the server.
             } catch (_: Exception) {
                 // Genuine network failure (no internet, timeout, etc.)
                 _isError.value = ConversationRepository.conversations.isEmpty()

@@ -11,24 +11,28 @@ import retrofit2.Response
  * Repository for Legal Services.
  * Encapsulates the logic for fetching and managing legal-related data.
  */
-class LegalRepository(private val apiService: LegalApiService) {
+class LegalRepository(private val apiService: HaqApiService) {
 
     /**
      * Generic helper to execute API calls and wrap the result in a Result<T>.
+     * It handles the [ApiResponse] envelope automatically.
      */
-    private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> {
+    private suspend fun <T> safeApiCall(call: suspend () -> Response<ApiResponse<T>>): Result<T> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = call()
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null) {
-                        Result.success(body)
+                val body = response.body()
+                if (response.isSuccessful && body != null && body.success) {
+                    val data = body.data
+                    if (data != null) {
+                        Result.success(data)
                     } else {
-                        Result.failure(Exception("Empty response body"))
+                        // For the current methods in this repository, they all expect non-null data.
+                        Result.failure(Exception("API success but data is null"))
                     }
                 } else {
-                    Result.failure(Exception("Error: ${response.code()} ${response.message()}"))
+                    val errorMsg = body?.errorMessage() ?: "API Error: ${response.code()}"
+                    Result.failure(Exception(errorMsg))
                 }
             } catch (e: Exception) {
                 Result.failure(e)

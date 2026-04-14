@@ -22,9 +22,9 @@ class BillingViewModel : ViewModel() {
         viewModelScope.launch {
             _summary.value = null  // trigger loading state
             try {
-                val response = RetrofitClient.mockApi.getBilling()
-                _summary.value = if (response.isSuccessful) {
-                    response.body() ?: BillingSummaryDto()
+                val response = RetrofitClient.haqApi.getMyBilling()
+                _summary.value = if (response.isSuccessful && response.body()?.success == true) {
+                    response.body()?.data ?: BillingSummaryDto()
                 } else {
                     BillingSummaryDto()
                 }

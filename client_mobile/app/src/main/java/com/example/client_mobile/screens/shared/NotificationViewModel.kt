@@ -21,9 +21,9 @@ class NotificationViewModel : ViewModel() {
     fun fetch() {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.mockApi.getNotifications()
-                if (response.isSuccessful) {
-                    val items = response.body()?.map { it.toAppNotification() } ?: return@launch
+                val response = RetrofitClient.haqApi.getNotifications()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val items = response.body()?.data?.map { it.toAppNotification() } ?: return@launch
                     NotificationRepository.userNotifications.clear()
                     NotificationRepository.userNotifications.addAll(items)
                 }
