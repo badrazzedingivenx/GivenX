@@ -15,26 +15,26 @@ interface AuthApiService {
     suspend fun login(
         @Query("email") email: String,
         @Query("password") password: String
-    ): Response<List<UserDto>>
+    ): Response<ApiResponse<List<UserDto>>>
 
     /** Fetch profile by userId */
     @GET("profiles")
-    suspend fun getProfileByUserId(@Query("userId") userId: Int): Response<List<ProfileDto>>
+    suspend fun getProfileByUserId(@Query("userId") userId: Int): Response<ApiResponse<List<ProfileDto>>>
 
     /** Fetch Lawyer details with profile info */
     @GET("lawyers")
     suspend fun getLawyerByProfileId(
         @Query("profileId") profileId: Int,
         @Query("_expand") expand: String = "profile"
-    ): Response<List<LawyerDataDto>>
+    ): Response<ApiResponse<List<LawyerDataDto>>>
 
     /** Fetch Client details */
     @GET("clients")
-    suspend fun getClientByProfileId(@Query("profileId") profileId: Int): Response<List<ClientDataDto>>
+    suspend fun getClientByProfileId(@Query("profileId") profileId: Int): Response<ApiResponse<List<ClientDataDto>>>
 
     @retrofit2.http.PATCH("profiles/{id}")
     suspend fun patchProfile(
         @retrofit2.http.Path("id") id: Int,
         @retrofit2.http.Body updates: Map<String, String>
-    ): Response<ProfileDto>
+    ): Response<ApiResponse<ProfileDto>>
 }
