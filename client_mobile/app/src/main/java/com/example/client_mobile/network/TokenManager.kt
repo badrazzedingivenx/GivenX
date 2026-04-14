@@ -46,7 +46,13 @@ object TokenManager {
 
     // ── Token ─────────────────────────────────────────────────────────────────
 
-    fun saveToken(token: String) = prefs.edit().putString(KEY_TOKEN, token).apply()
+    fun saveToken(token: String) {
+        if (token.isNotBlank()) {
+            prefs.edit().putString(KEY_TOKEN, token).apply()
+        } else {
+            clearToken()
+        }
+    }
 
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)?.takeIf { it.isNotBlank() }
 

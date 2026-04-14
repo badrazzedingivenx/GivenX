@@ -31,7 +31,8 @@ object UserService {
             throw Exception("Identifiants incorrects")
         }
         val body = response.body()!!
-        TokenManager.saveToken(body.effectiveToken())
+        val token = body.effectiveToken() ?: ""
+        TokenManager.saveToken(token)
         TokenManager.saveEmail(email)
         body.effectiveUser()?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
     }

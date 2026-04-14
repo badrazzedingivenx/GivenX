@@ -490,8 +490,131 @@ app.post('/api/seed', async (req, res) => {
     }
 });
 
+// ══════════════════════════════════════════════════════════════════════════════
+// DATA MAPPING ROUTES (Match Android Retrofit Annotations)
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Handle /api/profiles (from LegalApiService)
+ * Returns users with the requested role.
+ */
+app.get('/api/profiles', authMiddleware, async (req, res) => {
+    const { role } = req.query;
+    try {
+        let query = `SELECT id, first_name, last_name, email, role, speciality, address, photo_url, is_verified, rating FROM users`;
+        const params = [];
+
+        if (role) {
+            query += ` WHERE role = ?`;
+            params.push(role.toLowerCase());
+        }
+
+        const [rows] = await pool.query(query, params);
+        res.json(rows.map(formatUser));
+    } catch (err) {
+        console.error('[profiles]', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+/**
+ * Handle /api/consultations (from LegalApiService)
+ * Filters by current user's ID as client or lawyer.
+ */
+app.get('/api/consultations', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const mockConsultations = [
+            { id: 1, client_id: userId, lawyer_id: 2, date: "2024-05-10", status: "completed", description: "Conseil juridique civil" },
+            { id: 2, client_id: 5, lawyer_id: userId, date: "2024-05-15", status: "pending",   description: "Consultation pénale" }
+        ].filter(c => c.client_id == userId || c.lawyer_id == userId);
+
+        res.json(mockConsultations);
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+/**
+ * Handle /api/specialties (from LegalApiService)
+ */
+app.get('/api/specialties', async (req, res) => {
+    try {
+        const [rows] = await pool.query(`SELECT DISTINCT speciality FROM users WHERE role = 'lawyer' AND speciality IS NOT NULL`);
+        const specialties = rows.map((r, index) => ({
+            id: index + 1,
+            name: r.speciality,
+            icon_url: ""
+        }));
+        res.json(specialties);
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DOCUMENTS & APPOINTMENTS (HaqApiService / MockApiService)
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.get('/api/documents/vault', authMiddleware, (req, res) => {
+    console.log(`[GET] /api/documents/vault hit by ${req.user.email}`);
+    res.json({
+        success: true,
+        data: [
+            { id: "doc_001", title: "Contrat de Travail", uploadDate: "2024-03-01", type: "PDF" },
+            { id: "doc_002", title: "Acte de Vente", uploadDate: "2024-03-15", type: "DOCX" },
+            { id: "doc_003", title: "Statuts SARL", uploadDate: "2024-04-02", type: "PDF" }
+        ]
+    });
+});
+
+app.get('/api/documents/me', authMiddleware, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: "doc_001", title: "Contrat de Travail", uploadDate: "2024-03-01", type: "PDF" }
+        ]
+    });
+});
+
+app.get('/api/appointments/me', authMiddleware, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: "appt_001", lawyerName: "Maître Yassine", date: "2024-05-20", time: "14:30", status: "Confirmé" }
+        ]
+    });
+});
+
+app.get('/api/dossiers/me', authMiddleware, (req, res) => {
+    res.json([
+        { id: "dos_101", caseNumber: "CAS-2024-001", title: "Litige Immobilier", status: "En cours" }
+    ]);
+});
+
 // ─── Start ────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => console.log(`GivenX API running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`GivenX API running on port ${PORT}`);
+
+    // Debug: List all registered routes
+    console.log('\n--- Registered Routes ---');
+    app._router.stack.forEach(r => {
+        if (r.route && r.route.path) {
+            const methods = Object.keys(r.route.methods).join(',').toUpperCase();
+            console.log(`${methods.padEnd(7)} ${r.route.path}`);
+        }
+    });
+    console.log('-------------------------\n');
+});
+
+// ─── Fallback for 404 ────────────────────────────────────────────────────────
+app.use((req, res) => {
+    console.warn(`[404] ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+        error: "Route introuvable",
+        message: `Le chemin ${req.originalUrl} n'existe pas sur ce serveur.`
+    });
+});
 
 /*
  * ═══════════════════════════════════════════════════════════════════════════

@@ -28,8 +28,8 @@ import retrofit2.http.PUT
  */
 interface AuthApiService {
 
-    /** POST /api/login */
-    @POST("api/login")
+    /** POST /api/auth/login */
+    @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
     /** POST /api/auth/register-user — legacy register (camelCase body). */

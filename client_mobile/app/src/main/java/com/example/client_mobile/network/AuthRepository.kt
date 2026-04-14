@@ -74,8 +74,9 @@ object AuthRepository {
                 ?: userType.uppercase()
         } else {
             // ── Shape 2 / 3: real API envelope or legacy flat mock ────────────
-            token = body.effectiveToken()
-            if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
+            token = body.effectiveToken() ?: ""
+            // The token is now optional. If blank, we continue but won't be able 
+            // to make authenticated calls until a token is obtained.
             user = body.effectiveUser()
             // Priority: user.role → top-level body.role → caller-supplied userType
             effectiveRole = user?.role?.uppercase()?.takeIf { it.isNotBlank() }
@@ -201,8 +202,10 @@ object AuthRepository {
         }
 
         val body = response.body()!!
-        val token = body.effectiveToken()
-        if (token.isBlank()) throw Exception("Token manquant dans la réponse")
+        val token = body.effectiveToken() ?: ""
+        
+        // Only throw if your app logic strictly requires a token immediately after registration
+        // if (token.isBlank()) throw Exception("Token manquant dans la réponse")
 
         val user = body.effectiveUser()
         val effectiveRole = user?.role?.uppercase() ?: role.uppercase()
@@ -256,8 +259,9 @@ object AuthRepository {
         }
 
         val body  = response.body()!!
-        val token = body.effectiveToken()
-        if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
+        val token = body.effectiveToken() ?: ""
+        
+        // if (token.isBlank()) throw Exception("Token manquant dans la réponse du serveur")
 
         val user         = body.effectiveUser()
         val effectiveRole = user?.role?.takeIf { it.isNotBlank() } ?: role
