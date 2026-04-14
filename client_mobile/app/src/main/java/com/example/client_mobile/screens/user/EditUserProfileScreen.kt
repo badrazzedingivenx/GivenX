@@ -64,9 +64,8 @@ fun EditUserProfileScreen(
     }
 
     // Pre-fill from API profile (re-initialises when profile loads)
-    var firstName by remember(profile) { mutableStateOf(profile?.firstName ?: "") }
-    var lastName  by remember(profile) { mutableStateOf(profile?.lastName  ?: "") }
-    val email     = profile?.email ?: ""   // email is read-only (managed via Firebase Auth)
+    var fullName  by remember(profile) { mutableStateOf(profile?.effectiveFullName() ?: "") }
+    val email     = profile?.email ?: ""   // email is read-only
     var phone     by remember(profile) { mutableStateOf(profile?.phone   ?: "") }
     var address   by remember(profile) { mutableStateOf(profile?.address ?: "") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -77,19 +76,19 @@ fun EditUserProfileScreen(
     ) { uri: Uri? -> if (uri != null) selectedImageUri = uri }
 
     // ── Validation errors ─────────────────────────────────────────────────────
-    var firstNameError by remember { mutableStateOf("") }
+    var fullNameError by remember { mutableStateOf("") }
     var phoneError     by remember { mutableStateOf("") }
 
     var showSaveDialog by remember { mutableStateOf(false) }
 
     fun validate(): Boolean {
-        firstNameError = if (firstName.isBlank()) "Le prénom est requis." else ""
+        fullNameError = if (fullName.isBlank()) "Le nom est requis." else ""
         phoneError = when {
             phone.isBlank()                    -> "Le numéro est requis."
             phone.replace(" ", "").length < 8  -> "Numéro trop court (min. 8 chiffres)."
             else                               -> ""
         }
-        return firstNameError.isEmpty() && phoneError.isEmpty()
+        return fullNameError.isEmpty() && phoneError.isEmpty()
     }
 
 
@@ -164,7 +163,7 @@ fun EditUserProfileScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                val initials = "$firstName $lastName"
+                                val initialsStr = fullName
                                     .trim()
                                     .split(" ")
                                     .mapNotNull { it.firstOrNull()?.uppercaseChar() }
@@ -185,7 +184,7 @@ fun EditUserProfileScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = initials.ifEmpty { "?" },
+                                        text = initialsStr.ifEmpty { "?" },
                                         fontFamily = FontFamily.Serif,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 30.sp,
@@ -228,18 +227,12 @@ fun EditUserProfileScreen(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             ProfileTextField(
-                                value = firstName,
-                                onValueChange = { firstName = it; firstNameError = "" },
-                                label = "Prénom",
+                                value = fullName,
+                                onValueChange = { fullName = it; fullNameError = "" },
+                                label = "Nom Complet",
                                 leadingIcon = Icons.Default.Person,
-                                isError = firstNameError.isNotEmpty(),
-                                errorMessage = firstNameError
-                            )
-                            ProfileTextField(
-                                value = lastName,
-                                onValueChange = { lastName = it },
-                                label = "Nom",
-                                leadingIcon = Icons.Default.Person
+                                isError = fullNameError.isNotEmpty(),
+                                errorMessage = fullNameError
                             )
                             ProfileTextField(
                                 value = email,
@@ -389,7 +382,7 @@ fun EditUserProfileScreen(
                 Button(
                     onClick = {
                         showSaveDialog = false
-                        userViewModel.saveProfile(firstName, lastName, phone, address)
+                        userViewModel.saveProfile(fullName, phone, address)
                         // onBack() is triggered by LaunchedEffect(updateSuccess) after API confirms
                     },
                     shape = RoundedCornerShape(12.dp),

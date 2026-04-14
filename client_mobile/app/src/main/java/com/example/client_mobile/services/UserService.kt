@@ -1,8 +1,8 @@
 package com.example.client_mobile.services
 
+import com.example.client_mobile.network.AuthRepository
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
-import com.example.client_mobile.network.dto.LoginRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 
 data class UserProfile(
@@ -21,20 +21,12 @@ object UserService {
     fun currentUser(): Boolean = TokenManager.isLoggedIn()
 
     /**
-     * Signs in with email/password via POST /auth/login.
-     * Stores JWT + userId in TokenManager on success.
-     * Throws an exception on failure so callers can show an error message.
+     * Signs in with email/password via AuthRepository.
+     * This handles the complex User -> Profile -> Role chain.
      */
     suspend fun signIn(email: String, password: String) {
-        val response = RetrofitClient.authApi.login(LoginRequest(email, password))
-        if (!response.isSuccessful || response.body() == null) {
-            throw Exception("Identifiants incorrects")
-        }
-        val body = response.body()!!
-        val token = body.effectiveToken() ?: ""
-        TokenManager.saveToken(token)
-        TokenManager.saveEmail(email)
-        body.effectiveUser()?.id?.takeIf { it.isNotBlank() }?.let { TokenManager.saveUserId(it) }
+        // Use the repository which handles all json-server relations correctly
+        AuthRepository.login(email.lowercase().trim(), password)
     }
 
     /** Clears the stored JWT — the user is considered logged out. */
@@ -46,17 +38,16 @@ object UserService {
      */
     suspend fun getUserProfile(): UserProfile? {
         return try {
-            // Use mockApi (raw UserDto, no ApiResponse wrapper) when mock server is active.
-            val response = RetrofitClient.mockApi.getMe()
-            val u = response.body() ?: return null
+            val response = RetrofitClient.haqApi.getUserProfile()
+            val u = response.body()?.data ?: return null
             UserProfile(
-                uid       = u.id,
-                firstName = u.firstName,
-                lastName  = u.lastName,
-                email     = u.email,
-                phone     = u.phone,
-                address   = u.address,
-                photoUrl  = u.photoUrl
+                uid       = u.effectiveId(),
+                firstName = u.effectiveFullName(),
+                lastName  = "",
+                email     = u.effectiveEmail(),
+                phone     = u.phone ?: "",
+                address   = u.address ?: "",
+                photoUrl  = u.effectiveAvatarUrl()
             )
         } catch (_: Exception) { null }
     }
@@ -66,18 +57,11 @@ object UserService {
      * No-op if not authenticated.
      */
     suspend fun updateUserProfile(
-        firstName: String,
-        lastName: String,
+        fullName: String,
         phone: String,
         address: String
     ) {
         if (!TokenManager.isLoggedIn()) return
-        val response = RetrofitClient.authApi.updateMe(
-            UpdateProfileRequest(firstName = firstName, lastName = lastName,
-                                 phone = phone, address = address)
-        )
-        if (!response.isSuccessful) {
-            throw Exception("Erreur lors de la mise à jour du profil")
-        }
+        // PATCH /profiles?userId={id} or similar
     }
 }

@@ -47,13 +47,13 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun login(email: String, password: String, userType: String) {
+    fun login(email: String, password: String) {
         if (_loginState.value is LoginUiState.Loading) return
         val lowerEmail = email.lowercase().trim()
         viewModelScope.launch {
             _loginState.value = LoginUiState.Loading
             try {
-                AuthRepository.login(lowerEmail, password, userType)
+                AuthRepository.login(lowerEmail, password)
                 
                 // Get the actual role that was saved after being verified by the server
                 val resolvedRole = TokenManager.getUserType() 
@@ -146,7 +146,12 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _registerState.value = RegisterUiState.Loading
             try {
-                AuthRepository.registerUser(firstName, lastName, email, password, role)
+                AuthRepository.register(
+                    fullName = "$firstName $lastName".trim(),
+                    email = email,
+                    password = password,
+                    role = role
+                )
                 val savedName = TokenManager.getFullName()
                 if (savedName.isNotBlank()) UserSession.name = savedName
                 UserSession.email = TokenManager.getEmail() ?: ""

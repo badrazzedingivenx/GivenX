@@ -191,7 +191,7 @@ private fun ReelPage(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            // Gradient shimmer when no videoUrl (creator reels, mock data)
+            // Gradient shimmer when no videoUrl (fallback)
             Box(
                 modifier = Modifier
                     .fillMaxSize()

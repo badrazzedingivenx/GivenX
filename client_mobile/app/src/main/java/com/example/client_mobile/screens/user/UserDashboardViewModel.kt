@@ -18,31 +18,25 @@ import kotlinx.coroutines.launch
 
 /**
  * Consolidates all data needed by the UserDashboard into a single ViewModel.
- * A single [fetch] call fires all 5 API requests in parallel.
+ * Standardized for the production-like Node.js/Express backend.
  */
 class UserDashboardViewModel : ViewModel() {
 
-    /** null = loading, blank = authenticated but no name */
     private val _firstName = MutableStateFlow<String?>(null)
     val firstName: StateFlow<String?> = _firstName
 
-    /** null = loading, empty list = none found */
     private val _dossiers = MutableStateFlow<List<DossierData>?>(null)
     val dossiers: StateFlow<List<DossierData>?> = _dossiers
 
-    /** null = loading, empty list = none found */
     private val _appointments = MutableStateFlow<List<AppointmentDto>?>(null)
     val appointments: StateFlow<List<AppointmentDto>?> = _appointments
 
-    /** null = loading */
     private val _billing = MutableStateFlow<BillingSummaryDto?>(null)
     val billing: StateFlow<BillingSummaryDto?> = _billing
 
-    /** null = loading, empty list = none available */
     private val _stories = MutableStateFlow<List<StoryDto>?>(null)
     val stories: StateFlow<List<StoryDto>?> = _stories
 
-    /** true while any network request is in flight */
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
@@ -55,7 +49,6 @@ class UserDashboardViewModel : ViewModel() {
         fetch()
     }
 
-    /** Refresh all dashboard data in parallel. */
     fun fetch() {
         viewModelScope.launch {
             if (!TokenManager.isLoggedIn()) {
@@ -79,10 +72,7 @@ class UserDashboardViewModel : ViewModel() {
         }
     }
 
-    // ── Private fetchers ──────────────────────────────────────────────────────
-
     private suspend fun fetchUser() {
-        // Seed immediately from login cache so the greeting renders before network
         if (_firstName.value == null) {
             val cachedName = TokenManager.getFullName()
             if (cachedName.isNotBlank()) {
@@ -90,104 +80,80 @@ class UserDashboardViewModel : ViewModel() {
             }
         }
         try {
-            val response = RetrofitClient.mockApi.getMe()
+            val response = RetrofitClient.haqApi.getUserProfile()
             if (response.isSuccessful) {
-                val dto = response.body()
+                val dto = response.body()?.data
                 val fullName = dto?.effectiveFullName() ?: ""
                 _firstName.value = fullName.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: fullName
-                // Sync into UserSession for backward-compatible screens (e.g. LawyerChatScreen)
                 if (dto != null) {
-                    if (fullName.isNotBlank())    UserSession.name    = fullName
-                    if (dto.email.isNotBlank())   UserSession.email   = dto.email
-                    if (dto.phone.isNotBlank())   UserSession.phone   = dto.phone
-                    if (dto.address.isNotBlank()) UserSession.address = dto.address
-                    val avatar = dto.effectiveAvatarUrl()
-                    if (avatar.isNotBlank()) UserSession.avatarUrl = avatar
-                    // Refresh TokenManager with latest values
-                    if (fullName.isNotBlank())    TokenManager.saveFullName(fullName)
-                    if (avatar.isNotBlank())      TokenManager.saveAvatarUrl(avatar)
-                    if (dto.city.isNotBlank())    TokenManager.saveCity(dto.city)
+                    UserSession.name = fullName
+                    TokenManager.saveFullName(fullName)
                 }
-            } else {
-                if (_firstName.value == null) _firstName.value = ""
             }
-        } catch (_: Exception) {
-            if (_firstName.value == null) _firstName.value = ""
-            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
-        }
+        } catch (_: Exception) {}
     }
 
     private suspend fun fetchDossiers() {
-        _dossiers.value = null
         try {
-            val response = RetrofitClient.mockApi.getDossiers()
+            val response = RetrofitClient.haqApi.getMyDossiers()
             _dossiers.value = if (response.isSuccessful) {
-                response.body()?.map { it.toDomain() } ?: emptyList()
+                response.body()?.data?.map { it.toDomain() } ?: emptyList()
             } else {
                 emptyList()
             }
         } catch (_: Exception) {
             _dossiers.value = emptyList()
-            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
     private suspend fun fetchAppointments() {
-        _appointments.value = null
         try {
-            val response = RetrofitClient.mockApi.getAppointments()
+            val response = RetrofitClient.haqApi.getMyAppointments()
             _appointments.value = if (response.isSuccessful) {
-                response.body() ?: emptyList()
+                response.body()?.data ?: emptyList()
             } else {
                 emptyList()
             }
         } catch (_: Exception) {
             _appointments.value = emptyList()
-            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
     private suspend fun fetchBilling() {
-        _billing.value = null
         try {
-            val response = RetrofitClient.mockApi.getBilling()
+            val response = RetrofitClient.haqApi.getMyBilling()
             _billing.value = if (response.isSuccessful) {
-                response.body() ?: BillingSummaryDto()
+                response.body()?.data ?: BillingSummaryDto()
             } else {
                 BillingSummaryDto()
             }
         } catch (_: Exception) {
             _billing.value = BillingSummaryDto()
-            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
     private suspend fun fetchStories() {
         try {
-            val response = RetrofitClient.mockApi.getStories()
+            val response = RetrofitClient.haqApi.getStories()
             _stories.value = if (response.isSuccessful) {
-                response.body() ?: emptyList()
+                response.body()?.data ?: emptyList()
             } else {
                 emptyList()
             }
         } catch (_: Exception) {
             _stories.value = emptyList()
-            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
         }
     }
 
     private suspend fun fetchNotifications() {
         try {
-            val response = RetrofitClient.mockApi.getNotifications()
+            val response = RetrofitClient.haqApi.getNotifications()
             if (response.isSuccessful) {
-                val items = response.body()?.map { dto ->
-                    val type = when {
-                        dto.title.contains("rendez-vous", ignoreCase = true) ->
-                            com.example.client_mobile.screens.shared.NotificationType.APPOINTMENT
-                        dto.title.contains("message", ignoreCase = true) ->
-                            com.example.client_mobile.screens.shared.NotificationType.MESSAGE
-                        else ->
-                            com.example.client_mobile.screens.shared.NotificationType.CASE_UPDATE
+                val items = response.body()?.data?.map { dto ->
+                    val type = try {
+                        com.example.client_mobile.screens.shared.NotificationType.valueOf(dto.type.uppercase())
+                    } catch (_: Exception) {
+                        com.example.client_mobile.screens.shared.NotificationType.CASE_UPDATE
                     }
                     com.example.client_mobile.screens.shared.AppNotification(
                         id      = dto.id,
@@ -195,18 +161,14 @@ class UserDashboardViewModel : ViewModel() {
                         message = dto.description,
                         type    = type,
                         isRead  = dto.isRead,
-                        time    = if (dto.time.length >= 10) dto.time.substring(0, 10) else dto.time
+                        time    = dto.time
                     )
                 } ?: return
                 NotificationRepository.userNotifications.clear()
                 NotificationRepository.userNotifications.addAll(items)
             }
-        } catch (_: Exception) {
-            _errorMessage.value = "Erreur de chargement. Tirez vers le bas pour réessayer."
-        }
+        } catch (_: Exception) {}
     }
-
-    // ── Mapping helpers ───────────────────────────────────────────────────────
 
     private fun DossierDto.toDomain() = DossierData(
         id              = id,

@@ -18,7 +18,7 @@ data class LastMessageSummaryDto(
 )
 
 // ─── GET /api/conversations ───────────────────────────────────────────────────
-// Supports both real API (nested lawyer/client objects) and legacy mock (flat fields).
+// Supports both real API (nested lawyer/client objects) and legacy keys.
 data class ConversationApiDto(
     @SerializedName("id")                  val id:              String               = "",
     // ── Real API fields ────────────────────────────────────────────────────────
@@ -28,14 +28,14 @@ data class ConversationApiDto(
     @SerializedName("unread_count_user")   val unreadCountUser:   Int                = 0,
     @SerializedName("unread_count_lawyer") val unreadCountLawyer: Int                = 0,
     @SerializedName("created_at")          val createdAt:       String               = "",
-    // ── Legacy mock flat fields (backward compat) ──────────────────────────────
+    // ── Legacy flat fields (backward compat) ──────────────────────────────────
     @SerializedName("otherPartyName")      val otherPartyName:  String               = "",
     @SerializedName("lastMessage")         val lastMessage:     String               = "",
     @SerializedName("timestamp")           val timestamp:       String               = "",
     @SerializedName("unreadCount")         val unreadCount:     Int                  = 0,
     @SerializedName("avatarUrl")           val avatarUrl:       String               = ""
 ) {
-    /** Display name for the other party. Chooses real API or flat mock. */
+    /** Display name for the other party. Chooses real API or flat fields. */
     fun displayName(isLawyer: Boolean): String = when {
         otherPartyName.isNotBlank() -> otherPartyName
         isLawyer                    -> client?.fullName ?: ""
@@ -78,7 +78,7 @@ data class ChatMessageApiDto(
     @SerializedName("sender_name")  val senderName:  String  = "",
     @SerializedName("is_from_user") val isFromUser:  Boolean = true,
     @SerializedName("sent_at")      val sentAt:      String  = "",
-    // Legacy mock flat fields
+    // Legacy flat fields
     @SerializedName("text")         val text:        String  = "",
     @SerializedName("time")         val time:        String  = ""
 ) {

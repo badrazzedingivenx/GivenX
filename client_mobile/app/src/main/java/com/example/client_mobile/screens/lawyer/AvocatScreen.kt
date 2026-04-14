@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -243,7 +245,7 @@ fun ScreenAvocat(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                    ActionMenuItemAvocat(Icons.Default.Assignment, "Voir les demandes", "Consulter et répondre aux nouvelles demandes", darkGreen, goldColor) {}
+                    ActionMenuItemAvocat(Icons.AutoMirrored.Filled.Assignment, "Voir les demandes", "Consulter et répondre aux nouvelles demandes", darkGreen, goldColor) {}
                     ActionMenuItemAvocat(Icons.Default.ChatBubble, "Messages", "Voir vos conversations", darkGreen, goldColor) {}
                     ActionMenuItemAvocat(Icons.Default.Person, "Mon profil", "Gérer vos informations", darkGreen, goldColor) {
                         onNavigateToProfile()
@@ -329,7 +331,7 @@ fun AvocatBottomBar(backgroundColor: Color, selectedColor: Color, selectedTab: I
     ) {
         Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
             BottomNavItemAvocat(Icons.Default.Home, "Accueil", selectedTab == 0, selectedColor) { onTabSelected(0) }
-            BottomNavItemAvocat(Icons.Default.Chat, "Messages", selectedTab == 1, selectedColor) { onTabSelected(1) }
+            BottomNavItemAvocat(Icons.AutoMirrored.Filled.Chat, "Messages", selectedTab == 1, selectedColor) { onTabSelected(1) }
             BottomNavItemAvocat(Icons.Default.Groups, "Clients", selectedTab == 2, selectedColor) { onTabSelected(2) }
             BottomNavItemAvocat(Icons.Default.Person, "Profil", selectedTab == 3, selectedColor) { onTabSelected(3) }
         }

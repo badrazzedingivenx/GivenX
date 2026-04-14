@@ -181,7 +181,7 @@ fun LoginScreen(
                             emailError = email.isBlank()
                             passwordError = password.isBlank()
                             if (emailError || passwordError) return@Button
-                            authViewModel.login(email, password, userType)
+                            authViewModel.login(email, password)
                         },
                         enabled = !isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = darkGreen),

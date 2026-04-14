@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 
 /**
  * Reusable full-screen "no connection" state shown when an API call fails
- * due to a network error or when the Postman Mock is offline.
+ * due to a network error or when the backend is unreachable.
  *
  * [onRetry] is called when the user taps the Retry button.
  */

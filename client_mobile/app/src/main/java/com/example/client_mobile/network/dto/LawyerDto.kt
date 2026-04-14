@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName
 
 /**
  * JSON shape for a single lawyer.
- * Supports both camelCase keys (Postman mock) and snake_case keys (real MySQL server)
+ * Supports both camelCase keys and snake_case keys (production MySQL server)
  * via Gson @SerializedName alternate values.
  */
 data class LawyerDto(

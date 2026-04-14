@@ -29,20 +29,10 @@ class DocumentViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Try HaqApiService first, then fallback to mockApi
-                val haqResponse = RetrofitClient.haqApi.getMyDocuments()
-                val dtos = if (haqResponse.isSuccessful && haqResponse.body()?.success == true) {
-                    haqResponse.body()?.data ?: emptyList()
-                } else {
-                    val mockResponse = RetrofitClient.mockApi.getDocuments()
-                    if (mockResponse.isSuccessful) {
-                        mockResponse.body() ?: emptyList()
-                    } else {
-                        null
-                    }
-                }
-
-                if (dtos != null) {
+                // Use HaqApiService for production-like backend
+                val response = RetrofitClient.haqApi.getMyDocuments()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val dtos = response.body()?.data ?: emptyList()
                     DocumentRepository.documents.clear()
                     DocumentRepository.documents.addAll(dtos.map { it.toVaultDocument() })
                 }
@@ -107,8 +97,8 @@ class DocumentViewModel : ViewModel() {
         }
         return VaultDocument(
             id        = id.toLongOrNull() ?: id.hashCode().toLong(),
-            name      = title,       // "title" from mock JSON
-            addedDate = uploadDate,  // "uploadDate" from mock JSON
+            name      = title,
+            addedDate = uploadDate,
             icon      = icon
         )
     }

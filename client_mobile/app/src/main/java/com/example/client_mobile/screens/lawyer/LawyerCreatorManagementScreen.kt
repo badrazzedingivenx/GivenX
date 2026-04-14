@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
@@ -195,7 +196,7 @@ fun LawyerCreatorManagementScreen(
                             value = viewsLabel, label = "Total Vues", accentColor = StudioIndigoMid)
                         KpiCard(modifier = Modifier.weight(1f), icon = Icons.Default.Favorite,
                             value = likesLabel, label = "J'aimes", accentColor = Color(0xFFE91E63))
-                        KpiCard(modifier = Modifier.weight(1f), icon = Icons.Default.ShowChart,
+                        KpiCard(modifier = Modifier.weight(1f), icon = Icons.AutoMirrored.Filled.ShowChart,
                             value = engLabel, label = "Engagement", accentColor = Color(0xFF4CAF50))
                     }
                 }

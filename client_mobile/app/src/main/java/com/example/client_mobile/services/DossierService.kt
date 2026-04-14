@@ -29,7 +29,7 @@ object DossierService {
      * Returns an empty list if not authenticated or on network error.
      */
     suspend fun getDossiersForCurrentUser(): List<DossierData> =
-        DossierApiRepository.getDossiersForCurrentUser(TokenManager.getUserId())
+        DossierApiRepository.getDossiersForCurrentUser(TokenManager.getUserId() ?: "")
 
     /**
      * Returns a single dossier by its API ID.
