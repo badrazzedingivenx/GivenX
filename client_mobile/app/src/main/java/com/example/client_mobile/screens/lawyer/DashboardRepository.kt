@@ -121,8 +121,8 @@ class DashboardRepository {
                 "via 'localhost'. Set LOCAL_BASE_URL = \"http://10.0.2.2:3000/\" in RetrofitClient.")
         }
 
-        val primaryUrl  = "${RetrofitClient.BASE_URL}api/avocat/consultations/recent"
-        val fallbackUrl = "${RetrofitClient.BASE_URL}api/lawyers/me/consultations/recent"
+        val primaryUrl  = "${RetrofitClient.BASE_URL}avocat/consultations/recent"
+        val fallbackUrl = "${RetrofitClient.BASE_URL}lawyers/me/consultations/recent"
 
         Log.d("GivenX-API", "[Consultations] mode=${if (RetrofitClient.isMockMode) "MOCK" else "REAL"}")
         Log.d("GivenX-API", "[Consultations] → GET $primaryUrl")

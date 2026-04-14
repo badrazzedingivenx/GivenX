@@ -6,8 +6,10 @@ import com.example.client_mobile.network.AuthRepository
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.google.gson.Gson
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
@@ -24,6 +26,27 @@ class AuthViewModel : ViewModel() {
     private val _loginState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val loginState: StateFlow<LoginUiState> = _loginState
 
+    // ── Navigation Events ─────────────────────────────────────────────────────
+
+    sealed class AuthNavEvent {
+        object NavigateToClientDashboard : AuthNavEvent()
+        object NavigateToLawyerDashboard : AuthNavEvent()
+    }
+
+    private val _navEvent = MutableSharedFlow<AuthNavEvent>()
+    val navEvent = _navEvent.asSharedFlow()
+
+    private fun handleLoginSuccess(role: String) {
+        viewModelScope.launch {
+            val normalizedRole = role.lowercase().trim()
+            if (normalizedRole == "lawyer" || normalizedRole == "avocat") {
+                _navEvent.emit(AuthNavEvent.NavigateToLawyerDashboard)
+            } else {
+                _navEvent.emit(AuthNavEvent.NavigateToClientDashboard)
+            }
+        }
+    }
+
     fun login(email: String, password: String, userType: String) {
         if (_loginState.value is LoginUiState.Loading) return
         val lowerEmail = email.lowercase().trim()
@@ -31,35 +54,43 @@ class AuthViewModel : ViewModel() {
             _loginState.value = LoginUiState.Loading
             try {
                 AuthRepository.login(lowerEmail, password, userType)
-                val fullName  = TokenManager.getFullName()
-                val avatarUrl = TokenManager.getAvatarUrl()
-                if (fullName.isNotBlank())  UserSession.name      = fullName
-                if (avatarUrl.isNotBlank()) UserSession.avatarUrl = avatarUrl
-                UserSession.email = TokenManager.getEmail() ?: ""
-                // "lawyer" → LawyerDashboard, "user"/"CLIENT" → ClientDashboard
-                val resolvedRole = TokenManager.getUserType() // "lawyer" | "user"
-                // Populate LawyerSession immediately from cache so screens that
-                // read LawyerSession.fullName directly (e.g. LiveStudioScreen) work.
-                if (resolvedRole == "lawyer") {
-                    if (fullName.isNotBlank())  LawyerSession.fullName = fullName
-                    if (avatarUrl.isNotBlank()) LawyerSession.avatarUrl = avatarUrl
-                    LawyerSession.email = TokenManager.getEmail() ?: ""
-                    val lawyerJson = TokenManager.getLawyerJson()
-                    if (lawyerJson != null) {
-                        try {
-                            val dto = Gson().fromJson(lawyerJson, LawyerProfileDto::class.java)
-                            if (dto.speciality.isNotBlank()) LawyerSession.title   = dto.speciality
-                            if (dto.phone.isNotBlank())      LawyerSession.phone   = dto.phone
-                            if (dto.address.isNotBlank())    LawyerSession.address = dto.address
-                            if (dto.bio.isNotBlank())        LawyerSession.bio     = dto.bio
-                        } catch (_: Exception) { /* malformed cache — ignore */ }
-                    }
-                }
+                
+                // Get the actual role that was saved after being verified by the server
+                val resolvedRole = TokenManager.getUserType() 
+                
+                // Sync sessions
+                syncSessions()
+
                 _loginState.value = LoginUiState.Success(resolvedRole)
+                handleLoginSuccess(resolvedRole)
             } catch (e: Exception) {
                 _loginState.value = LoginUiState.Error(
                     e.message ?: "Identifiants incorrects. Veuillez réessayer."
                 )
+            }
+        }
+    }
+
+    private fun syncSessions() {
+        val fullName  = TokenManager.getFullName()
+        val avatarUrl = TokenManager.getAvatarUrl()
+        val email     = TokenManager.getEmail() ?: ""
+        val role      = TokenManager.getUserType()
+
+        if (fullName.isNotBlank())  UserSession.name      = fullName
+        if (avatarUrl.isNotBlank()) UserSession.avatarUrl = avatarUrl
+        UserSession.email = email
+
+        if (role == "lawyer") {
+            LawyerSession.fullName = fullName
+            LawyerSession.avatarUrl = avatarUrl
+            LawyerSession.email = email
+            val lawyerJson = TokenManager.getLawyerJson()
+            if (lawyerJson != null) {
+                try {
+                    val dto = Gson().fromJson(lawyerJson, LawyerProfileDto::class.java)
+                    LawyerSession.title = dto.speciality
+                } catch (_: Exception) {}
             }
         }
     }

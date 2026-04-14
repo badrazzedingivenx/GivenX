@@ -62,32 +62,28 @@ object AuthRepository {
         val entry = body.profileFor(email)
         val token: String
         val user: com.example.client_mobile.network.dto.UserDto?
-        val effectiveRole: String
+        val serverRole: String?
 
         if (entry != null) {
             // Found a matching profile in the "profiles" map
             token = entry.token.takeIf { it.isNotBlank() }
                 ?: throw Exception("Token manquant pour ce compte")
             user  = entry.user
-            effectiveRole = entry.role.uppercase().takeIf { it.isNotBlank() }
-                ?: user?.role?.uppercase()?.takeIf { it.isNotBlank() }
-                ?: userType.uppercase()
+            serverRole = entry.role.takeIf { it.isNotBlank() } ?: user?.role
         } else {
             // ── Shape 2 / 3: real API envelope or legacy flat mock ────────────
             token = body.effectiveToken() ?: ""
-            // The token is now optional. If blank, we continue but won't be able 
-            // to make authenticated calls until a token is obtained.
             user = body.effectiveUser()
-            // Priority: user.role → top-level body.role → caller-supplied userType
-            effectiveRole = user?.role?.uppercase()?.takeIf { it.isNotBlank() }
-                ?: body.role.uppercase().takeIf { it.isNotBlank() }
-                ?: userType.uppercase()
+            // Priority: user.role → top-level body.role
+            serverRole = user?.role?.takeIf { it.isNotBlank() } ?: body.role.takeIf { it.isNotBlank() }
         }
 
-        val storedRole = when (effectiveRole) {
-            "LAWYER" -> "lawyer"
-            "CLIENT" -> "user"
-            else     -> if (userType.lowercase() == "lawyer") "lawyer" else "user"
+        // Trust serverRole if available, otherwise fallback to UI-provided userType
+        val normalizedRole = serverRole?.lowercase()?.trim() ?: userType.lowercase().trim()
+        val storedRole = when (normalizedRole) {
+            "lawyer", "avocat" -> "lawyer"
+            "user", "client"   -> "user"
+            else               -> "user" // Default to client if unknown
         }
 
         TokenManager.saveToken(token)

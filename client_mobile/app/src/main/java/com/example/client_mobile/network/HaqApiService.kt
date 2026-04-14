@@ -50,7 +50,7 @@ interface HaqApiService {
      * GET /api/lawyers
      * Optional: ?domaine=Droit+Civil  ?q=dupont  ?page=1  ?limit=50
      */
-    @GET("api/lawyers")
+    @GET("lawyers")
     suspend fun getLawyers(
         @Query("domaine") domaine: String? = null,
         @Query("q")       query:   String? = null,
@@ -59,47 +59,47 @@ interface HaqApiService {
     ): Response<ApiResponse<List<LawyerDto>>>
 
     /**
-     * GET /api/lawyers/{id}
+     * GET /lawyers/{id}
      */
-    @GET("api/lawyers/{id}")
+    @GET("lawyers/{id}")
     suspend fun getLawyerById(
         @Path("id") id: String
     ): Response<ApiResponse<LawyerDto>>
 
-    /** GET /api/lawyers/me — returns the authenticated lawyer's profile. */
-    @GET("api/lawyers/me")
+    /** GET /lawyers/me — returns the authenticated lawyer's profile. */
+    @GET("lawyers/me")
     suspend fun getLawyerProfile(): Response<ApiResponse<LawyerProfileDto>>
 
-    /** PATCH /api/lawyers/me — update the authenticated lawyer's profile. */
-    @PATCH("api/lawyers/me")
+    /** PATCH /lawyers/me — update the authenticated lawyer's profile. */
+    @PATCH("lawyers/me")
     suspend fun updateLawyerProfile(
         @Body profile: LawyerProfileDto
     ): Response<ApiResponse<LawyerProfileDto>>
 
-    /** GET /api/lawyers/me/stats — returns dashboard KPIs for the lawyer. */
-    @GET("api/lawyers/me/stats")
+    /** GET /lawyers/me/stats — returns dashboard KPIs for the lawyer. */
+    @GET("lawyers/me/stats")
     suspend fun getLawyerStats(): Response<ApiResponse<LawyerStatsDto>>
 
-    /** GET /api/lawyers/me/revenue/monthly — returns 6-month revenue history. */
-    @GET("api/lawyers/me/revenue/monthly")
+    /** GET /lawyers/me/revenue/monthly — returns 6-month revenue chart data. */
+    @GET("lawyers/me/revenue/monthly")
     suspend fun getLawyerRevenueMonthly(): Response<ApiResponse<List<RevenueMonthDto>>>
 
-    /** GET /api/lawyers/me/consultations/recent — legacy endpoint kept as fallback. */
-    @GET("api/lawyers/me/consultations/recent")
-    suspend fun getRecentConsultations(): Response<ApiResponse<List<RecentConsultationDto>>>
-
-    /** GET /api/avocat/consultations/recent — primary consultations endpoint. */
-    @GET("api/avocat/consultations/recent")
+    /** GET /avocat/consultations/recent — primary endpoint for lawyer consultations. */
+    @GET("avocat/consultations/recent")
     suspend fun getAvocatConsultationsRecent(): Response<ApiResponse<List<RecentConsultationDto>>>
+
+    /** GET /consultations — returns consultations for current user (client/lawyer). */
+    @GET("consultations")
+    suspend fun getRecentConsultations(): Response<ApiResponse<List<RecentConsultationDto>>>
 
     // ── User Profile ─────────────────────────────────────────────────────────
 
-    /** GET /api/users/me — authenticated user's full profile. */
-    @GET("api/users/me")
+    /** GET /auth/me — authenticated user's full profile (Client). */
+    @GET("auth/me")
     suspend fun getUserProfile(): Response<ApiResponse<UserDto>>
 
-    /** PUT /api/users/me — update authenticated user's profile. */
-    @PUT("api/users/me")
+    /** PUT /users/me — update authenticated user's profile. */
+    @PUT("users/me")
     suspend fun updateUserProfile(
         @Body request: UpdateProfileRequest
     ): Response<ApiResponse<UserDto>>
@@ -107,37 +107,37 @@ interface HaqApiService {
     // ── Dossiers ──────────────────────────────────────────────────────────────
 
     /**
-     * GET /api/dossiers/{userId}
+     * GET /dossiers/{userId}
      * Returns all dossiers belonging to the given user.
      * The JWT in the Authorization header is validated server-side to ensure
      * the caller can only read their own dossiers.
      */
-    @GET("api/dossiers/{userId}")
+    @GET("dossiers/{userId}")
     suspend fun getDossiers(
         @Path("userId") userId: String
     ): Response<ApiResponse<List<DossierDto>>>
 
     /**
-     * GET /api/dossiers/me
+     * GET /dossiers/me
      * Convenience endpoint: returns the current user's dossiers using
      * the JWT alone (no explicit userId needed).
      */
-    @GET("api/dossiers/me")
+    @GET("dossiers/me")
     suspend fun getMyDossiers(): Response<ApiResponse<List<DossierDto>>>
 
     /**
-     * GET /api/dossiers/detail/{id}
+     * GET /dossiers/detail/{id}
      * Returns a single dossier by its database ID.
      */
-    @GET("api/dossiers/{id}")
+    @GET("dossiers/{id}")
     suspend fun getDossierById(
         @Path("id") id: String
     ): Response<ApiResponse<DossierDto>>
     /**
-     * PATCH /api/dossiers/{id}/status
+     * PATCH /dossiers/{id}/status
      * Updates the status of a dossier (lawyer only — enforced server-side via JWT).
      */
-    @PATCH("api/dossiers/{id}/status")
+    @PATCH("dossiers/{id}/status")
     suspend fun updateDossierStatus(
         @Path("id") id: String,
         @Body request: UpdateDossierStatusRequest
@@ -145,59 +145,59 @@ interface HaqApiService {
     // ── Consultations ─────────────────────────────────────────────────────────
 
     /**
-     * POST /api/consultations
+     * POST /consultations
      * Creates a consultation record when a user matches a lawyer.
      */
-    @POST("api/consultations")
+    @POST("consultations")
     suspend fun saveConsultation(
         @Body request: SaveConsultationRequest
     ): Response<ApiResponse<Unit>>
 
     // ── Appointments ──────────────────────────────────────────────────────────
 
-    /** GET /api/appointments/me — returns all appointments for the current user. */
-    @GET("api/appointments/me")
+    /** GET /appointments/me — returns all appointments for the current user. */
+    @GET("appointments/me")
     suspend fun getMyAppointments(): Response<ApiResponse<List<AppointmentDto>>>
 
     // ── Billing ───────────────────────────────────────────────────────────────
 
-    /** GET /api/billing/me — returns billing summary + invoice list for current user. */
-    @GET("api/billing/me")
+    /** GET /billing/me — returns billing summary + invoice list for current user. */
+    @GET("billing/me")
     suspend fun getMyBilling(): Response<ApiResponse<BillingSummaryDto>>
 
     // ── Documents ─────────────────────────────────────────────────────────────
 
-    /** GET /api/documents/vault — returns all documents owned by the current user. */
-    @GET("api/documents/vault")
+    /** GET /documents/vault — returns all documents owned by the current user. */
+    @GET("documents/vault")
     suspend fun getMyDocuments(): Response<ApiResponse<List<DocumentApiDto>>>
 
-    /** POST /api/documents — upload / register a new document record. */
-    @POST("api/documents")
+    /** POST /documents — upload / register a new document record. */
+    @POST("documents")
     suspend fun createDocument(
         @Body request: CreateDocumentRequest
     ): Response<ApiResponse<DocumentApiDto>>
 
-    /** PATCH /api/documents/{id} — rename an existing document. */
-    @PATCH("api/documents/{id}")
+    /** PATCH /documents/{id} — rename an existing document. */
+    @PATCH("documents/{id}")
     suspend fun renameDocument(
         @Path("id") id: String,
         @Body request: RenameDocumentRequest
     ): Response<ApiResponse<DocumentApiDto>>
 
-    /** DELETE /api/documents/{id} — remove a document record. */
-    @DELETE("api/documents/{id}")
+    /** DELETE /documents/{id} — remove a document record. */
+    @DELETE("documents/{id}")
     suspend fun deleteDocument(
         @Path("id") id: String
     ): Response<ApiResponse<Unit>>
 
     // ── Messages ──────────────────────────────────────────────────────────────
 
-    /** GET /api/conversations — all conversations for the authenticated user or lawyer. */
-    @GET("api/conversations")
+    /** GET /conversations — all conversations for the authenticated user or lawyer. */
+    @GET("conversations")
     suspend fun getMessages(): Response<ApiResponse<List<ConversationApiDto>>>
 
-    /** POST /api/conversations/{id}/messages — send a text message in a conversation. */
-    @POST("api/conversations/{id}/messages")
+    /** POST /conversations/{id}/messages — send a text message in a conversation. */
+    @POST("conversations/{id}/messages")
     suspend fun sendMessage(
         @Path("id") conversationId: String,
         @Body request: SendMessageRequest
@@ -205,19 +205,19 @@ interface HaqApiService {
 
     // ── Reels ──────────────────────────────────────────────────────
 
-    /** GET /api/reels — [ { "id": "reel_001", "lawyerName": "...", "likes": 542, "caption": "..." } ] */
-    @GET("api/reels")
+    /** GET /reels — [ { "id": "reel_001", "lawyerName": "...", "likes": 542, "caption": "..." } ] */
+    @GET("reels")
     suspend fun getReels(): Response<ApiResponse<List<ReelDto>>>
 
     // ── Stories ────────────────────────────────────────────────────
 
-    /** GET /api/stories — [ { "id": "story_001", "lawyerName": "...", "imageUrl": "..." } ] */
-    @GET("api/stories")
+    /** GET /stories — [ { "id": "story_001", "lawyerName": "...", "imageUrl": "..." } ] */
+    @GET("stories")
     suspend fun getStories(): Response<ApiResponse<List<StoryDto>>>
 
     // ── Lives ──────────────────────────────────────────────────────
 
-    /** GET /api/lives — [ { "id": "live_001", "title": "...", "viewersCount": 124 } ] */
-    @GET("api/lives")
+    /** GET /lives — [ { "id": "live_001", "title": "...", "viewersCount": 124 } ] */
+    @GET("lives")
     suspend fun getLives(): Response<ApiResponse<List<LiveDto>>>
 }

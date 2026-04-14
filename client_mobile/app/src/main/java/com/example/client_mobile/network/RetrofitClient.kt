@@ -27,7 +27,7 @@ object RetrofitClient {
     private const val MOCK_URL = "http://demo3674879"
 
     /** Local dev server (Android Emulator → host localhost:3000) */
-    private const val LOCAL_BASE_URL = "http://10.0.2.2:3001/"
+    private const val LOCAL_BASE_URL = "http://10.0.2.2:3001/api/"
 
     /**
      * Toggle: set true to hit the Mockable.io mock, false for local Express server.
