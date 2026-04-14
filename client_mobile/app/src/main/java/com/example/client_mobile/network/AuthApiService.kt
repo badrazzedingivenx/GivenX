@@ -9,13 +9,12 @@ interface AuthApiService {
 
     /** 
      * json-server "Login" 
-     * Returns a list: if empty, login failed.
+     * Now using custom POST /api/auth/login
      */
-    @GET("users")
+    @retrofit2.http.POST("auth/login")
     suspend fun login(
-        @Query("email") email: String,
-        @Query("password") password: String
-    ): Response<ApiResponse<List<UserDto>>>
+        @retrofit2.http.Body request: LoginRequest
+    ): Response<ApiResponse<AuthResponse>>
 
     /** Fetch profile by userId */
     @GET("profiles")

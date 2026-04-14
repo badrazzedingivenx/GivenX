@@ -11,22 +11,23 @@ import com.google.gson.Gson
 object AuthRepository {
 
     suspend fun login(email: String, password: String) {
-        // 1. Authenticate (Find user in the array)
-        val response = RetrofitClient.authApi.login(email.lowercase().trim(), password)
+        // 1. Authenticate (Custom POST /auth/login)
+        val response = RetrofitClient.authApi.login(LoginRequest(email.lowercase().trim(), password))
         val apiResponse = response.body()
         
-        if (!response.isSuccessful || apiResponse?.success != true || apiResponse.data.isNullOrEmpty()) {
+        if (!response.isSuccessful || apiResponse?.success != true || apiResponse.data?.user == null) {
             throw Exception("Email ou mot de passe incorrect")
         }
 
-        val user = apiResponse.data[0]
+        val authData = apiResponse.data!!
+        val user = authData.user ?: throw Exception("Données utilisateur manquantes")
         val role = user.effectiveRole()
         
         // Save initial identity
         val userIdStr = user.effectiveId()
         val userIdInt = userIdStr.toDoubleOrNull()?.toInt() ?: -1
 
-        TokenManager.saveToken("mock-jwt-token-for-$userIdStr") 
+        TokenManager.saveToken(authData.token ?: "mock-jwt-token-for-$userIdStr")
         TokenManager.saveUserId(userIdInt)
         TokenManager.saveEmail(user.effectiveEmail())
 
