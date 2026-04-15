@@ -94,16 +94,25 @@ fun UserDashboardHost(
     AppScaffold(
         topBar = {
             val onNetworkingRoute = currentRoute == UserTab.Networking.route
-            val showBackButton = onNetworkingRoute
-            val titleText = if (onNetworkingRoute) "Réseaux" else null
+            val onMessagesRoute   = currentRoute == UserTab.Messages.route
+            
+            val showBackButton = onNetworkingRoute || onMessagesRoute
+            val titleText = when {
+                onNetworkingRoute -> "Réseaux"
+                onMessagesRoute   -> "Messages"
+                else              -> null
+            }
+
+            val showLogo = titleText == null
 
             StandardTopBar(
                 title = titleText ?: "",
+                showLogo = showLogo,
                 onBack = if (showBackButton) {
                     {
-                        if (onNetworkingRoute) {
+                        if (onNetworkingRoute || onMessagesRoute) {
                             innerNavController.navigate(UserTab.Home.route) {
-                                popUpTo(innerNavController.graph.startDestinationId)
+                                popUpTo(UserTab.Home.route) { inclusive = true }
                                 launchSingleTop = true
                             }
                         } else {
@@ -112,79 +121,14 @@ fun UserDashboardHost(
                     }
                 } else null,
                 actions = {
-                    val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
-                    // ── Notification bell ──────────────────────────────────
-                    IconButton(onClick = onNavigateToNotifications) {
-                        BadgedBox(
-                            badge = {
-                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
-                                    Text(
-                                        if (unreadCount > 9) "9+" else "$unreadCount",
-                                        color = Color.White,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        ) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                    // ── Profile avatar ─────────────────────────────────────
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .clickable { onNavigateToProfile() }
-                    ) {
-                        // Gold-bordered avatar circle
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            shape    = CircleShape,
-                            color    = AppDarkGreen.copy(alpha = 0.10f),
-                            border   = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                val resolvedPhoto = profile?.photoUrl?.takeIf { it.isNotBlank() }
-                                    ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
-                                when {
-                                    !resolvedPhoto.isNullOrBlank() -> AsyncImage(
-                                        model              = resolvedPhoto,
-                                        contentDescription = "Profil",
-                                        modifier           = Modifier.fillMaxSize().clip(CircleShape),
-                                        contentScale       = ContentScale.Crop
-                                    )
-                                    !initials.isNullOrBlank() -> Text(
-                                        text       = initials,
-                                        fontFamily = FontFamily.Serif,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize   = 13.sp,
-                                        color      = AppGoldColor
-                                    )
-                                    else -> Icon(
-                                        Icons.Default.Person,
-                                        contentDescription = "Profil",
-                                        tint     = AppGoldColor,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        }
-                        // Online green dot
-                        Box(
-                            modifier = Modifier
-                                .size(11.dp)
-                                .align(Alignment.BottomEnd)
-                                .background(Color.White, CircleShape)
-                                .padding(2.dp)
-                                .background(Color(0xFF34A853), CircleShape)
-                        )
-                    }
+                    TopBarActions(
+                        unreadCount     = NotificationRepository.userNotifications.count { !it.isRead },
+                        photoUrl        = profile?.photoUrl?.takeIf { it.isNotBlank() }
+                                         ?: UserSession.avatarUrl.takeIf { it.isNotBlank() },
+                        initials        = initials,
+                        onNotifications = onNavigateToNotifications,
+                        onProfile       = onNavigateToProfile
+                    )
                 }
             )
         },

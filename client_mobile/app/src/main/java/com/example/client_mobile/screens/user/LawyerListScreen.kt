@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.animateFloat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.delay
 
 /** Which dimension the quick-filter chips operate on. */
@@ -55,6 +57,11 @@ fun LawyerListScreen(
     val displayTitle = domaine
         .replace("Droit Civil", "Droit de la Famille")
         .ifBlank { "Avocats" }
+
+    // ── Wire server-side domaine pre-filter on first composition ─────────────
+    LaunchedEffect(domaine) {
+        lawyerListViewModel.setDomaine(domaine)
+    }
 
     // ── API state ─────────────────────────────────────────────────────────────
     val lawyersState   by lawyerListViewModel.lawyers.collectAsStateWithLifecycle()
@@ -421,21 +428,33 @@ private fun LawyerListCard(lawyer: LawyerItem, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Avatar circle
+            // Avatar — real photo via Coil, initials fallback
             Box(
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(62.dp)
                     .clip(CircleShape)
                     .background(AppDarkGreen),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    initials,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = AppGoldColor
-                )
+                if (lawyer.avatarUrl.isNotBlank()) {
+                    AsyncImage(
+                        model              = lawyer.avatarUrl,
+                        contentDescription = lawyer.name,
+                        contentScale       = ContentScale.Crop,
+                        modifier           = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                    )
+                } else {
+                    // Initials fallback
+                    Text(
+                        initials,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 20.sp,
+                        color      = AppGoldColor
+                    )
+                }
             }
 
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

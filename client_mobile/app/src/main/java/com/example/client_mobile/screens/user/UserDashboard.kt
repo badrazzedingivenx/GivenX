@@ -72,73 +72,13 @@ fun UserDashboard(
             StandardTopBar(
                 onBack = null,
                 actions = {
-                    // Notification Icon
-                    IconButton(
-                        onClick = { /* onNavigateToNotifications */ },
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = Color(0xFFE53935), // Pure red
-                                    modifier = Modifier.size(16.dp).offset(x = (-4).dp, y = 4.dp),
-                                    contentColor = Color.White
-                                ) {
-                                    Text("2", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AppGoldColor,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    // Premium Profile Avatar with Status
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(48.dp)
-                            .clickable { onNavigateToProfile() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Main Avatar with Gold Border
-                        Surface(
-                            modifier = Modifier.size(42.dp),
-                            shape = CircleShape,
-                            color = Color.White.copy(alpha = 0.2f),
-                            border = BorderStroke(2.dp, AppGoldColor)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profil",
-                                tint = AppGoldColor,
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        }
-                        
-                        // Online Status Indicator
-                        Surface(
-                            modifier = Modifier
-                                .size(14.dp)
-                                .align(Alignment.BottomEnd)
-                                .offset(x = (-2).dp, y = (-2).dp),
-                            shape = CircleShape,
-                            color = Color.White,
-                            border = BorderStroke(2.dp, Color.White)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color(0xFF4CAF50), CircleShape)
-                            )
-                        }
-                    }
+                    TopBarActions(
+                        unreadCount     = NotificationRepository.userNotifications.count { !it.isRead },
+                        photoUrl        = null,
+                        initials        = null,
+                        onNotifications = { /* wired via UserDashboardHost */ },
+                        onProfile       = onNavigateToProfile
+                    )
                 }
             )
         }

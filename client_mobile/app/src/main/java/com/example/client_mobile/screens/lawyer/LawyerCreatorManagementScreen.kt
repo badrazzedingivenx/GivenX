@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -111,52 +110,31 @@ fun LawyerCreatorManagementScreen(
 
     AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Studio Créateur",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 18.sp,
-                            color      = AppDarkGreen
-                        )
-                        Text(
-                            LawyerSession.fullName.ifBlank { "Me. Yassine" },
-                            fontFamily = FontFamily.Serif,
-                            fontSize   = 12.sp,
-                            color      = AppDarkGreen.copy(alpha = 0.7f)
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
+            // ── Top Bar — texte "Studio Créateur" sur fond dégradé ────────────
+            StandardTopBar(
+                title  = "Studio Créateur",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Actualiser", tint = AppDarkGreen)
+                        Icon(
+                            imageVector        = Icons.Default.Refresh,
+                            contentDescription = "Actualiser",
+                            tint               = Color.White,
+                            modifier           = Modifier.size(22.dp)
+                        )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { 
+                onClick = {
                     pickerType = MediaPostType.Story
-                    showMediaPicker = true 
+                    showMediaPicker = true
                 },
                 containerColor = AppGoldColor,
-                contentColor = AppDarkGreen,
-                shape = CircleShape
+                contentColor   = AppDarkGreen,
+                shape          = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Ajouter")
             }
