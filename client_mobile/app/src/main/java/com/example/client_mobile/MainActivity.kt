@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.client_mobile.Navigation.AppNavigation
 import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.ui.theme.LegalAgroTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +18,9 @@ class MainActivity : ComponentActivity() {
         TokenManager.init(applicationContext)
 
         setContent {
-            AppNavigation()
+            LegalAgroTheme {
+                AppNavigation()
+            }
         }
     }
 }

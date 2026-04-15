@@ -34,36 +34,21 @@ fun AppointmentsScreen(
     val appointments by viewModel.appointments.collectAsStateWithLifecycle()
     val isLoading = appointments == null
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Mes Rendez-vous",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Mes Rendez-vous",
+                onBack = onBack
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
                 if (isLoading) {
                     item {
@@ -88,7 +73,7 @@ fun AppointmentsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.80f),
+                        color = Color.White,
                         border = BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.45f)),
                         shadowElevation = 2.dp
                     ) {
@@ -106,17 +91,23 @@ fun AppointmentsScreen(
                                 fontFamily = FontFamily.Serif, fontSize = 12.sp,
                                 color = AppDarkGreen.copy(alpha = 0.55f),
                                 textAlign = TextAlign.Center, lineHeight = 18.sp)
-                            AppButton(
-                                text       = "Trouver un avocat",
-                                onClick    = {},
-                                modifier   = Modifier.wrapContentWidth()
-                            )
+                            Button(
+                                onClick = {},
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                                border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.55f))
+                            ) {
+                                Icon(Icons.Default.CalendarMonth, contentDescription = null,
+                                    tint = AppGoldColor, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Trouver un avocat", fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AppGoldColor)
+                            }
                         }
                     }
                 }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
             }
-        }
     }
 }
 
@@ -148,37 +139,16 @@ private fun AppointmentCard(lawyerName: String, specialty: String, datetime: Str
                 Text(initials, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
                     fontSize = 16.sp, color = AppGoldColor)
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    lawyerName,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 15.sp,
-                    color      = AppDarkGreen
-                )
-                Text(
-                    specialty,
-                    fontFamily = FontFamily.Serif,
-                    fontSize   = 12.sp,
-                    color      = AppGoldColor,
-                    fontWeight = FontWeight.Medium
-                )
-                Row(
-                    verticalAlignment      = Alignment.CenterVertically,
-                    horizontalArrangement  = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        Icons.Default.AccessTime,
-                        contentDescription = null,
-                        tint               = AppDarkGreen.copy(alpha = 0.40f),
-                        modifier           = Modifier.size(12.dp)
-                    )
-                    Text(
-                        datetime,
-                        fontFamily = FontFamily.Serif,
-                        fontSize   = 11.sp,
-                        color      = AppDarkGreen.copy(alpha = 0.55f)
-                    )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(lawyerName, fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppDarkGreen)
+                Text(specialty, fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppGoldColor)
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(Icons.Default.AccessTime, contentDescription = null,
+                        tint = AppDarkGreen.copy(alpha = 0.45f), modifier = Modifier.size(12.dp))
+                    Text(datetime, fontFamily = FontFamily.Serif, fontSize = 11.sp,
+                        color = AppDarkGreen.copy(alpha = 0.60f))
                 }
             }
             Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFF34A853).copy(alpha = 0.12f)) {

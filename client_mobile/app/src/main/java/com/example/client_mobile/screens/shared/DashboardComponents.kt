@@ -21,9 +21,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -41,54 +48,152 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
-val AppDarkGreen = Color(0xFF1B3124)
-val AppGoldColor = Color(0xFFD4AF37)
+val AppDarkGreen = Color(0xFF1B4332)
+val AppGoldColor = Color(0xFFC5A059)
 
-// ─── Skeleton Loader ──────────────────────────────────────────────────────────
+// ─── Status Colors ────────────────────────────────────────────────────────────
+val StatusGreen      = Color(0xFF1B4332)   // Green-600
+val StatusGreenBg    = Color(0xFFECFDF5)   // Green-50
+val StatusOrange     = Color(0xFFD97706)   // Amber-600
+val StatusOrangeBg   = Color(0xFFFFF3E0)   // Orange-50
+val StatusRed        = Color(0xFFDC2626)   // Red-600
+val StatusRedBg      = Color(0xFFFFF1F2)   // Rose-50
+val StatusBlue      = Color(0xFF2563EB)   // Blue-600
+val StatusBlueBg    = Color(0xFFEFF6FF)   // Blue-50
+val StatusGray      = Color(0xFF4B5563)   // Gray-600
+val StatusGrayBg    = Color(0xFFF3F4F6)   // Gray-100
+val AppGoldBg       = Color(0xFFC5A059).copy(alpha = 0.12f)
+val AppSubtitleGray = Color(0xFF4A4A4A)
+
+// ─── Base Screen Template ─────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SkeletonBox(
+fun AppScaffold(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(12.dp)
+    topBar: @Composable () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
+    showBackground: Boolean = true,
+    content: @Composable (PaddingValues) -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue  = 0.08f,
-        targetValue   = 0.22f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "skeletonAlpha"
-    )
-    Box(modifier = modifier.clip(shape).background(AppDarkGreen.copy(alpha = alpha)))
-}
+    Box(modifier = modifier.fillMaxSize()) {
+        if (showBackground) {
+            // Layer 1: Background Image
+            Image(
+                painter = painterResource(id = R.drawable.background_app),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            // Layer 2: White Overlay (Only affects the background image)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White.copy(alpha = 0.20f))
+            )
+        }
 
-// ─── Shared Background ────────────────────────────────────────────────────────
-@Composable
-fun DashBoardBackground(content: @Composable BoxScope.() -> Unit) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
+        // Layer 3: UI Content (Above the overlay)
+        Scaffold(
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            topBar = topBar,
+            bottomBar = bottomBar,
+            floatingActionButton = floatingActionButton,
+            snackbarHost = snackbarHost,
+            containerColor = Color.Transparent,
+            content = content
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White.copy(alpha = 0.72f))
-        )
-        content()
     }
 }
 
-// ─── Section Header ───────────────────────────────────────────────────────────
+/**
+ * Base screen with optional standardized TopBar and BottomBar.
+ */
+@Composable
+fun BaseScreen(
+    title: String? = null,
+    onBack: (() -> Unit)? = null,
+    showBottomBar: Boolean = true,
+    floatingActionButton: @Composable () -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit
+) {
+    AppScaffold(
+        topBar = {
+            if (title != null) {
+                StandardTopBar(title = title, onBack = onBack)
+            }
+        },
+        floatingActionButton = floatingActionButton,
+        content = content
+    )
+}
+
+// ─── Shared UI Components ──────────────────────────────────────────────────────
+
+/**
+ * Standard High-End Card for the Application
+ */
+@Composable
+fun AppCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    containerColor: Color = Color.White,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        content = {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                content = content
+            )
+        }
+    )
+}
+
+@Composable
+fun DashCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    containerColor: Color = Color.White,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    AppCard(
+        modifier = modifier,
+        onClick = onClick,
+        containerColor = containerColor,
+        content = content
+    )
+}
+
+@Composable
+fun DarkDashCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = AppDarkGreen),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        content = content
+    )
+}
+
 @Composable
 fun SectionHeader(
     title: String,
@@ -96,419 +201,345 @@ fun SectionHeader(
     onAction: (() -> Unit)? = null
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = title,
-            fontSize = 17.sp,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
-            color = AppDarkGreen
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = AppDarkGreen,
+                fontSize = 18.sp,
+                fontFamily = FontFamily.Serif
+            )
         )
         if (actionLabel != null && onAction != null) {
-            Text(
-                text = actionLabel,
-                fontSize = 13.sp,
-                fontFamily = FontFamily.Serif,
-                color = AppGoldColor,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable { onAction() }
-            )
+            TextButton(onClick = onAction) {
+                Text(
+                    text = actionLabel,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AppGoldColor,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
 
-// ─── Light Card ───────────────────────────────────────────────────────────────
-@Composable
-fun DashCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && onClick != null) 0.97f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
-        label = "dashCardScale"
-    )
-    Surface(
-        modifier = modifier
-            .scale(scale)
-            .fillMaxWidth()
-            .then(
-                if (onClick != null)
-                    Modifier.clickable(interactionSource = interactionSource, indication = null) { onClick() }
-                else Modifier
-            ),
-        shape = RoundedCornerShape(22.dp),
-        color = Color.White.copy(alpha = 0.92f),
-        border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
-        shadowElevation = 2.dp
-    ) {
-        Column(modifier = Modifier.padding(18.dp), content = content)
-    }
-}
-
-// ─── Dark Card ────────────────────────────────────────────────────────────────
-@Composable
-fun DarkDashCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed && onClick != null) 0.97f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
-        label = "darkDashCardScale"
-    )
-    Surface(
-        modifier = modifier
-            .scale(scale)
-            .fillMaxWidth()
-            .then(
-                if (onClick != null)
-                    Modifier.clickable(interactionSource = interactionSource, indication = null) { onClick() }
-                else Modifier
-            ),
-        shape = RoundedCornerShape(22.dp),
-        color = AppDarkGreen,
-        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.40f)),
-        shadowElevation = 4.dp
-    ) {
-        Column(modifier = Modifier.padding(18.dp), content = content)
-    }
-}
-
-// ─── Status Chip ──────────────────────────────────────────────────────────────
 @Composable
 fun StatusChip(
     label: String,
     containerColor: Color,
-    textColor: Color = Color.White
+    textColor: Color
 ) {
-    Surface(shape = RoundedCornerShape(50.dp), color = containerColor) {
+    Surface(
+        color = containerColor,
+        shape = RoundedCornerShape(50.dp)
+    ) {
         Text(
             text = label,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
-            color = textColor,
-            maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
         )
     }
 }
 
-// ─── Quick Action Button ──────────────────────────────────────────────────────
 @Composable
 fun QuickActionButton(
-    modifier: Modifier = Modifier,
     icon: ImageVector,
     label: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.88f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessHigh),
-        label = "quickActionScale"
-    )
     Column(
         modifier = modifier
-            .scale(scale)
-            .clip(RoundedCornerShape(18.dp))
-            .clickable(interactionSource = interactionSource, indication = null) { onClick() }
-            .padding(vertical = 10.dp, horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
-            modifier = Modifier.size(52.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = AppDarkGreen,
-            border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
+            modifier = Modifier.size(48.dp),
+            shape = CircleShape,
+            color = AppGoldColor.copy(alpha = 0.15f)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = icon,
                     contentDescription = label,
                     tint = AppGoldColor,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Serif,
-            color = AppDarkGreen,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = AppDarkGreen
+            ),
             textAlign = TextAlign.Center
         )
     }
 }
 
-// ─── Compact Stat Tile ────────────────────────────────────────────────────────
 @Composable
-fun CompactStatTile(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    count: String,
-    label: String
+fun SkeletonBox(
+    modifier: Modifier,
+    shape: Shape = RoundedCornerShape(8.dp)
 ) {
-    Surface(
-        modifier = modifier.height(85.dp),
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White.copy(alpha = 0.18f),
-        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.40f))
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = AppGoldColor, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                count,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                fontFamily = FontFamily.Serif
-            )
-            Text(
-                label,
-                color = Color.White.copy(alpha = 0.65f),
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Serif
-            )
-        }
-    }
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(Color.LightGray.copy(alpha = alpha))
+    )
 }
 
-// ─── Client Bottom Bar ────────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserBottomBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
-    val tabs = listOf(
-        Pair(Icons.Default.Home, "Accueil"),
-        Pair(Icons.AutoMirrored.Filled.Assignment, "Dossiers"),
-        Pair(Icons.AutoMirrored.Filled.Chat, "Messages"),
-        Pair(Icons.Default.Person, "Profil")
-    )
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .height(70.dp),
-        shape = RoundedCornerShape(25.dp),
-        color = AppDarkGreen,
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEachIndexed { index, (icon, label) ->
-                val selected = selectedTab == index
-                val indicatorWidth by animateDpAsState(
-                    targetValue = if (selected) 16.dp else 0.dp,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "userTabIndicator_$index"
+fun StandardTopBar(
+    title: @Composable () -> Unit,
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    TopAppBar(
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_app),
+                    contentDescription = "GivenX Logo",
+                    modifier = Modifier.height(32.dp),
+                    contentScale = ContentScale.Fit
                 )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { onTabSelected(index) }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
+                Spacer(modifier = Modifier.width(12.dp))
+                title()
+            }
+        },
+        navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
                     Icon(
-                        imageVector = icon,
-                        contentDescription = label,
-                        tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = label,
-                        color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Box(
-                        modifier = Modifier
-                            .height(3.dp)
-                            .width(indicatorWidth)
-                            .clip(CircleShape)
-                            .background(AppGoldColor)
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = AppDarkGreen
                     )
                 }
             }
+        },
+        actions = actions,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            titleContentColor = AppDarkGreen
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StandardTopBar(
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    TopAppBar(
+        title = {
+            Image(
+                painter = painterResource(id = R.drawable.logo_app),
+                contentDescription = "GivenX Logo",
+                modifier = Modifier.height(40.dp),
+                contentScale = ContentScale.Fit
+            )
+        },
+        navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = AppDarkGreen
+                    )
+                }
+            }
+        },
+        actions = actions,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            titleContentColor = AppDarkGreen
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StandardTopBar(
+    title: String,
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    StandardTopBar(
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen,
+                    fontFamily = FontFamily.Serif
+                )
+            )
+        },
+        onBack = onBack,
+        actions = actions
+    )
+}
+
+// ─── Standardized Legal Button ────────────────────────────────────────────────
+@Composable
+fun LegalButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        enabled = enabled,
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = AppGoldColor,
+            contentColor = AppDarkGreen
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+        )
+    }
+}
+
+@Composable
+fun LegalDashboardCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    containerColor: Color = Color.White,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    AppCard(
+        modifier = modifier,
+        onClick = onClick,
+        containerColor = containerColor,
+        content = content
+    )
+}
+
+// ─── Common Input Field (New Standard) ──────────────────────────────────────────
+
+@Composable
+fun LegalInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: ImageVector,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    enabled: Boolean = true
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            ),
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+        )
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            leadingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            shape = RoundedCornerShape(16.dp),
+            isError = isError,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+            )
+        )
+        if (isError && errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
         }
     }
 }
 
-// ─── Navigation Route Tokens ──────────────────────────────────────────────────
+// ─── App Navigation Tokens ──────────────────────────────────────────────────────
+
 sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home     : LawyerTab("lawyer_home",     Icons.Default.Home,        "Tableau")
-    data object Clients  : LawyerTab("lawyer_clients",  Icons.Default.Groups,      "Clients")
-    data object Messages : LawyerTab("lawyer_messages", Icons.AutoMirrored.Filled.Chat,        "Messages")
-    data object Creator  : LawyerTab("lawyer_creator",  Icons.Default.AutoAwesome, "Studio")
-    data object Profile  : LawyerTab("lawyer_profile",  Icons.Default.Person,      "Profil")
-    companion object { val all: List<LawyerTab> by lazy { listOf(Home, Clients, Creator, Messages, Profile) } }
+    object Home : LawyerTab("lawyer_home", Icons.Default.Home, "Accueil")
+    object Messages : LawyerTab("lawyer_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
+    object Clients : LawyerTab("lawyer_clients", Icons.Default.Groups, "Clients")
+    object Profile : LawyerTab("lawyer_profile", Icons.Default.Person, "Profil")
+    object Creator : LawyerTab("lawyer_creator", Icons.Default.AutoAwesome, "Créateur")
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
-    data object Home       : UserTab("user_home",        Icons.Default.Home,        "Accueil")
-    data object Networking : UserTab("user_networking",  Icons.Default.PeopleAlt,   "Réseaux")
-    data object Vault      : UserTab("user_vault",       Icons.Default.Shield,      "Coffre")
-    data object Profile    : UserTab("user_profile",     Icons.Default.Person,      "Profil")
-    companion object { val all: List<UserTab> by lazy { listOf(Home, Networking, Vault, Profile) } }
+    object Home : UserTab("user_home", Icons.Default.Home, "Accueil")
+    object Networking : UserTab("user_networking", Icons.Default.PeopleAlt, "Réseau")
+    object Messages : UserTab("user_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
+    object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
 }
 
-// ─── Lawyer Nav Bottom Bar ─────────────────────────────────────────────────────
 @Composable
 fun LawyerNavBottomBar(
     currentRoute: String?,
-    onNavigateTo: (LawyerTab) -> Unit
+    onTabSelected: (LawyerTab) -> Unit
 ) {
-    // The outer Box must be tall enough for the pill (72dp) + the raised
-    // Creator button overhang above it (28dp) + bottom safe spacing (12dp).
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(112.dp)
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp)
-    ) {
-        // ── Pill ──────────────────────────────────────────────────────────────
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .align(Alignment.BottomCenter),
-            shape = RoundedCornerShape(28.dp),
-            color = AppDarkGreen,
-            shadowElevation = 16.dp
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                LawyerTab.all.forEach { tab ->
-                    if (tab is LawyerTab.Creator) {
-                        // Empty gap reserved for the raised center button
-                        Spacer(modifier = Modifier.width(60.dp))
-                        return@forEach
-                    }
-                    val selected = currentRoute == tab.route
-                    val dotAlpha by animateFloatAsState(
-                        targetValue = if (selected) 1f else 0f,
-                        animationSpec = tween(200),
-                        label = "dot_${tab.route}"
-                    )
-                    val iconAlpha by animateFloatAsState(
-                        targetValue = if (selected) 1f else 0.45f,
-                        animationSpec = tween(200),
-                        label = "icon_${tab.route}"
-                    )
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
-                            .clickable(enabled = !selected) { onNavigateTo(tab) }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
-                    ) {
-                        Icon(
-                            imageVector = tab.icon,
-                            contentDescription = tab.label,
-                            tint = if (selected) AppGoldColor
-                                   else Color.White.copy(alpha = iconAlpha),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.height(5.dp))
-                        // Active dot indicator — fades in/out
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(AppGoldColor.copy(alpha = dotAlpha))
-                        )
-                    }
-                }
-            }
-        }
-
-        // ── Raised Creator center button ───────────────────────────────────────
-        val creatorSelected    = currentRoute == LawyerTab.Creator.route
-        val creatorInteraction = remember { MutableInteractionSource() }
-        val creatorPressed     by creatorInteraction.collectIsPressedAsState()
-        val creatorScale by animateFloatAsState(
-            targetValue = when {
-                creatorPressed  -> 0.91f
-                creatorSelected -> 1.10f
-                else            -> 1f
-            },
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness    = Spring.StiffnessMediumLow
-            ),
-            label = "creatorScale"
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .scale(creatorScale)
-                .clip(CircleShape)
-                .clickable(
-                    interactionSource = creatorInteraction,
-                    indication        = null,
-                    enabled           = !creatorSelected
-                ) { onNavigateTo(LawyerTab.Creator) }
-        ) {
-            Surface(
-                modifier      = Modifier.size(60.dp),
-                shape         = CircleShape,
-                color         = AppGoldColor,
-                shadowElevation = if (creatorSelected) 4.dp else 12.dp,
-                border        = BorderStroke(3.dp, Color.White)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector        = Icons.Default.AutoAwesome,
-                        contentDescription = "Studio",
-                        tint               = AppDarkGreen,
-                        modifier           = Modifier.size(28.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ─── User Nav Bottom Bar ───────────────────────────────────────────────────────
-@Composable
-fun UserNavBottomBar(
-    currentRoute: String?,
-    onNavigateTo: (UserTab) -> Unit
-) {
+    val tabs = listOf(
+        LawyerTab.Home,
+        LawyerTab.Messages,
+        LawyerTab.Clients,
+        LawyerTab.Creator,
+        LawyerTab.Profile
+    )
+    
     Surface(
         modifier = Modifier
-            .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .height(70.dp),
         shape = RoundedCornerShape(25.dp),
@@ -517,312 +548,182 @@ fun UserNavBottomBar(
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            UserTab.all.forEach { tab ->
-                val selected = currentRoute == tab.route
-                val indicatorWidth by animateDpAsState(
-                    targetValue = if (selected) 16.dp else 0.dp,
-                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-                    label = "userNavTabIndicator_${tab.route}"
+            tabs.forEach { tab ->
+                BottomNavItem(
+                    icon = tab.icon,
+                    label = tab.label,
+                    selected = currentRoute == tab.route,
+                    onClick = { onTabSelected(tab) }
                 )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .weight(1f)             // each tab claims exactly 1/4 of the bar width
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(20.dp))
-                        // Guard: skip navigation when the tab is already active
-                        .clickable(enabled = !selected) { onNavigateTo(tab) }
-                        .padding(vertical = 6.dp)
-                ) {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.label,
-                        tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = tab.label,
-                        color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Box(
-                        modifier = Modifier
-                            .height(3.dp)
-                            .width(indicatorWidth)
-                            .clip(CircleShape)
-                            .background(AppGoldColor)
-                    )
-                }
             }
         }
     }
 }
 
-// ─── Shared Profile Text Field ────────────────────────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileTextField(
+fun UserNavBottomBar(
+    currentRoute: String?,
+    onTabSelected: (UserTab) -> Unit
+) {
+    val tabs = listOf(
+        UserTab.Home,
+        UserTab.Messages,
+        UserTab.Profile
+    )
+
+    Surface(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(70.dp),
+        shape = RoundedCornerShape(25.dp),
+        color = AppDarkGreen,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tabs.forEach { tab ->
+                BottomNavItem(
+                    icon = tab.icon,
+                    label = tab.label,
+                    selected = currentRoute == tab.route,
+                    onClick = { onTabSelected(tab) }
+                )
+            }
+        }
+    }
+}
+
+// ─── App Bottom Navigation ────────────────────────────────────────────────────
+@Composable
+fun AppBottomNavigation(
+    currentRoute: String?,
+    onNavigate: (String) -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(70.dp),
+        shape = RoundedCornerShape(25.dp),
+        color = AppDarkGreen,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavItem(
+                icon = Icons.Default.Home,
+                label = "Accueil",
+                selected = currentRoute == "home",
+                onClick = { onNavigate("home") }
+            )
+            BottomNavItem(
+                icon = Icons.AutoMirrored.Filled.Chat,
+                label = "Messages",
+                selected = currentRoute == "messages",
+                onClick = { onNavigate("messages") }
+            )
+            BottomNavItem(
+                icon = Icons.Default.Person,
+                label = "Profil",
+                selected = currentRoute == "profile",
+                onClick = { onNavigate("profile") }
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomNavItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(if (selected) 1.1f else 1f)
+    val indicatorWidth by animateDpAsState(
+        targetValue = if (selected) 16.dp else 0.dp,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp)
+            .scale(scale)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
+        )
+    }
+}
+
+// ─── Legal Input Field (Standardized) ──────────────────────────────────────────
+
+@Composable
+fun CustomLegalInputField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    placeholder: String,
     leadingIcon: ImageVector,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
     isError: Boolean = false,
-    errorMessage: String = "",
-    singleLine: Boolean = true,
-    maxLines: Int = if (singleLine) 1 else 6,
-    minLines: Int = 1,
+    errorMessage: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(label, fontFamily = FontFamily.Serif, fontSize = 13.sp)
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            label = {
-                Text(label, fontFamily = FontFamily.Serif, fontSize = 13.sp)
-            },
+            placeholder = { Text(placeholder, color = Color.Gray) },
             leadingIcon = {
                 Icon(
                     imageVector = leadingIcon,
                     contentDescription = null,
-                    tint = if (isError) MaterialTheme.colorScheme.error else AppGoldColor,
+                    tint = AppDarkGreen,
                     modifier = Modifier.size(20.dp)
                 )
             },
-            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
+            singleLine = true,
             isError = isError,
-            singleLine = singleLine,
-            maxLines = maxLines,
-            minLines = minLines,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
                 focusedBorderColor = AppDarkGreen,
-                unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.28f),
-                focusedLabelColor = AppDarkGreen,
-                unfocusedLabelColor = AppDarkGreen.copy(alpha = 0.50f),
-                focusedContainerColor = Color.White.copy(alpha = 0.95f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.88f),
-                errorBorderColor = MaterialTheme.colorScheme.error,
-                errorContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.05f),
-                cursorColor = AppDarkGreen
+                unfocusedBorderColor = Color.Transparent,
+                errorBorderColor = Color.Red
             )
         )
-        if (isError && errorMessage.isNotEmpty()) {
+        if (isError && errorMessage != null) {
             Text(
                 text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
+                color = Color.Red,
                 fontSize = 11.sp,
                 fontFamily = FontFamily.Serif,
                 modifier = Modifier.padding(start = 16.dp, top = 3.dp)
             )
         }
     }
-}
-
-// ─── Standard Primary Button ───────────────────────────────────────────────────
-/**
- * Standard app-wide primary button.
- * Height is fixed at [AppButtonDefaults.Height] (52 dp) for consistency.
- * Shows a [CircularProgressIndicator] when [isLoading] is true.
- */
-object AppButtonDefaults {
-    val Height: Dp = 52.dp
-    val Shape = RoundedCornerShape(26.dp)
-}
-
-@Composable
-fun AppButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isLoading: Boolean = false,
-    enabled: Boolean = true,
-    containerColor: Color = AppDarkGreen,
-    contentColor: Color = Color.White
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled && !isLoading,
-        shape = AppButtonDefaults.Shape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
-            contentColor   = contentColor,
-            disabledContainerColor = containerColor.copy(alpha = 0.55f),
-            disabledContentColor   = contentColor.copy(alpha = 0.55f)
-        ),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(AppButtonDefaults.Height)
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier    = Modifier.size(22.dp),
-                color       = contentColor,
-                strokeWidth = 2.5.dp
-            )
-        } else {
-            Text(
-                text       = text,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize   = 16.sp
-            )
-        }
-    }
-}
-
-// ─── Standard Outlined Button ─────────────────────────────────────────────────
-@Composable
-fun AppOutlinedButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    borderColor: Color = AppDarkGreen,
-    contentColor: Color = AppDarkGreen
-) {
-    OutlinedButton(
-        onClick = onClick,
-        shape   = AppButtonDefaults.Shape,
-        border  = BorderStroke(1.dp, borderColor),
-        colors  = ButtonDefaults.outlinedButtonColors(contentColor = contentColor),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(AppButtonDefaults.Height)
-    ) {
-        Text(
-            text       = text,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.SemiBold,
-            fontSize   = 15.sp
-        )
-    }
-}
-
-// ─── Empty-State View ─────────────────────────────────────────────────────────
-/**
- * Standardised empty-state composable used across all screens.
- * Renders an icon tile, a bold title and a muted subtitle.
- */
-@Composable
-fun EmptyStateView(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-    iconTint: Color = AppDarkGreen.copy(alpha = 0.30f),
-    titleColor: Color = AppDarkGreen,
-    subtitleColor: Color = AppDarkGreen.copy(alpha = 0.48f)
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(AppDarkGreen.copy(alpha = 0.06f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector        = icon,
-                contentDescription = null,
-                tint               = iconTint,
-                modifier           = Modifier.size(38.dp)
-            )
-        }
-        Text(
-            text       = title,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
-            fontSize   = 16.sp,
-            color      = titleColor,
-            textAlign  = TextAlign.Center
-        )
-        Text(
-            text       = subtitle,
-            fontFamily = FontFamily.Serif,
-            fontSize   = 13.sp,
-            color      = subtitleColor,
-            textAlign  = TextAlign.Center,
-            lineHeight = 19.sp
-        )
-    }
-}
-
-// ─── Inline Error Banner ──────────────────────────────────────────────────────
-/**
- * A small, centered error text block used below form fields or buttons
- * to display authentication / validation error messages.
- */
-@Composable
-fun ErrorBanner(
-    message: String?,
-    modifier: Modifier = Modifier
-) {
-    if (!message.isNullOrBlank()) {
-        Text(
-            text       = message,
-            color      = Color(0xFFD32F2F),
-            fontSize   = 12.sp,
-            fontFamily = FontFamily.Serif,
-            textAlign  = TextAlign.Center,
-            lineHeight = 17.sp,
-            modifier   = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 4.dp)
-        )
-    }
-}
-
-// ─── Info Chip ────────────────────────────────────────────────────────────────
-/**
- * A lightweight pill chip used for type labels, status indicators and tags.
- */
-@Composable
-fun InfoChip(
-    label: String,
-    containerColor: Color = AppGoldColor.copy(alpha = 0.15f),
-    textColor: Color = AppDarkGreen.copy(alpha = 0.70f),
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape    = RoundedCornerShape(8.dp),
-        color    = containerColor
-    ) {
-        Text(
-            text       = label,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.SemiBold,
-            fontSize   = 10.sp,
-            color      = textColor,
-            modifier   = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
-    }
-}
-
-// ─── Section Divider ─────────────────────────────────────────────────────────
-/**
- * Subtle horizontal divider for visual grouping within scrollable content.
- */
-@Composable
-fun SectionDivider(modifier: Modifier = Modifier) {
-    HorizontalDivider(
-        modifier  = modifier.padding(vertical = 4.dp),
-        thickness = 0.5.dp,
-        color     = AppDarkGreen.copy(alpha = 0.10f)
-    )
 }

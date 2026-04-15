@@ -2,7 +2,6 @@ package com.example.client_mobile.screens.shared
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -11,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -27,84 +25,69 @@ fun TypeCompteScreen(
     showBackground: Boolean = true,
     onNavigateToLogin: (String) -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (showBackground) {
-            Image(
-                painter            = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                modifier           = Modifier.fillMaxSize(),
-                contentScale       = ContentScale.Crop
-            )
-        }
+    val darkGreen = Color(0xFF1B3124)
+    AppScaffold(
+        showBackground = showBackground
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
-
-            // Logo
+            Spacer(modifier = Modifier.height(65.dp))
             Image(
-                painter            = painterResource(id = R.drawable.logo_app),
+                painter = painterResource(id = R.drawable.logo_app),
                 contentDescription = "HAQ Logo",
-                modifier           = Modifier.size(220.dp),
-                contentScale       = ContentScale.Fit
+                modifier = Modifier.size(235.dp),
+                contentScale = ContentScale.Fit
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+            Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text       = "Bienvenue sur HAQ",
-                fontSize   = 30.sp,
+                text = "Bienvenue sur HAQ",
+                fontSize = 32.sp,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                color      = AppDarkGreen,
-                textAlign  = TextAlign.Center
+                color = darkGreen, // Color updated to Gold for consistency
+                textAlign = TextAlign.Center
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(
-                text       = "Choisissez votre espace pour commencer",
-                fontSize   = 14.sp,
+                text = "Choisissez votre espace pour commencer",
+                fontSize = 15.sp,
                 fontFamily = FontFamily.Serif,
-                color      = AppDarkGreen.copy(alpha = 0.55f),
-                textAlign  = TextAlign.Center,
-                modifier   = Modifier.padding(horizontal = 16.dp)
+                color = Color.Gray,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 20.dp)
             )
-
             Spacer(modifier = Modifier.weight(1f))
-
-            // Account option cards
             Row(
-                modifier              = Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AccountOptionCard(
-                    modifier    = Modifier.weight(1f),
-                    iconRes     = R.drawable.logo_user,
-                    title       = "Utilisateur",
+                    modifier = Modifier.weight(1f),
+                    iconRes = R.drawable.logo_user,
+                    title = "Utilisateur",
                     description = "Je cherche un conseil juridique",
-                    onClick     = { onNavigateToLogin("user") }
+                    onClick = { onNavigateToLogin("user") }
                 )
                 AccountOptionCard(
-                    modifier    = Modifier.weight(1f),
-                    iconRes     = R.drawable.logo_avocat,
-                    title       = "Avocat",
+                    modifier = Modifier.weight(1f),
+                    iconRes = R.drawable.logo_avocat,
+                    title = "Avocat",
                     description = "Je souhaite offrir mes services",
-                    onClick     = { onNavigateToLogin("lawyer") }
+                    onClick = { onNavigateToLogin("lawyer") }
                 )
             }
-
-            Spacer(modifier = Modifier.weight(1.6f))
+            Spacer(modifier = Modifier.weight(1.8f))
         }
     }
 }
 
-// ─── Account Option Card ──────────────────────────────────────────────────────
 @Composable
 fun AccountOptionCard(
     modifier: Modifier = Modifier,
@@ -114,14 +97,11 @@ fun AccountOptionCard(
     onClick: () -> Unit
 ) {
     Surface(
-        modifier       = modifier.height(340.dp),
-        shape          = RoundedCornerShape(32.dp),
-        color          = Color.White.copy(alpha = 0.92f),
-        shadowElevation = 4.dp,
-        border         = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            AppGoldColor.copy(alpha = 0.30f)
-        )
+        modifier = modifier.height(350.dp),
+        shape = RoundedCornerShape(35.dp),
+        color = Color.White,
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier
@@ -130,71 +110,66 @@ fun AccountOptionCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Illustration box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(145.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(AppDarkGreen.copy(alpha = 0.04f)),
+                    .height(150.dp)
+                    .background(Color(0xFFF2F2F2), RoundedCornerShape(25.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter            = painterResource(id = iconRes),
+                    painter = painterResource(id = iconRes),
                     contentDescription = title,
-                    modifier           = Modifier.size(160.dp)
+                    modifier = Modifier.size(170.dp)
                 )
             }
-
-            // Text block
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text       = title,
-                    fontSize   = 20.sp,
+                    text = title,
+                    fontSize = 20.sp,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    color      = AppDarkGreen
+                    color = Color(0xFF1B3124)
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text       = description,
-                    fontSize   = 12.sp,
+                    text = description,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Serif,
-                    color      = AppDarkGreen.copy(alpha = 0.55f),
-                    textAlign  = TextAlign.Center,
-                    lineHeight = 17.sp
+                    color = Color.Gray.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 16.sp
                 )
             }
-
-            // CTA button  — uses AppDarkGreen with gold accent
             Button(
-                onClick          = onClick,
-                colors           = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
-                shape            = RoundedCornerShape(16.dp),
-                modifier         = Modifier
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B3124)),
+                shape = RoundedCornerShape(15.dp),
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                contentPadding   = PaddingValues(0.dp)
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Row(
-                    verticalAlignment      = Alignment.CenterVertically,
-                    horizontalArrangement  = Arrangement.Center
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text       = "Accéder",
-                        fontSize   = 14.sp,
+                        text = "Accéder",
+                        fontSize = 14.sp,
                         fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color      = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
-                        imageVector        = Icons.AutoMirrored.Filled.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        modifier           = Modifier.size(16.dp),
-                        tint               = AppGoldColor
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
                     )
                 }
             }

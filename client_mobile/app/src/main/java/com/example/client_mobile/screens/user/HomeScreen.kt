@@ -91,54 +91,26 @@ fun UserDashboardHost(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             val onNetworkingRoute = currentRoute == UserTab.Networking.route
-            val showTitleBar    = onNetworkingRoute
-            val titleBarText    = when {
-                onNetworkingRoute -> "Réseaux"
-                else            -> ""
-            }
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    if (showTitleBar) {
-                        IconButton(onClick = {
-                            if (onNetworkingRoute) {
-                                innerNavController.navigate(UserTab.Home.route) {
-                                    popUpTo(innerNavController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            } else {
-                                innerNavController.popBackStack()
+            val showBackButton = onNetworkingRoute
+            val titleText = if (onNetworkingRoute) "Réseaux" else null
+
+            StandardTopBar(
+                title = titleText ?: "",
+                onBack = if (showBackButton) {
+                    {
+                        if (onNetworkingRoute) {
+                            innerNavController.navigate(UserTab.Home.route) {
+                                popUpTo(innerNavController.graph.startDestinationId)
+                                launchSingleTop = true
                             }
-                        }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Retour",
-                                tint = AppDarkGreen
-                            )
+                        } else {
+                            innerNavController.popBackStack()
                         }
                     }
-                },
-                title = {
-                    if (showTitleBar) {
-                        Text(
-                            titleBarText,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = AppDarkGreen
-                        )
-                    } else {
-                        Text(
-                            "GivenX",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = AppDarkGreen
-                        )
-                    }
-                },
+                } else null,
                 actions = {
                     val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
                     // ── Notification bell ──────────────────────────────────
@@ -213,8 +185,7 @@ fun UserDashboardHost(
                                 .background(Color(0xFF34A853), CircleShape)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                }
             )
         },
         bottomBar = {
@@ -224,43 +195,38 @@ fun UserDashboardHost(
                 } else {
                     innerNavController.navigate(tab.route) {
                         // Pop back to HomeTab without destroying its saved state
-                        popUpTo(UserTab.Home.route) { saveState = true }
+                        popUpTo(UserTab.Home.route) { 
+                            saveState = true 
+                        }
                         launchSingleTop = true
                         restoreState = true
                     }
                 }
             }
         },
-        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        DashBoardBackground {
-            NavHost(
-                navController = innerNavController,
-                startDestination = UserTab.Home.route
-            ) {
-                composable(UserTab.Home.route) {
-                    UserHomeTabContent(
-                        paddingValues = paddingValues,
-                        onNavigateToAbout = onNavigateToAbout,
-                        onNavigateToCategory = onNavigateToCategory
-                    )
-                }
-                composable(UserTab.Networking.route) {
-                    NetworkingScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Vault.route) {
-                    UserCasesTabContent(
-                        paddingValues = paddingValues,
-                        onNavigateToConsulter = onNavigateToAppointments,
-                        onNavigateToMessages = {
-                            // This might need a different handling now that Messages is not in bottom bar
-                        },
-                        onNavigateToDocuments = onNavigateToDocuments,
-                        onNavigateToFacturation = onNavigateToFacturation,
-                        onNavigateToDossier = onNavigateToDossier
-                    )
-                }
+        NavHost(
+            navController = innerNavController,
+            startDestination = UserTab.Home.route,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable(UserTab.Home.route) {
+                UserHomeTabContent(
+                    paddingValues = PaddingValues(0.dp),
+                    onNavigateToAbout = onNavigateToAbout,
+                    onNavigateToCategory = onNavigateToCategory
+                )
+            }
+            composable(UserTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer = false,
+                    paddingValues = PaddingValues(0.dp),
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+            composable(UserTab.Profile.route) {
+                Box(Modifier.fillMaxSize())
             }
         }
     }
@@ -315,8 +281,8 @@ internal fun UserHomeTabContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { Spacer(modifier = Modifier.height(4.dp)) }
 
@@ -331,7 +297,7 @@ internal fun UserHomeTabContent(
         item { SectionHeader(title = "En chiffres") }
         item { HomeQuickStats() }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
     }
 }
 
@@ -499,7 +465,7 @@ private fun CategoryCard(
             .aspectRatio(1f)
             .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
-        color = Color.White.copy(alpha = 0.92f),
+        color = Color.White,
         border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
         shadowElevation = 2.dp
     ) {

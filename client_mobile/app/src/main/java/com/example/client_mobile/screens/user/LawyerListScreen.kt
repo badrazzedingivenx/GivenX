@@ -132,7 +132,7 @@ fun LawyerListScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -168,28 +168,25 @@ fun LawyerListScreen(
                     scrolledContainerColor = AppDarkGreen
                 )
             )
-        },
-        containerColor = Color(0xFFF4F6F4)
+        }
     ) { paddingValues ->
 
         // ── No-connection state ───────────────────────────────────────────────
         if (isError && lawyersState?.isEmpty() == true) {
             NoConnectionScreen(onRetry = { lawyerListViewModel.refresh() })
-            return@Scaffold
-        }
-
-        // ── Pull-to-refresh + scrollable content ──────────────────────────────
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh    = { lawyerListViewModel.refresh() },
-            modifier     = Modifier.fillMaxSize().padding(paddingValues)
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+        } else {
+            // ── Pull-to-refresh + scrollable content ──────────────────────────────
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh    = { lawyerListViewModel.refresh() },
+                modifier     = Modifier.fillMaxSize().padding(paddingValues)
             ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                 item { Spacer(Modifier.height(6.dp)) }
 
                 // ── Filter mode toggle (Spécialité / Ville) ───────────────────
@@ -329,7 +326,7 @@ fun LawyerListScreen(
                             focusedBorderColor   = AppDarkGreen,
                             unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.18f),
                             focusedContainerColor   = Color.White,
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.90f),
+                            unfocusedContainerColor = Color.White,
                             cursorColor = AppGoldColor,
                             selectionColors = TextSelectionColors(
                                 handleColor     = AppGoldColor,
@@ -406,6 +403,7 @@ fun LawyerListScreen(
             }
         }
     }
+}
 }
 
 // ─── Lawyer Card ─────────────────────────────────────────────────────────────

@@ -243,6 +243,15 @@ interface HaqApiService {
     @GET("notifications")
     suspend fun getNotifications(): Response<ApiResponse<List<com.example.client_mobile.network.dto.NotificationDto>>>
 
+    // ── Payments ─────────────────────────────────────────────────────────────
+
+    /** GET /payments?clientId={id} or /payments?lawyerId={id} — returns payments. */
+    @GET("payments")
+    suspend fun getPayments(
+        @Query("clientId") clientId: Int? = null,
+        @Query("lawyerId") lawyerId: Int? = null
+    ): Response<ApiResponse<List<com.example.client_mobile.network.dto.PaymentDto>>>
+
     // ── Legal Services (Legacy support/migration) ─────────────────────────────
 
     @GET("profiles")

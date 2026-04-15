@@ -9,19 +9,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,21 +37,21 @@ fun RegistrationScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     var firstName by remember { mutableStateOf("") }
-    var lastName  by remember { mutableStateOf("") }
-    var email     by remember { mutableStateOf("") }
-    var password  by remember { mutableStateOf("") }
-    var isLawyer  by remember { mutableStateOf(false) }
-
+    var lastName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isLawyer by remember { mutableStateOf(false) }
+    
     var isPasswordVisible by remember { mutableStateOf(false) }
-
+    
     var firstNameError by remember { mutableStateOf(false) }
-    var lastNameError  by remember { mutableStateOf(false) }
-    var emailError     by remember { mutableStateOf(false) }
-    var passwordError  by remember { mutableStateOf(false) }
+    var lastNameError by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
 
     val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
-    val isLoading  = registerState is AuthViewModel.RegisterUiState.Loading
-    val authError  = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
+    val isLoading = registerState is AuthViewModel.RegisterUiState.Loading
+    val authError = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
 
     LaunchedEffect(registerState) {
         when (val state = registerState) {
@@ -63,177 +64,194 @@ fun RegistrationScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Background image
-        Image(
-            painter            = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier           = Modifier.fillMaxSize(),
-            contentScale       = ContentScale.Crop
-        )
-
-        // Scrollable centered card
-        Column(
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(vertical = 44.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.88f)
+                    .fillMaxWidth(0.92f)
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(40.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.52f),
-                                Color.White.copy(alpha = 0.68f)
-                            )
-                        )
-                    )
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
-                        color = Color.White.copy(alpha = 0.45f),
-                        shape = RoundedCornerShape(40.dp)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(32.dp)
                     )
                     .padding(horizontal = 24.dp, vertical = 32.dp)
             ) {
                 Column(
-                    modifier            = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text       = "Inscription",
-                        fontSize   = 28.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color      = AppDarkGreen
+                        text = "Inscription",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Créez votre compte",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // ── Account type toggle ──────────────────────────────────
+                    // User Type Selector
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(AppDarkGreen.copy(alpha = 0.08f))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        listOf("Client" to false, "Avocat" to true).forEach { (label, isLawyerType) ->
-                            val isSelected = isLawyer == isLawyerType
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(40.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(if (isSelected) AppDarkGreen else Color.Transparent)
-                                    .clickable { isLawyer = isLawyerType },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text       = label,
-                                    color      = if (isSelected) Color.White else AppDarkGreen,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Serif,
-                                    fontSize   = 14.sp
-                                )
-                            }
+                        val selectedColor = MaterialTheme.colorScheme.primary
+                        val unselectedColor = Color.Transparent
+                        val selectedTextColor = Color.White
+                        val unselectedTextColor = MaterialTheme.colorScheme.primary
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (!isLawyer) selectedColor else unselectedColor)
+                                .clickable { isLawyer = false },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Client",
+                                color = if (!isLawyer) selectedTextColor else unselectedTextColor,
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isLawyer) selectedColor else unselectedColor)
+                                .clickable { isLawyer = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Avocat",
+                                color = if (isLawyer) selectedTextColor else unselectedTextColor,
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    // ── Form fields ──────────────────────────────────────────
                     CustomInputField(
-                        value         = firstName,
+                        value = firstName,
                         onValueChange = { firstName = it; firstNameError = false },
-                        placeholder   = "Prénom",
-                        leadingIcon   = Icons.Default.Person,
-                        isError       = firstNameError,
-                        errorMessage  = "Veuillez saisir votre prénom"
+                        placeholder = "Prénom",
+                        leadingIcon = Icons.Default.Person,
+                        isError = firstNameError,
+                        errorMessage = "Veuillez saisir votre prénom"
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
-                        value         = lastName,
+                        value = lastName,
                         onValueChange = { lastName = it; lastNameError = false },
-                        placeholder   = "Nom",
-                        leadingIcon   = Icons.Default.Person,
-                        isError       = lastNameError,
-                        errorMessage  = "Veuillez saisir votre nom"
+                        placeholder = "Nom",
+                        leadingIcon = Icons.Default.Person,
+                        isError = lastNameError,
+                        errorMessage = "Veuillez saisir votre nom"
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
-                        value         = email,
+                        value = email,
                         onValueChange = { email = it; emailError = false },
-                        placeholder   = "E-mail",
-                        leadingIcon   = Icons.Default.Email,
-                        isError       = emailError,
-                        errorMessage  = "Veuillez saisir un e-mail valide",
-                        keyboardType  = KeyboardType.Email
+                        placeholder = "E-mail",
+                        leadingIcon = Icons.Default.Email,
+                        isError = emailError,
+                        errorMessage = "Veuillez saisir un e-mail valide",
+                        keyboardType = KeyboardType.Email
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
-                        value              = password,
-                        onValueChange      = { password = it; passwordError = false },
-                        placeholder        = "Mot de passe",
-                        leadingIcon        = Icons.Default.Lock,
-                        isError            = passwordError,
-                        errorMessage       = "Mot de passe requis (6 caractères min)",
-                        isPassword         = true,
-                        isPasswordVisible  = isPasswordVisible,
+                        value = password,
+                        onValueChange = { password = it; passwordError = false },
+                        placeholder = "Mot de passe",
+                        leadingIcon = Icons.Default.Lock,
+                        isError = passwordError,
+                        errorMessage = "Mot de passe (min 6 caractères)",
+                        isPassword = true,
+                        isPasswordVisible = isPasswordVisible,
                         onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                    // ── Error banner ─────────────────────────────────────────
-                    ErrorBanner(message = authError)
-                    if (authError != null) Spacer(modifier = Modifier.height(8.dp))
+                    authError?.let { err ->
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
 
-                    // ── Submit button ────────────────────────────────────────
-                    AppButton(
-                        text      = "S'inscrire",
-                        isLoading = isLoading,
-                        onClick   = {
+                    LegalButton(
+                        text = "S'inscrire",
+                        onClick = {
                             firstNameError = firstName.isBlank()
-                            lastNameError  = lastName.isBlank()
-                            emailError     = email.isBlank() || !email.contains("@")
-                            passwordError  = password.length < 6
-                            if (firstNameError || lastNameError || emailError || passwordError) return@AppButton
+                            lastNameError = lastName.isBlank()
+                            emailError = email.isBlank() || !email.contains("@")
+                            passwordError = password.length < 6
+                            
+                            if (firstNameError || lastNameError || emailError || passwordError) return@LegalButton
+                            
                             authViewModel.registerNewUser(
                                 firstName = firstName,
-                                lastName  = lastName,
-                                email     = email,
-                                password  = password,
-                                role      = if (isLawyer) "lawyer" else "user"
+                                lastName = lastName,
+                                email = email,
+                                password = password,
+                                role = if (isLawyer) "lawyer" else "user"
                             )
-                        }
+                        },
+                        enabled = !isLoading
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    if (isLoading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
 
-                    // ── Back to login link ───────────────────────────────────
+                    Spacer(modifier = Modifier.height(24.dp))
                     Row(
-                        modifier          = Modifier.clickable { onNavigateBack() },
+                        modifier = Modifier.clickable { onNavigateBack() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             "Déjà un compte ? ",
-                            fontSize   = 13.sp,
-                            color      = AppDarkGreen.copy(alpha = 0.55f),
-                            fontFamily = FontFamily.Serif
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
                         )
                         Text(
                             "Se connecter",
-                            fontSize   = 13.sp,
-                            color      = AppDarkGreen,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Serif
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
                         )
                     }
                 }

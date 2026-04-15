@@ -28,8 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
@@ -49,15 +51,16 @@ fun LoginScreen(
     var passwordError by remember { mutableStateOf(false) }
 
     val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
-    val isLoading  = loginState is AuthViewModel.LoginUiState.Loading
-    val authError  = (loginState as? AuthViewModel.LoginUiState.Error)?.message
-    val context    = LocalContext.current
+    val isLoading = loginState is AuthViewModel.LoginUiState.Loading
+    val authError = (loginState as? AuthViewModel.LoginUiState.Error)?.message
+    val context   = LocalContext.current
 
+    // Show Toast on every new error, then keep inline text as well
     LaunchedEffect(authError) {
         if (!authError.isNullOrBlank()) {
             Toast.makeText(context, authError, Toast.LENGTH_LONG).show()
         }
-    }
+ }
 
     LaunchedEffect(loginState) {
         if (loginState is AuthViewModel.LoginUiState.Success) {
@@ -68,143 +71,143 @@ fun LoginScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Background image
-        Image(
-            painter            = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier           = Modifier.fillMaxSize(),
-            contentScale       = ContentScale.Crop
-        )
-
-        // Centered glassmorphism card
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
         Box(
-            modifier         = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.88f)
+                    .fillMaxWidth(0.92f)
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(40.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.52f),
-                                Color.White.copy(alpha = 0.68f)
-                            )
-                        )
-                    )
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
-                        color = Color.White.copy(alpha = 0.45f),
-                        shape = RoundedCornerShape(40.dp)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(32.dp)
                     )
-                    .padding(horizontal = 24.dp, vertical = 36.dp)
+                    .padding(horizontal = 24.dp, vertical = 40.dp)
             ) {
                 Column(
-                    modifier            = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Logo
                     Image(
-                        painter            = painterResource(id = R.drawable.logo_app),
+                        painter = painterResource(id = R.drawable.logo_app),
                         contentDescription = "Logo",
-                        modifier           = Modifier.size(220.dp),
-                        contentScale       = ContentScale.Fit
+                        modifier = Modifier.height(120.dp),
+                        contentScale = ContentScale.Fit
                     )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text       = "Connexion",
-                        fontSize   = 28.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color      = AppDarkGreen
+                        text = "Connexion",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     )
-
-                    Spacer(modifier = Modifier.height(28.dp))
-
-                    // Email field
-                    CustomInputField(
-                        value         = email,
-                        onValueChange = { email = it; emailError = false },
-                        placeholder   = "E-mail",
-                        leadingIcon   = Icons.Default.Email,
-                        isError       = emailError,
-                        errorMessage  = "Veuillez saisir votre e-mail",
-                        keyboardType  = KeyboardType.Email
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Accédez à votre espace sécurisé",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                     )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Password field
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
                     CustomInputField(
-                        value              = password,
-                        onValueChange      = { password = it; passwordError = false },
-                        placeholder        = "Mot de passe",
-                        leadingIcon        = Icons.Default.Lock,
-                        isError            = passwordError,
-                        errorMessage       = "Veuillez saisir votre mot de passe",
-                        isPassword         = true,
-                        isPasswordVisible  = isPasswordVisible,
+                        value = email,
+                        onValueChange = { 
+                            email = it
+                            emailError = false 
+                        },
+                        placeholder = "E-mail",
+                        leadingIcon = Icons.Default.Email,
+                        isError = emailError,
+                        errorMessage = "Veuillez saisir votre e-mail",
+                        keyboardType = KeyboardType.Email
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CustomInputField(
+                        value = password,
+                        onValueChange = { 
+                            password = it
+                            passwordError = false 
+                        },
+                        placeholder = "Mot de passe",
+                        leadingIcon = Icons.Default.Lock,
+                        isError = passwordError,
+                        errorMessage = "Veuillez saisir votre mot de passe",
+                        isPassword = true,
+                        isPasswordVisible = isPasswordVisible,
                         onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
                     )
-
-                    // Forgot password
                     Text(
-                        text       = "Mot de passe oublié ?",
-                        fontSize   = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.Serif,
-                        color      = AppDarkGreen,
-                        modifier   = Modifier
+                        text = "Mot de passe oublié ?",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier
                             .align(Alignment.End)
-                            .padding(top = 10.dp)
+                            .padding(top = 12.dp)
                             .clickable { /* Action */ }
                     )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    // Auth error banner
+                    authError?.let { err ->
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                        )
+                    }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Inline error banner
-                    ErrorBanner(message = authError)
-
-                    if (authError != null) Spacer(modifier = Modifier.height(8.dp))
-
-                    // Login button — uses the standardised AppButton
-                    AppButton(
-                        text      = "Se connecter",
-                        onClick   = {
-                            emailError    = email.isBlank()
+                    LegalButton(
+                        text = "Se connecter",
+                        onClick = {
+                            emailError = email.isBlank()
                             passwordError = password.isBlank()
-                            if (emailError || passwordError) return@AppButton
+                            if (emailError || passwordError) return@LegalButton
                             authViewModel.login(email, password)
                         },
-                        isLoading = isLoading
+                        enabled = !isLoading
                     )
 
-                    Spacer(modifier = Modifier.height(22.dp))
+                    if (isLoading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
 
-                    // Sign-up link
+                    Spacer(modifier = Modifier.height(24.dp))
                     Row(
-                        modifier              = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text       = "Pas encore de compte ? ",
-                            fontSize   = 12.sp,
-                            fontFamily = FontFamily.Serif,
-                            color      = AppDarkGreen.copy(alpha = 0.55f),
-                            fontWeight = FontWeight.Medium
+                            text = "Nouveau ici ? ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
                         )
                         Text(
-                            text       = "Créer un compte",
-                            fontSize   = 12.sp,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            color      = AppDarkGreen,
-                            modifier   = Modifier.clickable { onNavigateToSignup(userType) }
+                            text = "Créer un compte",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            ),
+                            modifier = Modifier.clickable { onNavigateToSignup(userType) }
                         )
                     }
                 }
@@ -213,7 +216,6 @@ fun LoginScreen(
     }
 }
 
-// ─── Custom Input Field ───────────────────────────────────────────────────────
 @Composable
 fun CustomInputField(
     value: String,
@@ -227,63 +229,45 @@ fun CustomInputField(
     onVisibilityToggle: (() -> Unit)? = null,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
+    val darkGreen = Color(0xFF1B3124)
     Column(modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
-            value         = value,
+            value = value,
             onValueChange = onValueChange,
-            placeholder   = {
-                Text(
-                    placeholder,
-                    color      = AppDarkGreen.copy(alpha = 0.40f),
-                    fontFamily = FontFamily.Serif,
-                    fontSize   = 14.sp
-                )
-            },
-            leadingIcon   = {
-                Icon(
-                    leadingIcon,
-                    contentDescription = null,
-                    tint     = if (isError) Color(0xFFD32F2F) else AppDarkGreen.copy(alpha = 0.65f),
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            trailingIcon  = {
+            placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = Color.Gray) },
+            leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            trailingIcon = {
                 if (isPassword && onVisibilityToggle != null) {
                     IconButton(onClick = onVisibilityToggle) {
                         Icon(
-                            imageVector        = if (isPasswordVisible) Icons.Default.Visibility
-                                                 else Icons.Default.VisibilityOff,
+                            imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = null,
-                            tint               = AppDarkGreen.copy(alpha = 0.45f)
+                            tint = Color.Gray
                         )
                     }
                 }
             },
-            visualTransformation = if (isPassword && !isPasswordVisible)
-                PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = if (isPassword) KeyboardType.Password else keyboardType
-            ),
-            modifier    = Modifier.fillMaxWidth(),
-            shape       = RoundedCornerShape(20.dp),
-            singleLine  = true,
-            isError     = isError,
-            colors      = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor   = Color.White.copy(alpha = 0.96f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.90f),
-                errorContainerColor     = Color.White.copy(alpha = 0.96f),
-                focusedBorderColor      = AppDarkGreen.copy(alpha = 0.70f),
-                unfocusedBorderColor    = AppDarkGreen.copy(alpha = 0.20f),
-                errorBorderColor        = Color(0xFFD32F2F)
+            visualTransformation = if (isPassword && !isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            singleLine = true,
+            isError = isError,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White, 
+                unfocusedContainerColor = Color.White,
+                errorContainerColor = Color.White,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                errorBorderColor = MaterialTheme.colorScheme.error
             )
         )
-        if (isError && errorMessage.isNotEmpty()) {
+        if (isError) {
             Text(
-                text     = errorMessage,
-                color    = Color(0xFFD32F2F),
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Serif,
-                modifier = Modifier.padding(start = 16.dp, top = 3.dp)
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
     }

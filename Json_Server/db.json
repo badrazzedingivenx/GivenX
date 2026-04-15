@@ -170,5 +170,59 @@
       "participants": 120,
       "status": "Scheduled"
     }
+  ],
+  "appointments": [
+    {
+      "id": "app_001",
+      "userId": 6,
+      "lawyerId": 1,
+      "lawyerName": "Jean Dupont",
+      "date": "2024-06-15T10:00:00Z",
+      "status": "CONFIRMED",
+      "type": "VIDEO"
+    }
+  ],
+  "billing": {
+    "summary": {
+      "totalPaid": "2,500 DH",
+      "pendingAmount": "500 DH"
+    },
+    "invoices": [
+      {
+        "id": "inv_001",
+        "date": "2024-05-01",
+        "amount": "1,250 DH",
+        "status": "PAID"
+      }
+    ]
+  },
+  "payments": [
+    {
+      "id": "pay_001",
+      "clientId": 6,
+      "date": "2024-06-01",
+      "amount": "1 500 DH",
+      "status": "Completed",
+      "subject": "Consultation Juridique",
+      "method": "Carte Bancaire"
+    },
+    {
+      "id": "pay_002",
+      "clientId": 6,
+      "date": "2024-06-05",
+      "amount": "3 000 DH",
+      "status": "Pending",
+      "subject": "Honoraires Dossier FR-2024-001",
+      "method": "Virement"
+    },
+    {
+      "id": "pay_003",
+      "clientId": 6,
+      "date": "2024-05-20",
+      "amount": "500 DH",
+      "status": "Failed",
+      "subject": "Frais de dossier",
+      "method": "Carte Bancaire"
+    }
   ]
 }
