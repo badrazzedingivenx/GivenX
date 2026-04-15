@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,9 +33,13 @@ fun PaymentScreen(
     onBack: () -> Unit,
     lawyerId: Int = -1,
     viewModel: PaymentViewModel = viewModel(
+        key = if (lawyerId != -1) "lawyer_$lawyerId" else "client",
         factory = PaymentViewModelFactory(if (lawyerId != -1) lawyerId else null)
     )
 ) {
+    LaunchedEffect(lawyerId) {
+        viewModel.fetchPayments()
+    }
     val uiState by viewModel.uiState.collectAsState()
 
     BaseScreen(

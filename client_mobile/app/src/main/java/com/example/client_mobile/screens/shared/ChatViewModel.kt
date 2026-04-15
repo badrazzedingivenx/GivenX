@@ -1,5 +1,6 @@
 package com.example.client_mobile.screens.shared
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -29,13 +30,18 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
     fun clearError() { _errorMessage.value = null }
 
     init {
+        Log.d("ChatViewModel", "Initializing for conversationId: $conversationId")
         fetchMessages()
     }
 
     fun fetchMessages() {
-        if (!TokenManager.isLoggedIn() || conversationId.isBlank()) return
+        if (!TokenManager.isLoggedIn() || conversationId.isBlank()) {
+            Log.d("ChatViewModel", "Fetch skipped: loggedIn=${TokenManager.isLoggedIn()}, id=$conversationId")
+            return
+        }
         viewModelScope.launch {
             _isLoading.value = true
+            Log.d("ChatViewModel", "Fetching messages for $conversationId...")
             try {
                 val response = RetrofitClient.haqApi.getChatDetails(conversationId)
                 if (response.isSuccessful && response.body()?.success == true) {

@@ -1,5 +1,6 @@
 package com.example.client_mobile.screens.shared
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -99,6 +100,7 @@ object ConversationRepository {
      * Locally-sent messages that are not yet returning from the API are kept.
      */
     fun replaceMessagesFromApi(conversationId: String, items: List<ChatMessage>) {
+        Log.d("ConversationRepo", "Replacing messages for $conversationId. API count: ${items.size}")
         val existing = getMessages(conversationId)
         val apiIds   = items.map { it.id }.toSet()
         val localOnly = existing.filter { it.id !in apiIds }
@@ -119,4 +121,9 @@ object ConversationRepository {
 
     private fun currentTime(): String =
         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+
+    fun clear() {
+        conversations.clear()
+        messageMap.clear()
+    }
 }

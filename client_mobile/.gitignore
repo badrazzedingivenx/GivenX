@@ -13,3 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Node.js / API server
+node_modules/
+api_server/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local

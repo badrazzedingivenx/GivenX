@@ -144,7 +144,7 @@ fun DossierDetailScreen(
     onBack: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {}
 ) {
-    val vm: DossierDetailViewModel = viewModel()
+    val vm: DossierDetailViewModel = viewModel(key = caseId)
     LaunchedEffect(caseId) { vm.fetchById(caseId) }
     val screenState by vm.state.collectAsStateWithLifecycle()
 

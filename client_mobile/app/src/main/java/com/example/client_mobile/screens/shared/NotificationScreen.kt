@@ -61,6 +61,11 @@ object NotificationRepository {
     fun markReadLawyer(id: String) { val i = lawyerNotifications.indexOfFirst { it.id == id }; if (i >= 0) lawyerNotifications[i] = lawyerNotifications[i].copy(isRead = true) }
     fun removeUser(id: String)     { userNotifications.removeAll { it.id == id } }
     fun removeLawyer(id: String)   { lawyerNotifications.removeAll { it.id == id } }
+
+    fun clear() {
+        userNotifications.clear()
+        lawyerNotifications.clear()
+    }
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────

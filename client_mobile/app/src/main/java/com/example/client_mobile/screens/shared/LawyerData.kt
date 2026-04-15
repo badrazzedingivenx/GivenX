@@ -86,6 +86,15 @@ object UserSession {
         address = newAddress
         profileImageUri = newImageUri
     }
+
+    fun clear() {
+        name = ""
+        email = ""
+        phone = ""
+        address = ""
+        avatarUrl = ""
+        profileImageUri = null
+    }
 }
 
 // ─── Lawyer Session / Repository ──────────────────────────────────────────────
@@ -131,18 +140,39 @@ object LawyerSession {
     }
 
     fun updateProfile(
-        newName: String, newTitle: String, newEmail: String, newPhone: String, 
-        newAddress: String, newBio: String, newSpecs: List<String>, newImageUri: Uri?
+        name: String,
+        title: String,
+        email: String,
+        phone: String,
+        address: String,
+        bio: String,
+        specs: List<String>,
+        imageUri: Uri?
     ) {
-        fullName = newName
-        title = newTitle
-        email = newEmail
-        phone = newPhone
-        address = newAddress
-        bio = newBio
-        profileImageUri = newImageUri
+        this.fullName = name
+        this.title = title
+        this.email = email
+        this.phone = phone
+        this.address = address
+        this.bio = bio
+        this.specializations.clear()
+        this.specializations.addAll(specs)
+        this.profileImageUri = imageUri
+    }
+
+    fun clear() {
+        fullName = ""
+        title = ""
+        email = ""
+        phone = ""
+        address = ""
+        bio = ""
+        avatarUrl = ""
+        profileImageUri = null
         specializations.clear()
-        specializations.addAll(newSpecs)
+        clients.clear()
+        requests.clear()
+        payments.clear()
     }
 }
 
@@ -151,6 +181,9 @@ object MessageRepository {
     val messages = mutableStateListOf<InboxMessage>()
     fun sendMessage(fromName: String, content: String, lawyerId: String) {
         messages.add(InboxMessage(id = System.currentTimeMillis().toString(), fromName = fromName, content = content, timestamp = "À l'instant", lawyerId = lawyerId))
+    }
+    fun clear() {
+        messages.clear()
     }
 }
 
@@ -183,6 +216,10 @@ object DocumentRepository {
 
     fun delete(id: Long) {
         documents.removeAll { it.id == id }
+    }
+
+    fun clear() {
+        documents.clear()
     }
 }
 
@@ -263,4 +300,10 @@ object CreatorRepository {
     fun deleteReel(id: Long)  { reels.removeAll  { it.id == id } }
     fun deleteStory(id: Long) { stories.removeAll { it.id == id } }
     fun deleteLive(id: Long)  { liveSessions.removeAll { it.id == id } }
+
+    fun clear() {
+        stories.clear()
+        reels.clear()
+        liveSessions.clear()
+    }
 }

@@ -252,10 +252,29 @@ fun EditLawyerProfileScreen(
                     Button(
                         onClick = {
                             showSaveDialog = false
-                            currentProfile?.let { base ->
-                                val updated = base.copy(fullName = name, speciality = title, email = email, phone = phone, address = address, bio = bio, specializations = specs.toList())
+                            val profile = currentProfile
+                            if (profile != null) {
+                                val updatedSpecs: List<String> = specs.toList()
+                                val updated = profile.copy(
+                                    fullName = name,
+                                    speciality = title,
+                                    email = email,
+                                    phone = phone,
+                                    address = address,
+                                    bio = bio,
+                                    specializations = updatedSpecs
+                                )
                                 dashboardViewModel.updateProfile(updated)
-                                LawyerSession.updateProfile(name, title, email, phone, address, bio, specs.toList(), selectedImageUri)
+                                LawyerSession.updateProfile(
+                                    name = name,
+                                    title = title,
+                                    email = email,
+                                    phone = phone,
+                                    address = address,
+                                    bio = bio,
+                                    specs = updatedSpecs,
+                                    imageUri = selectedImageUri
+                                )
                             }
                             onBack()
                         },
