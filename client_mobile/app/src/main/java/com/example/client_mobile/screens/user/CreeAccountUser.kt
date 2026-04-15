@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
 import com.example.client_mobile.screens.shared.AuthViewModel
+import com.example.client_mobile.screens.shared.AppScaffold
 
 @Composable
 fun CreeUserScreen(
@@ -67,15 +68,13 @@ fun CreeUserScreen(
 
     val darkGreen = Color(0xFF1B3124)
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -83,14 +82,7 @@ fun CreeUserScreen(
                     .fillMaxWidth(0.9f)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(50.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.50f),
-                                Color.White.copy(alpha = 0.65f)
-                            )
-                        )
-                    )
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
                         color = Color.White.copy(alpha = 0.4f),
@@ -286,9 +278,9 @@ fun CustomInputFieldUser(
             singleLine = true,
             isError = isError,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.95f), 
-                unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                errorContainerColor = Color.White.copy(alpha = 0.95f),
+                focusedContainerColor = Color.White, 
+                unfocusedContainerColor = Color.White,
+                errorContainerColor = Color.White,
                 focusedBorderColor = Color.Transparent,
                 unfocusedBorderColor = Color.Transparent,
                 errorBorderColor = Color.Red

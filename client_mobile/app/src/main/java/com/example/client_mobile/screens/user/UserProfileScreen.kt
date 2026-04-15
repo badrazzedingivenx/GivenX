@@ -66,27 +66,11 @@ fun UserProfileScreen(
     var showLogOutDialog  by remember { mutableStateOf(false) }
     var showDeleteDialog  by remember { mutableStateOf(false) }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Mon Profil",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
+            StandardTopBar(
+                title = "Mon Profil",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = onNavigateToEdit) {
                         Icon(
@@ -95,44 +79,34 @@ fun UserProfileScreen(
                             tint = AppGoldColor
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
-
-            // ── Initial loading state ─────────────────────────────────────────
-            if (isFetching && profile == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = AppGoldColor)
                 }
-                return@DashBoardBackground
+            )
+        }
+    ) { paddingValues ->
+        // ── Initial loading state ─────────────────────────────────────────
+        if (isFetching && profile == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = AppGoldColor)
             }
-
+        } else if (isError && profile == null) {
             // ── No-connection state ───────────────────────────────────────────
-            if (isError && profile == null) {
-                NoConnectionScreen(
-                    onRetry  = { userViewModel.refresh() },
-                    modifier = Modifier.padding(paddingValues)
-                )
-                return@DashBoardBackground
-            }
-
+            NoConnectionScreen(
+                onRetry  = { userViewModel.refresh() },
+                modifier = Modifier.padding(paddingValues)
+            )
+        } else {
             // ── Pull-to-refresh wrapping the scrollable content ───────────────
             PullToRefreshBox(
                 isRefreshing = isFetching,
                 onRefresh    = { userViewModel.refresh() },
-                modifier     = Modifier.fillMaxSize()
+                modifier     = Modifier.fillMaxSize().padding(paddingValues)
             ) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues)
                         .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
@@ -225,86 +199,84 @@ fun UserProfileScreen(
                         }
                     }
 
-                    // ── Membership Badge ──────────────────────────────────────
-                    item { MembershipBanner() }
 
                     // ── Footer Actions ────────────────────────────────────────
                     item {
                         Spacer(modifier = Modifier.height(4.dp))
-                    Button(
-                        onClick = { showLogOutDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFFF1F1)
-                        ),
-                        border = BorderStroke(1.dp, Color(0xFFE53935).copy(alpha = 0.35f))
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
-                            tint = Color(0xFFE53935),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Se Déconnecter",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Color(0xFFE53935)
-                        )
-                    }
-                }
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Supprimer mon compte",
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 13.sp,
-                            color = Color.Gray.copy(alpha = 0.60f),
+                        Button(
+                            onClick = { showLogOutDialog = true },
                             modifier = Modifier
-                                .clickable { showDeleteDialog = true }
-                                .padding(vertical = 8.dp, horizontal = 12.dp)
-                        )
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFFF1F1)
+                            ),
+                            border = BorderStroke(1.dp, Color(0xFFE53935).copy(alpha = 0.35f))
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = null,
+                                tint = Color(0xFFE53935),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Se Déconnecter",
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color(0xFFE53935)
+                            )
+                        }
                     }
-                }
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Supprimer mon compte",
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 13.sp,
+                                color = Color.Gray.copy(alpha = 0.60f),
+                                modifier = Modifier
+                                    .clickable { showDeleteDialog = true }
+                                    .padding(vertical = 8.dp, horizontal = 12.dp)
+                            )
+                        }
+                    }
                     item { Spacer(modifier = Modifier.height(20.dp)) }
                 } // end LazyColumn
             } // end PullToRefreshBox
-        } // end DashBoardBackground
-    } // end Scaffold
+        }
 
-    // ── Log Out Confirmation Dialog ───────────────────────────────────────────
-    if (showLogOutDialog) {
-        ProfileConfirmDialog(
-            title = "Se déconnecter ?",
-            message = "Vous serez redirigé vers l'écran de connexion.",
-            confirmLabel = "Déconnecter",
-            confirmColor = Color(0xFFE53935),
-            onConfirm = {
-                showLogOutDialog = false
-                onLogOut()
-            },
-            onDismiss = { showLogOutDialog = false }
-        )
-    }
+        // ── Log Out Confirmation Dialog ───────────────────────────────────────────
+        if (showLogOutDialog) {
+            ProfileConfirmDialog(
+                title = "Se déconnecter ?",
+                message = "Vous serez redirigé vers l'écran de connexion.",
+                confirmLabel = "Déconnecter",
+                confirmColor = Color(0xFFE53935),
+                onConfirm = {
+                    showLogOutDialog = false
+                    onLogOut()
+                },
+                onDismiss = { showLogOutDialog = false }
+            )
+        }
 
-    // ── Delete Account Dialog ─────────────────────────────────────────────────
-    if (showDeleteDialog) {
-        ProfileConfirmDialog(
-            title = "Supprimer le compte ?",
-            message = "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
-            confirmLabel = "Supprimer",
-            confirmColor = Color(0xFFE53935),
-            onConfirm = { showDeleteDialog = false },
-            onDismiss = { showDeleteDialog = false }
-        )
+        // ── Delete Account Dialog ─────────────────────────────────────────────────
+        if (showDeleteDialog) {
+            ProfileConfirmDialog(
+                title = "Supprimer le compte ?",
+                message = "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
+                confirmLabel = "Supprimer",
+                confirmColor = Color(0xFFE53935),
+                onConfirm = { showDeleteDialog = false },
+                onDismiss = { showDeleteDialog = false }
+            )
+        }
     }
 }
 
@@ -413,31 +385,6 @@ private fun ProfileHeaderCard(userName: String, photoUrl: String? = null) {
                         fontSize = 22.sp,
                         color = Color.White
                     )
-                    Surface(
-                        shape = RoundedCornerShape(50.dp),
-                        color = AppGoldColor.copy(alpha = 0.18f),
-                        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.60f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = null,
-                                tint = AppGoldColor,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Text(
-                                text = "Client Premium",
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = AppGoldColor
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -651,61 +598,6 @@ private fun LegalFeatureRow(
     }
 }
 
-// ─── Membership Banner ────────────────────────────────────────────────────────
-@Composable
-private fun MembershipBanner() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = AppDarkGreen,
-        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.45f)),
-        shadowElevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.WorkspacePremium,
-                contentDescription = null,
-                tint = AppGoldColor,
-                modifier = Modifier.size(36.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Abonnement Premium",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color.White
-                )
-                Text(
-                    text = "Valide jusqu'au 31 Déc 2026",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    color = AppGoldColor.copy(alpha = 0.80f)
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = AppGoldColor.copy(alpha = 0.18f),
-                border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.60f))
-            ) {
-                Text(
-                    text = "Actif",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    color = AppGoldColor,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                )
-            }
-        }
-    }
-}
 
 // ─── Row Divider ─────────────────────────────────────────────────────────────
 @Composable

@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -123,39 +124,15 @@ fun LawyerDashboardHost(
         return
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             val onMessagesRoute = currentRoute == LawyerTab.Messages.route
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    if (onMessagesRoute) {
-                        IconButton(onClick = { innerNavController.popBackStack() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Retour",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                },
-                title = {
-                    if (onMessagesRoute) {
-                        Text(
-                            "Messages",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = AppDarkGreen
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Haqqi",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.height(68.dp)
-                        )
-                    }
-                },
+            val titleText = if (onMessagesRoute) "Messages" else null
+
+            StandardTopBar(
+                title = titleText ?: "",
+                showLogo = !onMessagesRoute,
+                onBack = if (onMessagesRoute) { { innerNavController.popBackStack() } } else null,
                 actions = {
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
                     IconButton(onClick = onNavigateToNotifications) {
@@ -171,15 +148,15 @@ fun LawyerDashboardHost(
                                 }
                             }
                         ) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = AppDarkGreen)
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color.White)
                         }
                     }
                     // Profile avatar
-                    val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == fullName }
+                    val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == displayName }
                     Box(
                         modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(40.dp)
+                            .padding(end = 16.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .clickable { onNavigateToProfile() },
                         contentAlignment = Alignment.Center
@@ -187,17 +164,17 @@ fun LawyerDashboardHost(
                         Surface(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(if (hasActiveStory) 3.dp else 0.dp),
+                                .padding(if (hasActiveStory) 2.dp else 0.dp),
                             shape    = CircleShape,
-                            color    = AppDarkGreen.copy(alpha = 0.10f),
-                            border   = if (!hasActiveStory) BorderStroke(1.5.dp, AppGoldColor.copy(alpha = 0.5f)) else null
+                            color    = Color.White.copy(alpha = 0.2f),
+                            border   = if (!hasActiveStory) BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)) else null
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (profileImageUri != null) {
                                     AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
                                 } else {
                                     Icon(Icons.Default.Person, contentDescription = "Profil",
-                                        tint = AppGoldColor, modifier = Modifier.size(20.dp))
+                                        tint = AppGoldColor, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -205,20 +182,11 @@ fun LawyerDashboardHost(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .border(2.dp, AppGoldColor, CircleShape)
+                                    .border(1.5.dp, AppGoldColor, CircleShape)
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .size(11.dp)
-                                .align(Alignment.BottomEnd)
-                                .background(Color.White, CircleShape)
-                                .padding(2.dp)
-                                .background(Color(0xFF34A853), CircleShape)
-                        )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                }
             )
         },
         floatingActionButton = {
@@ -230,47 +198,48 @@ fun LawyerDashboardHost(
                     is LawyerTab.Profile -> onNavigateToProfile()
                     is LawyerTab.Creator -> onNavigateToCreator()
                     else -> innerNavController.navigate(tab.route) {
-                        popUpTo(LawyerTab.Home.route) { saveState = true }
+                        popUpTo(LawyerTab.Home.route) { 
+                            saveState = true 
+                        }
                         launchSingleTop = true
                         restoreState = true
                     }
                 }
             }
         },
-        containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        showBackground = true
     ) { paddingValues ->
-        DashBoardBackground {
-            NavHost(
-                navController = innerNavController,
-                startDestination = LawyerTab.Home.route
-            ) {
-                composable(LawyerTab.Home.route) {
-                    AvocatDashboardScreen(
-                        paddingValues           = paddingValues,
-                        profile                 = lawyerProfile,
-                        stats                   = lawyerStats,
-                        revenueMonthly          = revenueMonthly,
-                        recentConsultations     = recentConsultations,
-                        consultationsError      = consultationsError,
-                        onNavigateToRequests    = onNavigateToRequests,
-                        onNavigateToPayments    = onNavigateToPayments,
-                        onNavigateToCreator     = onNavigateToCreator,
-                        onRetryConsultations    = { dashboardViewModel.retryConsultations() }
-                    )
-                }
-                composable(LawyerTab.Messages.route) {
-                    MessagesInboxScreen(
-                        isLawyer = true,
-                        paddingValues = paddingValues,
-                        onNavigateToChat = onNavigateToChat
-                    )
-                }
-                composable(LawyerTab.Clients.route) {
-                    LawyerClientsTabContent(paddingValues = paddingValues)
-                }
-
+        NavHost(
+            navController = innerNavController,
+            startDestination = LawyerTab.Home.route,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable(LawyerTab.Home.route) {
+                AvocatDashboardScreen(
+                    paddingValues           = PaddingValues(0.dp),
+                    profile                 = lawyerProfile,
+                    stats                   = lawyerStats,
+                    revenueMonthly          = revenueMonthly,
+                    recentConsultations     = recentConsultations,
+                    consultationsError      = consultationsError,
+                    onNavigateToRequests    = onNavigateToRequests,
+                    onNavigateToPayments    = onNavigateToPayments,
+                    onNavigateToCreator     = onNavigateToCreator,
+                    onRetryConsultations    = { dashboardViewModel.retryConsultations() }
+                )
             }
+            composable(LawyerTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer = true,
+                    paddingValues = PaddingValues(0.dp),
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+            composable(LawyerTab.Clients.route) {
+                LawyerClientsTabContent(paddingValues = PaddingValues(0.dp))
+            }
+
         }
     }
 
@@ -309,34 +278,26 @@ fun LawyerDashboardHost(
 fun LawyerPaymentsScreen(onBack: () -> Unit) {
     val payments = LawyerSession.payments
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Suivi des Paiements", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AppDarkGreen) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Suivi des Paiements",
+                onBack = onBack
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
-                items(payments) { payment ->
-                    PaymentCard(payment)
-                }
-                item { Spacer(modifier = Modifier.height(24.dp)) }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+            items(payments) { payment ->
+                PaymentCard(payment)
             }
+            item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
@@ -354,8 +315,8 @@ fun PaymentCard(payment: PaymentItem) {
                 Text(payment.amount, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppDarkGreen)
                 StatusChip(
                     label = payment.status,
-                    containerColor = if (payment.status == "Reçu") Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
-                    textColor = if (payment.status == "Reçu") Color(0xFF2E7D32) else Color(0xFFE65100)
+                    containerColor = if (payment.status == "Reçu") StatusGreenBg else StatusOrangeBg,
+                    textColor = if (payment.status == "Reçu") StatusGreen else StatusOrange
                 )
             }
         }
@@ -388,11 +349,11 @@ private fun LawyerClientsTabContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Spacer(modifier = Modifier.height(8.dp))
         SectionHeader(title = "Gestion des Clients")
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Search Bar
         OutlinedTextField(
@@ -404,8 +365,8 @@ private fun LawyerClientsTabContent(
             shape = RoundedCornerShape(16.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.9f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
                 focusedBorderColor = AppDarkGreen,
                 unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.1f)
             )
@@ -423,7 +384,7 @@ private fun LawyerClientsTabContent(
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = AppDarkGreen,
                         selectedLabelColor = Color.White,
-                        containerColor = Color.White.copy(alpha = 0.6f)
+                        containerColor = Color.White
                     ),
                     border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.1f))
                 )
@@ -541,16 +502,16 @@ fun DossierClientCard(dossier: DossierData) {
                         color      = AppDarkGreen.copy(alpha = 0.55f)
                     )
                 }
-                val statusColor = when {
-                    dossier.status.equals("En cours",  ignoreCase = true) -> Color(0xFF1565C0) to Color(0xFFE3F2FD)
-                    dossier.status.equals("Clôturé",   ignoreCase = true) -> Color(0xFF2E7D32) to Color(0xFFE8F5E9)
-                    dossier.status.equals("En attente",ignoreCase = true) -> Color(0xFFE65100) to Color(0xFFFFF3E0)
-                    else -> Color(0xFF616161) to Color(0xFFF5F5F5)
+                val statusResult = when {
+                    dossier.status.contains("En cours",  ignoreCase = true) -> StatusBlue to StatusBlueBg
+                    dossier.status.contains("Clôturé",   ignoreCase = true) -> StatusGreen to StatusGreenBg
+                    dossier.status.contains("En attente",ignoreCase = true) -> StatusOrange to StatusOrangeBg
+                    else -> StatusGray to StatusGrayBg
                 }
                 StatusChip(
                     label          = dossier.status.ifBlank { "—" },
-                    containerColor = statusColor.second,
-                    textColor      = statusColor.first
+                    containerColor = statusResult.second,
+                    textColor      = statusResult.first
                 )
             }
 
@@ -617,96 +578,71 @@ fun LawyerRequestsScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Nouvelles Demandes",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize   = 18.sp,
-                        color      = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Nouvelles Demandes",
+                onBack = onBack
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            androidx.compose.material3.pulltorefresh.PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh    = { viewModel.refresh() },
-                modifier     = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                when {
-                    isLoading -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = AppDarkGreen)
-                        }
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh    = { viewModel.refresh() },
+            modifier     = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when {
+                isLoading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = AppDarkGreen)
                     }
-                    pending.isEmpty() -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    imageVector        = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint               = AppDarkGreen.copy(alpha = 0.35f),
-                                    modifier           = Modifier.size(56.dp)
-                                )
-                                Text(
-                                    "Aucune demande en attente",
-                                    fontFamily = FontFamily.Serif,
-                                    color      = AppDarkGreen.copy(alpha = 0.55f),
-                                    fontSize   = 15.sp
-                                )
-                                TextButton(onClick = { viewModel.refresh() }) {
-                                    Text("Actualiser", color = AppDarkGreen)
-                                }
-                            }
-                        }
-                    }
-                    else -> {
-                        LazyColumn(
-                            modifier            = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                }
+                pending.isEmpty() -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            item { Spacer(modifier = Modifier.height(4.dp)) }
-                            item {
-                                Text(
-                                    "À traiter (${pending.size})",
-                                    fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
-                                    color      = AppDarkGreen
-                                )
+                            Icon(
+                                imageVector        = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint               = AppDarkGreen.copy(alpha = 0.35f),
+                                modifier           = Modifier.size(56.dp)
+                            )
+                            Text(
+                                "Aucune demande en attente",
+                                fontFamily = FontFamily.Serif,
+                                color      = AppDarkGreen.copy(alpha = 0.55f),
+                                fontSize   = 15.sp
+                            )
+                            TextButton(onClick = { viewModel.refresh() }) {
+                                Text("Actualiser", color = AppDarkGreen)
                             }
-                            items(pending, key = { it.id }) { dossier ->
-                                DemandCard(
-                                    dossier   = dossier,
-                                    onAccept  = { viewModel.accept(dossier.id) },
-                                    onDecline = { viewModel.reject(dossier.id) }
-                                )
-                            }
-                            item { Spacer(modifier = Modifier.height(24.dp)) }
                         }
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier            = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item { Spacer(modifier = Modifier.height(4.dp)) }
+                        item {
+                            SectionHeader(title = "À traiter (${pending.size})")
+                        }
+                        items(pending, key = { it.id }) { dossier ->
+                            DemandCard(
+                                dossier   = dossier,
+                                onAccept  = { viewModel.accept(dossier.id) },
+                                onDecline = { viewModel.reject(dossier.id) }
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(24.dp)) }
                     }
                 }
             }
@@ -733,8 +669,8 @@ fun DemandCard(dossier: DossierData, onAccept: () -> Unit, onDecline: () -> Unit
                 )
                 StatusChip(
                     label          = dossier.status.ifBlank { "En attente" },
-                    containerColor = Color(0xFFE3F2FD),
-                    textColor      = Color(0xFF1976D2)
+                    containerColor = StatusBlueBg,
+                    textColor      = StatusBlue
                 )
             }
             // ── Category ──────────────────────────────────────────────────────
@@ -772,21 +708,21 @@ fun DemandCard(dossier: DossierData, onAccept: () -> Unit, onDecline: () -> Unit
             ) {
                 Button(
                     onClick          = onAccept,
-                    modifier         = Modifier.weight(1f),
+                    modifier         = Modifier.weight(1f).height(42.dp),
                     colors           = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
-                    shape            = RoundedCornerShape(10.dp),
+                    shape            = RoundedCornerShape(12.dp),
                     contentPadding   = PaddingValues(0.dp)
                 ) {
-                    Text("Accepter", fontSize = 12.sp, color = Color.White)
+                    Text("Accepter", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Serif)
                 }
                 OutlinedButton(
                     onClick          = onDecline,
-                    modifier         = Modifier.weight(0.6f),
-                    border           = BorderStroke(1.dp, Color(0xFFD32F2F).copy(alpha = 0.5f)),
-                    shape            = RoundedCornerShape(10.dp),
+                    modifier         = Modifier.weight(0.6f).height(42.dp),
+                    border           = BorderStroke(1.dp, StatusRed.copy(alpha = 0.5f)),
+                    shape            = RoundedCornerShape(12.dp),
                     contentPadding   = PaddingValues(0.dp)
                 ) {
-                    Text("Refuser", fontSize = 12.sp, color = Color(0xFFD32F2F))
+                    Text("Refuser", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = StatusRed, fontFamily = FontFamily.Serif)
                 }
             }
         }
@@ -819,9 +755,9 @@ private fun LawyerHomeTabContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -863,7 +799,7 @@ private fun LawyerHomeTabContent(
         }
 
         // ── RBAC KPI Cards: Mes Clients / Audiences du Jour / Honoraires ──────
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RbacKpiCard(
                 modifier  = Modifier.weight(1f),
                 icon      = Icons.Default.Groups,
@@ -1147,25 +1083,25 @@ fun CreateContentSheet(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Surface(modifier = Modifier.size(48.dp), shape = CircleShape,
-                    color = Color(0xFFD32F2F).copy(alpha = 0.12f)) {}
+                    color = StatusRed.copy(alpha = 0.12f)) {}
                 Icon(Icons.Default.LiveTv, contentDescription = null,
-                    tint = Color(0xFFD32F2F), modifier = Modifier.size(24.dp))
+                    tint = StatusRed, modifier = Modifier.size(24.dp))
                 Box(
                     modifier = Modifier
                         .size(10.dp)
                         .align(Alignment.TopEnd)
-                        .background(Color(0xFFD32F2F).copy(alpha = liveAlpha), CircleShape)
+                        .background(StatusRed.copy(alpha = liveAlpha), CircleShape)
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text("Aller en Live", fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFFD32F2F))
+                    fontWeight = FontWeight.Bold, fontSize = 15.sp, color = StatusRed)
                 Text("Démarrer une session Q&A en direct",
                     fontFamily = FontFamily.Serif, fontSize = 12.sp,
                     color = Color.Gray)
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null,
-                tint = Color(0xFFD32F2F).copy(alpha = 0.50f))
+                tint = StatusRed.copy(alpha = 0.50f))
         }
     }
 }

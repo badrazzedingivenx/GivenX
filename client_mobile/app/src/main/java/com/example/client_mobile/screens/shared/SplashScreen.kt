@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -11,7 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
 import com.example.client_mobile.network.AuthRepository
 import com.example.client_mobile.network.TokenManager
@@ -40,53 +44,61 @@ fun SplashScreen(
     onNavigateToUserHome: () -> Unit,
     onNavigateToLawyerHome: () -> Unit
 ) {
-    // Show a simple branded loading screen while the check runs
     Box(
-        modifier = Modifier
+        modifier         = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1B3124)),
+            .background(AppDarkGreen),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.logo_app),
-            contentDescription = "Logo",
-            modifier = Modifier.size(180.dp),
-            contentScale = ContentScale.Fit
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter            = painterResource(id = R.drawable.logo_app),
+                contentDescription = "Logo",
+                modifier           = Modifier.size(200.dp),
+                contentScale       = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text       = "HAQ",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize   = 13.sp,
+                color      = AppGoldColor.copy(alpha = 0.70f),
+                letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified
+            )
+        }
+
         CircularProgressIndicator(
-            modifier = Modifier
+            modifier    = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 60.dp),
-            color = Color(0xFFD4AF37),
+                .padding(bottom = 56.dp),
+            color       = AppGoldColor,
             strokeWidth = 3.dp
         )
     }
 
     LaunchedEffect(Unit) {
-        // FORCE_LOGIN = true: always go to Login so the API connection can be verified.
-        // Set to false to re-enable the stored-token fast-path.
         if (FORCE_LOGIN) {
-            TokenManager.clear()          // discard any stale token
+            TokenManager.clear()
             onNavigateToLogin()
             return@LaunchedEffect
         }
 
         if (!TokenManager.isLoggedIn()) {
-            // No token stored — go straight to login, no API call needed
             onNavigateToLogin()
             return@LaunchedEffect
         }
 
-        // Token exists — validate it against the server before trusting it
         val confirmedRole = AuthRepository.autoLogin()
-
         when (confirmedRole) {
             "lawyer" -> onNavigateToLawyerHome()
             "user"   -> onNavigateToUserHome()
-            else     -> {
-                // autoLogin() returned null → token was invalid, already cleared
-                onNavigateToLogin()
-            }
+            else     -> onNavigateToLogin()
         }
     }
 }

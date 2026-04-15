@@ -34,36 +34,21 @@ fun AppointmentsScreen(
     val appointments by viewModel.appointments.collectAsStateWithLifecycle()
     val isLoading = appointments == null
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Mes Rendez-vous",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Mes Rendez-vous",
+                onBack = onBack
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
                 if (isLoading) {
                     item {
@@ -88,7 +73,7 @@ fun AppointmentsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.80f),
+                        color = Color.White,
                         border = BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.45f)),
                         shadowElevation = 2.dp
                     ) {
@@ -123,7 +108,6 @@ fun AppointmentsScreen(
                 }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
             }
-        }
     }
 }
 

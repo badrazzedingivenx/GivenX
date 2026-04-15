@@ -67,11 +67,89 @@ data class LegalStory(
 fun UserDashboard(
     onNavigateToProfile: () -> Unit = {}
 ) {
-    UserCasesTabContent(
-        paddingValues = PaddingValues(0.dp)
-    )
+    AppScaffold(
+        topBar = {
+            StandardTopBar(
+                onBack = null,
+                actions = {
+                    // Notification Icon
+                    IconButton(
+                        onClick = { /* onNavigateToNotifications */ },
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                Badge(
+                                    containerColor = Color(0xFFE53935), // Pure red
+                                    modifier = Modifier.size(16.dp).offset(x = (-4).dp, y = 4.dp),
+                                    contentColor = Color.White
+                                ) {
+                                    Text("2", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = AppGoldColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    // Premium Profile Avatar with Status
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(48.dp)
+                            .clickable { onNavigateToProfile() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Main Avatar with Gold Border
+                        Surface(
+                            modifier = Modifier.size(42.dp),
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.2f),
+                            border = BorderStroke(2.dp, AppGoldColor)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profil",
+                                tint = AppGoldColor,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                        
+                        // Online Status Indicator
+                        Surface(
+                            modifier = Modifier
+                                .size(14.dp)
+                                .align(Alignment.BottomEnd)
+                                .offset(x = (-2).dp, y = (-2).dp),
+                            shape = CircleShape,
+                            color = Color.White,
+                            border = BorderStroke(2.dp, Color.White)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF4CAF50), CircleShape)
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        UserCasesTabContent(
+            paddingValues = innerPadding
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun UserCasesTabContent(
     paddingValues: PaddingValues,
@@ -128,7 +206,6 @@ internal fun UserCasesTabContent(
         )
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh    = {
@@ -160,16 +237,15 @@ internal fun UserCasesTabContent(
             }
             Text(
                 text = greeting,
-                fontSize = 26.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppDarkGreen
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             )
             Text(
                 text = "Comment puis-je vous aider aujourd'hui ?",
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Serif,
-                color = AppDarkGreen.copy(alpha = 0.60f)
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.60f)
             )
         }
 
@@ -252,9 +328,8 @@ internal fun UserCasesTabContent(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Affaire N° ${d.caseNumber}",
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = AppGoldColor,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(18.dp))
@@ -441,7 +516,7 @@ fun CaseStatusTimeline(steps: List<CaseStep>) {
                                     modifier = Modifier
                                         .size(7.dp)
                                         .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.85f))
+                                        .background(Color.White)
                                 )
                             }
                         }

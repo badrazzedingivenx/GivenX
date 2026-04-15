@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.shared
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,24 +50,34 @@ fun MessagesInboxScreen(
         }
     }
 
-    DashBoardBackground {
-        // ── No-connection full-screen state ───────────────────────────────────
-        if (isError && conversations.isEmpty()) {
+    // ── No-connection full-screen state ───────────────────────────────────
+    if (isError && conversations.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             NoConnectionScreen(
                 onRetry   = { conversationViewModel.refresh() },
-                modifier  = Modifier.padding(paddingValues)
+                modifier  = Modifier.fillMaxSize()
             )
-            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
-            return@DashBoardBackground
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
+        return
+    }
 
-        // ── Loading bar ───────────────────────────────────────────────────────
-        if (isLoading) {
-            LinearProgressIndicator(
-                modifier   = Modifier.fillMaxWidth().align(Alignment.TopCenter),
-                color      = AppGoldColor,
-                trackColor = AppDarkGreen.copy(alpha = 0.2f)
-            )
+    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        // ── Loading state (Skeleton) ──────────────────────────────────────────
+        if (isLoading && conversations.isEmpty()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { SkeletonBox(modifier = Modifier.width(150.dp).height(24.dp)) }
+                items(5) {
+                    SkeletonBox(modifier = Modifier.fillMaxWidth().height(80.dp), shape = RoundedCornerShape(18.dp))
+                }
+            }
         }
 
         // ── Pull-to-refresh + conversation list ───────────────────────────────
@@ -78,7 +89,7 @@ fun MessagesInboxScreen(
             MessagesInboxContent(
                 conversations    = conversations,
                 isLawyer         = isLawyer,
-                paddingValues    = paddingValues,
+                paddingValues    = PaddingValues(0.dp),
                 onNavigateToChat = onNavigateToChat
             )
         }
@@ -166,6 +177,7 @@ private fun ConversationCard(
 ) {
     val otherName = conversation.otherPartyName
     val unreadCount = conversation.unreadCount
+    val isUnread = unreadCount > 0
     val initials = otherName
         .removePrefix("Maître ")
         .split(" ")
@@ -177,24 +189,29 @@ private fun ConversationCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        color = if (unreadCount > 0) Color.White else Color.White.copy(alpha = 0.78f),
+        shape = RoundedCornerShape(20.dp),
+        color = if (isUnread) Color.White else Color.White.copy(alpha = 0.7f),
         border = BorderStroke(
-            width = if (unreadCount > 0) 1.dp else 0.5.dp,
-            color = if (unreadCount > 0) AppGoldColor.copy(alpha = 0.55f) else AppDarkGreen.copy(alpha = 0.10f)
+            width = if (isUnread) 1.5.dp else 1.dp,
+            color = if (isUnread) AppGoldColor.copy(alpha = 0.4f) else AppDarkGreen.copy(alpha = 0.08f)
         ),
-        shadowElevation = if (unreadCount > 0) 4.dp else 1.dp
+        shadowElevation = if (isUnread) 6.dp else 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // Avatar with premium border if unread
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(52.dp)
                     .clip(CircleShape)
-                    .background(AppDarkGreen),
+                    .background(AppDarkGreen)
+                    .then(
+                        if (isUnread) Modifier.border(2.dp, AppGoldColor, CircleShape)
+                        else Modifier
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 if (conversation.avatarUrl.isNotBlank()) {
@@ -206,17 +223,18 @@ private fun ConversationCard(
                 } else {
                     Text(
                         initials,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = AppGoldColor
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = AppGoldColor,
+                            fontFamily = FontFamily.Serif
+                        )
                     )
                 }
             }
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -225,10 +243,12 @@ private fun ConversationCard(
                 ) {
                     Text(
                         otherName,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = if (unreadCount > 0) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 14.sp,
-                        color = AppDarkGreen,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = if (isUnread) FontWeight.ExtraBold else FontWeight.Bold,
+                            color = AppDarkGreen,
+                            fontSize = 15.sp,
+                            fontFamily = FontFamily.Serif
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
@@ -236,10 +256,11 @@ private fun ConversationCard(
                     if (conversation.timestamp.isNotEmpty()) {
                         Text(
                             conversation.timestamp,
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 10.sp,
-                            color = AppDarkGreen.copy(alpha = 0.40f),
-                            modifier = Modifier.padding(start = 8.dp)
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = if (isUnread) AppGoldColor else AppDarkGreen.copy(alpha = 0.4f),
+                                fontWeight = if (isUnread) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 10.sp
+                            )
                         )
                     }
                 }
@@ -252,42 +273,36 @@ private fun ConversationCard(
                     Text(
                         if (conversation.lastMessage.isNotEmpty()) conversation.lastMessage
                         else "Nouvelle conversation",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 12.sp,
-                        color = if (unreadCount > 0) AppDarkGreen.copy(alpha = 0.80f)
-                                else AppDarkGreen.copy(alpha = 0.50f),
-                        fontWeight = if (unreadCount > 0) FontWeight.Medium else FontWeight.Normal,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = AppDarkGreen.copy(alpha = if (isUnread) 0.85f else 0.55f),
+                            fontWeight = if (isUnread) FontWeight.SemiBold else FontWeight.Normal,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Serif
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    if (unreadCount > 0) {
+                    
+                    if (isUnread) {
                         Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .background(AppDarkGreen),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            shape = CircleShape,
+                            color = AppDarkGreen,
+                            modifier = Modifier.size(20.dp)
                         ) {
-                            Text(
-                                if (unreadCount > 9) "9+" else "$unreadCount",
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AppGoldColor
-                            )
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    if (unreadCount > 9) "9+" else "$unreadCount",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = AppGoldColor,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 9.sp
+                                    )
+                                )
+                            }
                         }
                     }
-                }
-
-                if (!isLawyer && conversation.timestamp.isNotEmpty()) {
-                    Text(
-                        conversation.timestamp,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 10.sp,
-                        color = AppGoldColor.copy(alpha = 0.80f)
-                    )
                 }
             }
         }

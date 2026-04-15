@@ -41,23 +41,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.StoryDto
-import com.example.client_mobile.screens.shared.AppDarkGreen
-import com.example.client_mobile.screens.shared.AppGoldColor
-import com.example.client_mobile.screens.shared.CreatorRepository
-import com.example.client_mobile.screens.shared.DashBoardBackground
-import com.example.client_mobile.screens.shared.LawyerSession
+import com.example.client_mobile.screens.shared.*
 
 // ── Branding tokens for the creator studio ─────────────────────────────────────
-private val StudioIndigo     = Color(0xFF3730A3)  // Indigo-800
-private val StudioIndigoDark = Color(0xFF1E1B4B)  // Indigo-950
-private val StudioIndigoMid  = Color(0xFF4F46E5)  // Indigo-600
-private val StudioAccent     = Color(0xFF818CF8)  // Indigo-400
-private val StudioBg         = Color(0xFFF8FAFF)  // near-white blue tint
 private val StudioGold       = AppGoldColor
 
-private val IndigoGradient = Brush.linearGradient(
-    colors = listOf(StudioIndigoMid, Color(0xFF7C3AED), StudioAccent)
-)
 private val GoldGradient = Brush.linearGradient(
     colors = listOf(StudioGold, Color(0xFFFFA000), StudioGold)
 )
@@ -108,7 +96,20 @@ fun LawyerCreatorManagementScreen(
     val likesLabel    = formatNumber(totalLikes)
     val engLabel      = String.format("%.1f", engPct) + "%"
 
-    Scaffold(
+    var showMediaPicker by remember { mutableStateOf(false) }
+    var pickerType      by remember { mutableStateOf(MediaPostType.Story) }
+
+    if (showMediaPicker) {
+        MediaPickerFlow(
+            postType    = pickerType,
+            onPublished = { showMediaPicker = false; viewModel.refresh() },
+            onCancel    = { showMediaPicker = false },
+            lawyerName  = LawyerSession.fullName,
+            specialty   = LawyerSession.title
+        )
+    }
+
+    AppScaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -118,13 +119,13 @@ fun LawyerCreatorManagementScreen(
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
                             fontSize   = 18.sp,
-                            color      = StudioIndigoDark
+                            color      = AppDarkGreen
                         )
                         Text(
                             LawyerSession.fullName.ifBlank { "Me. Yassine" },
                             fontFamily = FontFamily.Serif,
                             fontSize   = 12.sp,
-                            color      = StudioIndigo.copy(alpha = 0.7f)
+                            color      = AppDarkGreen.copy(alpha = 0.7f)
                         )
                     }
                 },
@@ -133,27 +134,39 @@ fun LawyerCreatorManagementScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Retour",
-                            tint = StudioIndigo
+                            tint = AppDarkGreen
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Actualiser", tint = StudioIndigo)
+                        Icon(Icons.Default.Refresh, contentDescription = "Actualiser", tint = AppDarkGreen)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = StudioBg
+                    containerColor = Color.Transparent
                 )
             )
         },
-        containerColor = StudioBg
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { 
+                    pickerType = MediaPostType.Story
+                    showMediaPicker = true 
+                },
+                containerColor = AppGoldColor,
+                contentColor = AppDarkGreen,
+                shape = CircleShape
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Ajouter")
+            }
+        }
     ) { padding ->
         if (isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = StudioIndigo)
+                CircularProgressIndicator(color = AppDarkGreen)
             }
-            return@Scaffold
+            return@AppScaffold
         }
 
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(
@@ -193,7 +206,7 @@ fun LawyerCreatorManagementScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         KpiCard(modifier = Modifier.weight(1f), icon = Icons.Default.Visibility,
-                            value = viewsLabel, label = "Total Vues", accentColor = StudioIndigoMid)
+                            value = viewsLabel, label = "Total Vues", accentColor = AppDarkGreen)
                         KpiCard(modifier = Modifier.weight(1f), icon = Icons.Default.Favorite,
                             value = likesLabel, label = "J'aimes", accentColor = Color(0xFFE91E63))
                         KpiCard(modifier = Modifier.weight(1f), icon = Icons.AutoMirrored.Filled.ShowChart,
@@ -282,7 +295,7 @@ private fun StoryCircle(story: StoryUiModel) {
     val ringBrush = if (story.isLive) {
         Brush.linearGradient(listOf(Color.Red, Color(0xFFFF6B6B)))
     } else {
-        IndigoGradient
+        Brush.linearGradient(listOf(AppDarkGreen, AppGoldColor, AppDarkGreen))
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -300,7 +313,7 @@ private fun StoryCircle(story: StoryUiModel) {
                 }
                 .padding(4.dp)
                 .clip(CircleShape)
-                .background(StudioIndigo.copy(alpha = 0.12f)),
+                .background(AppDarkGreen.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -308,7 +321,7 @@ private fun StoryCircle(story: StoryUiModel) {
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize   = 22.sp,
-                color      = StudioIndigo
+                color      = AppDarkGreen
             )
             if (story.isLive) {
                 Box(
@@ -334,7 +347,7 @@ private fun StoryCircle(story: StoryUiModel) {
         Text(
             text     = story.authorName.substringAfterLast(" ").take(8),
             fontSize = 10.sp,
-            color    = StudioIndigoDark.copy(alpha = 0.7f),
+            color    = AppDarkGreen.copy(alpha = 0.7f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -342,7 +355,7 @@ private fun StoryCircle(story: StoryUiModel) {
             Text(
                 text     = formatNumber(story.views) + " vues",
                 fontSize = 9.sp,
-                color    = StudioAccent
+                color    = AppGoldColor
             )
         }
     }
@@ -358,15 +371,11 @@ private fun KpiCard(
     label:       String,
     accentColor: Color
 ) {
-    Surface(
-        modifier  = modifier.height(96.dp),
-        shape     = RoundedCornerShape(20.dp),
-        color     = Color.White,
-        shadowElevation = 4.dp,
-        border    = BorderStroke(1.dp, accentColor.copy(alpha = 0.18f))
+    DashCard(
+        modifier  = modifier.height(96.dp)
     ) {
         Column(
-            modifier            = Modifier.fillMaxSize().padding(12.dp),
+            modifier            = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
@@ -383,7 +392,7 @@ private fun KpiCard(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize   = 18.sp,
-                    color      = StudioIndigoDark
+                    color      = AppDarkGreen
                 )
                 Text(
                     label,
@@ -400,16 +409,12 @@ private fun KpiCard(
 
 @Composable
 private fun AiInsightCard(insight: String) {
-    Surface(
+    DashCard(
         modifier        = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp),
-        shape           = RoundedCornerShape(24.dp),
-        color           = StudioIndigoDark,
-        shadowElevation = 6.dp,
-        border          = BorderStroke(1.dp, StudioAccent.copy(alpha = 0.30f))
+            .padding(horizontal = 20.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 verticalAlignment  = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -417,13 +422,13 @@ private fun AiInsightCard(insight: String) {
                 Box(
                     modifier         = Modifier
                         .size(38.dp)
-                        .background(StudioAccent.copy(alpha = 0.18f), RoundedCornerShape(12.dp)),
+                        .background(AppGoldColor.copy(alpha = 0.18f), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.AutoAwesome,
                         contentDescription = null,
-                        tint     = StudioAccent,
+                        tint     = AppGoldColor,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -433,22 +438,22 @@ private fun AiInsightCard(insight: String) {
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
                         fontSize   = 14.sp,
-                        color      = Color.White
+                        color      = AppDarkGreen
                     )
                     Text(
                         "Powered by Gemini",
                         fontSize = 10.sp,
-                        color    = StudioAccent.copy(alpha = 0.75f)
+                        color    = AppGoldColor.copy(alpha = 0.75f)
                     )
                 }
             }
-            HorizontalDivider(color = StudioAccent.copy(alpha = 0.15f))
+            HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.05f))
             Text(
                 text       = insight.ifBlank { "Analyse en cours…" },
                 fontFamily = FontFamily.Serif,
                 fontSize   = 14.sp,
                 lineHeight = 22.sp,
-                color      = Color.White.copy(alpha = 0.88f)
+                color      = AppDarkGreen.copy(alpha = 0.88f)
             )
         }
     }
@@ -464,24 +469,16 @@ private fun LiveBannerCard(live: LiveDto) {
         initialValue   = 0.4f,
         targetValue    = 1.0f,
         animationSpec  = infiniteRepeatable(
-            animation = tween(700),
+            animation  = tween(700),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseAlpha"
     )
 
-    Surface(
-        modifier        = Modifier.fillMaxWidth(),
-        shape           = RoundedCornerShape(20.dp),
-        color           = if (isLive) Color(0xFF1A0E2E) else Color.White,
-        shadowElevation = 4.dp,
-        border          = BorderStroke(
-            1.dp,
-            if (isLive) Color.Red.copy(alpha = 0.50f) else StudioAccent.copy(alpha = 0.25f)
-        )
+    DashCard(
+        modifier        = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier           = Modifier.padding(16.dp),
             verticalAlignment  = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -490,7 +487,7 @@ private fun LiveBannerCard(live: LiveDto) {
                 modifier         = Modifier
                     .size(56.dp)
                     .background(
-                        if (isLive) Color.Red.copy(alpha = 0.15f) else StudioIndigo.copy(alpha = 0.10f),
+                        if (isLive) Color.Red.copy(alpha = 0.15f) else AppDarkGreen.copy(alpha = 0.10f),
                         RoundedCornerShape(14.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -498,7 +495,7 @@ private fun LiveBannerCard(live: LiveDto) {
                 Icon(
                     Icons.Default.LiveTv,
                     contentDescription = null,
-                    tint     = if (isLive) Color.Red.copy(pulseAlpha) else StudioAccent,
+                    tint     = if (isLive) Color.Red.copy(pulseAlpha) else AppGoldColor,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -507,7 +504,7 @@ private fun LiveBannerCard(live: LiveDto) {
                     live.title.ifBlank { "Direct sans titre" },
                     fontWeight = FontWeight.Bold,
                     fontSize   = 14.sp,
-                    color      = if (isLive) Color.White else StudioIndigoDark,
+                    color      = AppDarkGreen,
                     maxLines   = 2,
                     overflow   = TextOverflow.Ellipsis
                 )
@@ -515,30 +512,23 @@ private fun LiveBannerCard(live: LiveDto) {
                     Text(
                         live.lawyerName,
                         fontSize = 12.sp,
-                        color    = if (isLive) Color.White.copy(0.6f) else Color.Gray
+                        color    = Color.Gray
                     )
                 }
             }
             // Status / viewers chip
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isLive) Color.Red.copy(pulseAlpha * 0.9f) else StudioAccent.copy(0.15f)
-                ) {
-                    Text(
-                        if (isLive) "LIVE" else "Prévu",
-                        fontSize   = 11.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color      = if (isLive) Color.White else StudioIndigo,
-                        modifier   = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
+                StatusChip(
+                    label = if (isLive) "LIVE" else "Prévu",
+                    containerColor = if (isLive) Color.Red.copy(pulseAlpha * 0.9f) else AppGoldColor,
+                    textColor = Color.White
+                )
                 if (live.viewersCount > 0) {
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "${live.viewersCount} 👁",
                         fontSize = 10.sp,
-                        color    = if (isLive) Color.White.copy(0.7f) else Color.Gray
+                        color    = Color.Gray
                     )
                 }
             }
@@ -560,15 +550,10 @@ private fun ReelAnalyticsCard(reel: ReelUiModel, modifier: Modifier = Modifier) 
         "down" -> Icons.AutoMirrored.Filled.TrendingDown
         else   -> null
     }
-    Surface(
-        modifier        = modifier.fillMaxWidth(),
-        shape           = RoundedCornerShape(20.dp),
-        color           = Color.White,
-        shadowElevation = 3.dp,
-        border          = BorderStroke(0.5.dp, StudioIndigo.copy(alpha = 0.08f))
+    DashCard(
+        modifier        = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier           = Modifier.padding(14.dp),
             verticalAlignment  = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -576,13 +561,16 @@ private fun ReelAnalyticsCard(reel: ReelUiModel, modifier: Modifier = Modifier) 
             Box(
                 modifier         = Modifier
                     .size(width = 70.dp, height = 88.dp)
-                    .background(IndigoGradient, RoundedCornerShape(14.dp)),
+                    .background(
+                        Brush.linearGradient(listOf(AppDarkGreen, AppDarkGreen.copy(0.8f))),
+                        RoundedCornerShape(14.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.PlayCircle,
                     contentDescription = null,
-                    tint     = Color.White.copy(alpha = 0.9f),
+                    tint     = Color.White,
                     modifier = Modifier.size(32.dp)
                 )
                 if (reel.duration.isNotBlank()) {
@@ -615,7 +603,7 @@ private fun ReelAnalyticsCard(reel: ReelUiModel, modifier: Modifier = Modifier) 
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize   = 14.sp,
-                    color      = StudioIndigoDark,
+                    color      = AppDarkGreen,
                     maxLines   = 2,
                     overflow   = TextOverflow.Ellipsis
                 )
@@ -676,13 +664,13 @@ private fun StudioSectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = StudioIndigo, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = null, tint = AppDarkGreen, modifier = Modifier.size(18.dp))
         Text(
             title,
             fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.Bold,
             fontSize   = 16.sp,
-            color      = StudioIndigoDark
+            color      = AppDarkGreen
         )
     }
 }
@@ -691,25 +679,22 @@ private fun StudioSectionHeader(
 
 @Composable
 private fun EmptyInlineNote(message: String) {
-    Surface(
+    DashCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
-        shape    = RoundedCornerShape(14.dp),
-        color    = StudioIndigo.copy(alpha = 0.05f),
-        border   = BorderStroke(1.dp, StudioAccent.copy(alpha = 0.20f))
+        containerColor = AppDarkGreen.copy(alpha = 0.05f)
     ) {
         Row(
-            modifier           = Modifier.padding(14.dp),
             verticalAlignment  = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Icon(Icons.Default.Info, contentDescription = null,
-                tint = StudioAccent, modifier = Modifier.size(18.dp))
+                tint = AppGoldColor, modifier = Modifier.size(18.dp))
             Text(
                 message,
                 fontSize   = 13.sp,
-                color      = StudioIndigo.copy(alpha = 0.75f),
+                color      = AppDarkGreen.copy(alpha = 0.75f),
                 lineHeight = 18.sp
             )
         }

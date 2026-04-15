@@ -27,40 +27,22 @@ import com.example.client_mobile.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onBack: () -> Unit = {}) {
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "À Propos",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "À Propos",
+                onBack = onBack
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 36.dp)
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 36.dp)
+        ) {
                 // ── Header ───────────────────────────────────────────────────
                 item { AboutHeaderSection() }
 
@@ -76,7 +58,6 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 // ── Contact ──────────────────────────────────────────────────
                 item { AboutContactSection() }
             }
-        }
     }
 }
 

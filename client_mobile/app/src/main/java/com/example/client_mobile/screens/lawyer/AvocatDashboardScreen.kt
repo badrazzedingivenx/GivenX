@@ -31,32 +31,9 @@ import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
-import com.example.client_mobile.screens.shared.LawyerSession
-import com.example.client_mobile.screens.shared.SkeletonBox
+import com.example.client_mobile.screens.shared.*
 
-// ─── Branding tokens ──────────────────────────────────────────────────────────
-// Primary: deep forest green  — #2E5D46
-// Accent:  muted gold          — #C5A059
-// Background: soft slate-50    — #F8FAFC
-private val BrandGreen     = Color(0xFF2E5D46)   // Deep forest green — headings, icons
-private val AppDarkGreen   = Color(0xFF1B3124)   // App dark green   — API metric values
-private val ConsultGreen   = Color(0xFF1B3A2C)   // Client name color
-private val BrandGreenMid  = Color(0xFF3D7A5F)   // Lighter green     — chart line
-private val BrandGold      = Color(0xFFC5A059)   // Muted gold        — badges, accents, "Voir tout"
-private val BrandGoldLight = Color(0xFFFBF5E8)   // Gold-50           — gold badge bg
-private val DashSlate50    = Color(0xFFF8FAFC)   // Slate-50          — page background
-private val DashSlate800   = Color(0xFF1E293B)   // Slate-800         — headings
-private val DashSlate400   = Color(0xFF64748B)   // Slate-500         — secondary labels
-private val DashGreen      = Color(0xFF166534)   // Green-900         — Terminé text
-private val DashGreenBg    = Color(0xFFDCFCE7)   // Green-100         — Terminé bg
-private val DashAmber      = Color(0xFF92400E)   // Yellow-800        — En attente text
-private val DashAmberBg    = Color(0xFFFEFCE8)   // Yellow-50         — En attente bg
-private val DashAmberBorder= Color(0xFFFDE68A)   // Yellow-200        — En attente border
-private val DashRoseBg     = Color(0xFFFFF1F2)   // Rose-50           — negative trend bg
-private val DashRose600    = Color(0xFFE11D48)   // Rose-600          — negative trend text
-private val DashRed        = Color(0xFFDC2626)   // Red-600           — destructive / declined
-
-// Fallback chart data when the API hasn't returned data yet
+// ─── Fallback chart data when the API hasn't returned data yet
 private val FallbackRevenue = listOf(
     RevenueMonthDto("Jan", 8400f),
     RevenueMonthDto("Fév", 11200f),
@@ -106,10 +83,9 @@ fun AvocatDashboardScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
-            .background(DashSlate50),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(paddingValues),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { DashHeader(profile = profile, isLoading = isLoading) }
         item { DashStatsGrid(stats = stats, isLoading = isLoading) }
@@ -130,8 +106,6 @@ fun AvocatDashboardScreen(
 // ─── Header ───────────────────────────────────────────────────────────────────
 @Composable
 private fun DashHeader(profile: LawyerProfileDto?, isLoading: Boolean) {
-    var showSuspendDialog by remember { mutableStateOf(false) }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -145,89 +119,25 @@ private fun DashHeader(profile: LawyerProfileDto?, isLoading: Boolean) {
             } else {
                 Text(
                     text = "Bonjour, Maître",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp,
-                    color = DashSlate400
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = AppSubtitleGray,
+                        fontSize = 14.sp
+                    )
                 )
                 val displayName = profile?.fullName?.ifBlank { null }
                     ?: LawyerSession.fullName.ifBlank { "Avocat" }
                 Text(
                     text = displayName,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = DashSlate800,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
+                    color = AppDarkGreen,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
-        if (!isLoading) {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Subscription badge
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = BrandGoldLight
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .background(BrandGold, CircleShape)
-                        )
-                        Text(
-                            "Premium",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandGold
-                        )
-                    }
-                }
-                TextButton(
-                    onClick = { showSuspendDialog = true },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                ) {
-                    Text("Suspendre", fontSize = 11.sp, color = DashRed)
-                }
-            }
-        }
-    }
-
-    if (showSuspendDialog) {
-        AlertDialog(
-            onDismissRequest = { showSuspendDialog = false },
-            title = {
-                Text(
-                    "Suspendre l'abonnement",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    "Voulez-vous vraiment suspendre votre abonnement Premium ?",
-                    fontFamily = FontFamily.Serif
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showSuspendDialog = false }) {
-                    Text("Confirmer", color = DashRed, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSuspendDialog = false }) {
-                    Text("Annuler", color = BrandGreen)
-                }
-            }
-        )
     }
 }
 
@@ -289,26 +199,7 @@ private fun DashStatCard(
     change: Float,
     isLoading: Boolean
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        shadowElevation = 2.dp
-    ) {
-        // Left accent stripe (border-l-4 green)
-        Box {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
-                    .background(BrandGreen)
-            )
-            Column(
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+    LegalDashboardCard(modifier = modifier) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -317,56 +208,50 @@ private fun DashStatCard(
                 Box(
                     modifier = Modifier
                         .size(36.dp)
-                        .background(BrandGreen.copy(alpha = 0.10f), RoundedCornerShape(10.dp)),
+                        .background(AppDarkGreen.copy(alpha = 0.10f), RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = BrandGreen,
+                        tint = AppDarkGreen,
                         modifier = Modifier.size(18.dp)
                     )
                 }
-                // % change badge — hidden when 0
+                // % change badge
                 if (!isLoading && change != 0f) {
                     val positive = change > 0f
-                    Surface(
-                        shape = RoundedCornerShape(50.dp),
-                        color = if (positive) DashGreenBg else DashRoseBg
-                    ) {
-                        Text(
-                            text = "${if (positive) "+" else ""}${"%.1f".format(change)}%",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (positive) DashGreen else DashRose600,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
+                    StatusChip(
+                        label = "${if (positive) "+" else ""}${"%.1f".format(change)}%",
+                        containerColor = if (positive) StatusGreenBg else StatusRedBg,
+                        textColor = if (positive) StatusGreen else StatusRed
+                    )
                 }
             }
+            Spacer(Modifier.height(10.dp))
             if (isLoading) {
                 SkeletonBox(modifier = Modifier.fillMaxWidth(0.60f).height(22.dp))
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(4.dp))
                 SkeletonBox(modifier = Modifier.fillMaxWidth(0.38f).height(10.dp))
             } else {
                 Text(
                     text = value ?: "—",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
                     color = AppDarkGreen,
                     maxLines = 1
                 )
                 Text(
                     text = label,
-                    fontSize = 11.sp,
-                    color = DashSlate400,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = AppSubtitleGray
+                    ),
                     maxLines = 1
                 )
             }
-            }  // Column
-        }  // Box
-    }  // Surface
+    }
 }
 
 // ─── Revenue Bar Chart ────────────────────────────────────────────────────────
@@ -376,25 +261,7 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
     val isFallback = revenue.isEmpty()
     val maxVal = displayRevenue.maxOfOrNull { it.amount }.takeIf { it != null && it > 0f } ?: 1f
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        shadowElevation = 2.dp
-    ) {
-        Box {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
-                    .background(BrandGold)
-            )
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    DashCard(modifier = Modifier.fillMaxWidth()) {
             // Title row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -403,24 +270,26 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
             ) {
                 Text(
                     "Revenus — 6 mois",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = DashSlate800
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
+                    color = AppDarkGreen
                 )
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = BrandGoldLight
+                    color = AppGoldColor.copy(alpha = 0.12f)
                 ) {
                     Text(
                         "MAD",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = BrandGold,
+                        color = AppGoldColor,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
             }
+            Spacer(Modifier.height(16.dp))
 
             // Bars
             if (isLoading) {
@@ -466,8 +335,8 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
                         path  = fillPath,
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                BrandGreen.copy(alpha = 0.22f),
-                                BrandGold.copy(alpha  = 0.06f)
+                                AppDarkGreen.copy(alpha = 0.22f),
+                                AppGoldColor.copy(alpha  = 0.06f)
                             ),
                             startY = 0f,
                             endY   = size.height
@@ -476,7 +345,7 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
                     // Line segments
                     for (i in 0 until count - 1) {
                         drawLine(
-                            color       = BrandGreenMid,
+                            color       = AppDarkGreen.copy(alpha = 0.6f),
                             start       = points[i],
                             end         = points[i + 1],
                             strokeWidth = 2.5.dp.toPx(),
@@ -486,9 +355,10 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
                     // Point markers — white ring + gold fill
                     points.forEach { pt ->
                         drawCircle(color = Color.White, radius = 4.dp.toPx(),   center = pt)
-                        drawCircle(color = BrandGold,   radius = 2.5.dp.toPx(), center = pt)
+                        drawCircle(color = AppGoldColor,   radius = 2.5.dp.toPx(), center = pt)
                     }
                 }
+                Spacer(Modifier.height(8.dp))
                 // Month labels
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -499,7 +369,7 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
                             text = m.month.take(3),
                             modifier = Modifier.weight(1f),
                             fontSize = 9.sp,
-                            color = DashSlate400,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -508,14 +378,12 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
                     Text(
                         "* Données approximatives. Synchronisez pour actualiser.",
                         fontSize = 10.sp,
-                        color = DashSlate400.copy(alpha = 0.70f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                         fontStyle = FontStyle.Italic
                     )
                 }
             }
-        }  // Column
-        }  // Box
-    }  // Surface (Revenue)
+    }
 }
 
 // ─── Recent Consultations ─────────────────────────────────────────────────────
@@ -527,22 +395,7 @@ private fun DashConsultationsCard(
     onRetry: () -> Unit = {},
     onViewAll: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        shadowElevation = 2.dp
-    ) {
-        Box {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
-                    .background(BrandGreen)
-            )
-        Column(modifier = Modifier.padding(20.dp)) {
+    LegalDashboardCard(modifier = Modifier.fillMaxWidth()) {
             // Title row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -551,21 +404,22 @@ private fun DashConsultationsCard(
             ) {
                 Text(
                     "Consultations récentes",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = ConsultGreen
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
+                    color = AppDarkGreen
                 )
                 if (!isLoading && consultations.isNotEmpty()) {
                     TextButton(
                         onClick = onViewAll,
                         contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text("Voir tout", fontSize = 12.sp, color = BrandGold)
+                        Text("Voir tout", fontSize = 12.sp, color = AppGoldColor)
                         Icon(
                             Icons.Default.ChevronRight,
                             contentDescription = null,
-                            tint = BrandGold,
+                            tint = AppGoldColor,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -596,20 +450,18 @@ private fun DashConsultationsCard(
                             Icon(
                                 Icons.Default.WifiOff,
                                 contentDescription = null,
-                                tint = DashSlate400,
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                 modifier = Modifier.size(36.dp)
                             )
                             Text(
                                 "Impossible de charger",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF64748B),
-                                fontFamily = FontFamily.Serif
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                             Text(
                                 "Vérifiez votre connexion internet.",
-                                fontSize = 12.sp,
-                                color = Color(0xFF94A3B8),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                 textAlign = TextAlign.Center
                             )
                             // Gold « Réessayer » button
@@ -621,7 +473,7 @@ private fun DashConsultationsCard(
                                 enabled = !isRetrying,
                                 shape = RoundedCornerShape(50.dp),
                                 border = androidx.compose.foundation.BorderStroke(
-                                    1.dp, BrandGold
+                                    1.dp, AppGoldColor
                                 ),
                                 contentPadding = PaddingValues(
                                     horizontal = 20.dp, vertical = 8.dp
@@ -631,13 +483,13 @@ private fun DashConsultationsCard(
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(14.dp),
                                         strokeWidth = 2.dp,
-                                        color = BrandGold
+                                        color = AppGoldColor
                                     )
                                 } else {
                                     Icon(
                                         Icons.Default.Refresh,
                                         contentDescription = null,
-                                        tint = BrandGold,
+                                        tint = AppGoldColor,
                                         modifier = Modifier.size(14.dp)
                                     )
                                 }
@@ -645,7 +497,7 @@ private fun DashConsultationsCard(
                                 Text(
                                     "Réessayer",
                                     fontSize = 13.sp,
-                                    color = BrandGold,
+                                    color = AppGoldColor,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -669,14 +521,13 @@ private fun DashConsultationsCard(
                         Icon(
                             Icons.Default.CalendarMonth,
                             contentDescription = null,
-                            tint = DashSlate400,
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                             modifier = Modifier.size(36.dp)
                         )
                         Text(
                             "Aucune consultation récente",
-                            fontSize = 14.sp,
-                            color = Color(0xFF64748B),
-                            fontFamily = FontFamily.Serif
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
                 }
@@ -688,20 +539,18 @@ private fun DashConsultationsCard(
                     )
                 }
             }
-        }  // Column
-        }  // Box
-    }  // Surface (Consultations)
+    }
 }
 
 @Composable
 private fun ConsultationRow(consultation: RecentConsultationDto) {
     val statusText = consultation.status.ifBlank { "—" }
-    val (statusColor, statusBg, statusBorder) = when {
+    val (statusColor, statusBg) = when {
         statusText.contains("term",    ignoreCase = true) ||
-        statusText.contains("compl",   ignoreCase = true) -> Triple(DashGreen,  DashGreenBg,  Color.Transparent)
+        statusText.contains("compl",   ignoreCase = true) -> StatusGreen to StatusGreenBg
         statusText.contains("attente", ignoreCase = true) ||
-        statusText.contains("pend",    ignoreCase = true)  -> Triple(BrandGold,  BrandGold.copy(alpha = 0.12f), BrandGold.copy(alpha = 0.35f))
-        else                                               -> Triple(DashRed,    DashRoseBg,   Color.Transparent)
+        statusText.contains("pend",    ignoreCase = true)  -> AppGoldColor to AppGoldColor.copy(alpha = 0.12f)
+        else                                               -> StatusRed to StatusRedBg
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -713,15 +562,13 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
             modifier = Modifier
                 .size(42.dp)
                 .clip(CircleShape)
-                .background(BrandGreen.copy(alpha = 0.12f)),
+                .background(AppDarkGreen.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = consultation.clientName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = BrandGreen
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = AppDarkGreen
             )
         }
         // ── Name + case + status pill ───────────────────────────────
@@ -731,10 +578,11 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
         ) {
             Text(
                 text = consultation.clientName.ifBlank { "Client" },
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                color = ConsultGreen,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Serif
+                ),
+                color = AppDarkGreen,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -749,8 +597,9 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
             }.ifBlank { "—" }
             Text(
                 text = consultSubtitle,
-                fontSize = 11.sp,
-                color = DashSlate400,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = AppSubtitleGray
+                ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -759,27 +608,17 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Status pill
-                Surface(
-                    shape = RoundedCornerShape(50.dp),
-                    color = statusBg,
-                    border = if (statusBorder != Color.Transparent)
-                        androidx.compose.foundation.BorderStroke(0.5.dp, statusBorder) else null
-                ) {
-                    Text(
-                        text = statusText,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor,
-                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
-                    )
-                }
+                StatusChip(
+                    label = statusText,
+                    containerColor = statusBg,
+                    textColor = statusColor
+                )
                 // Price
                 if (consultation.price > 0f) {
                     Text(
                         text = "· %.0f MAD".format(consultation.price),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = DashSlate400
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 }
             }
@@ -789,13 +628,13 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(BrandGold.copy(alpha = 0.12f)),
+                .background(AppGoldColor.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.VideoCall,
                 contentDescription = "Démarrer la consultation",
-                tint = BrandGold,
+                tint = AppGoldColor,
                 modifier = Modifier.size(18.dp)
             )
         }
