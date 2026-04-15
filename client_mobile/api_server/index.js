@@ -294,4 +294,51 @@ app.post('/api/seed', async (req, res) => {
     }
 });
 
+// Payments
+app.get('/api/payments', authMiddleware, async (req, res) => {
+    const { clientId, lawyerId } = req.query;
+    try {
+        let sql = 'SELECT * FROM payments WHERE 1=1';
+        const params = [];
+
+        if (clientId) {
+            sql += ' AND client_id = ?';
+            params.push(clientId);
+        }
+        if (lawyerId) {
+            sql += ' AND lawyer_id = ?';
+            params.push(lawyerId);
+        }
+
+        // If neither provided, and not admin, restrict to own payments
+        if (!clientId && !lawyerId) {
+            if (req.user.role === 'lawyer') {
+                sql += ' AND lawyer_id = ?';
+                params.push(req.user.uid);
+            } else {
+                sql += ' AND client_id = ?';
+                params.push(req.user.uid);
+            }
+        }
+
+        const [rows] = await pool.query(sql, params);
+        res.json({
+            success: true,
+            data: rows.map(r => ({
+                id: r.id.toString(),
+                clientId: r.client_id,
+                lawyerId: r.lawyer_id,
+                date: r.date,
+                amount: r.amount,
+                status: r.status,
+                subject: r.subject,
+                method: r.method
+            }))
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 app.listen(PORT, () => console.log(`API running on port ${PORT}`));

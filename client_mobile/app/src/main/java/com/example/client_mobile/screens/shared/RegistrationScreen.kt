@@ -9,17 +9,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -64,76 +64,68 @@ fun RegistrationScreen(
         }
     }
 
-    val darkGreen = Color(0xFF1B3124)
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
-        Column(
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(vertical = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.88f)
+                    .fillMaxWidth(0.92f)
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(40.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.50f),
-                                Color.White.copy(alpha = 0.65f)
-                            )
-                        )
-                    )
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
-                        color = Color.White.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(40.dp)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(32.dp)
                     )
-                    .padding(horizontal = 24.dp, vertical = 30.dp)
+                    .padding(horizontal = 24.dp, vertical = 32.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Inscription",
-                        fontSize = 28.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = darkGreen
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Créez votre compte premium",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // User Type Selector
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(25.dp))
-                            .background(Color.White.copy(alpha = 0.3f))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.05f))
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        val selectedColor = darkGreen
+                        val selectedColor = MaterialTheme.colorScheme.primary
                         val unselectedColor = Color.Transparent
                         val selectedTextColor = Color.White
-                        val unselectedTextColor = darkGreen
+                        val unselectedTextColor = MaterialTheme.colorScheme.primary
 
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(if (!isLawyer) selectedColor else unselectedColor)
                                 .clickable { isLawyer = false },
                             contentAlignment = Alignment.Center
@@ -141,15 +133,14 @@ fun RegistrationScreen(
                             Text(
                                 "Client",
                                 color = if (!isLawyer) selectedTextColor else unselectedTextColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                             )
                         }
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(if (isLawyer) selectedColor else unselectedColor)
                                 .clickable { isLawyer = true },
                             contentAlignment = Alignment.Center
@@ -157,13 +148,12 @@ fun RegistrationScreen(
                             Text(
                                 "Avocat",
                                 color = if (isLawyer) selectedTextColor else unselectedTextColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     CustomInputField(
                         value = firstName,
@@ -173,7 +163,7 @@ fun RegistrationScreen(
                         isError = firstNameError,
                         errorMessage = "Veuillez saisir votre prénom"
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
                         value = lastName,
                         onValueChange = { lastName = it; lastNameError = false },
@@ -182,7 +172,7 @@ fun RegistrationScreen(
                         isError = lastNameError,
                         errorMessage = "Veuillez saisir votre nom"
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
                         value = email,
                         onValueChange = { email = it; emailError = false },
@@ -192,40 +182,40 @@ fun RegistrationScreen(
                         errorMessage = "Veuillez saisir un e-mail valide",
                         keyboardType = KeyboardType.Email
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     CustomInputField(
                         value = password,
                         onValueChange = { password = it; passwordError = false },
                         placeholder = "Mot de passe",
                         leadingIcon = Icons.Default.Lock,
                         isError = passwordError,
-                        errorMessage = "Mot de passe requis",
+                        errorMessage = "Mot de passe (min 6 caractères)",
                         isPassword = true,
                         isPasswordVisible = isPasswordVisible,
                         onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
                     )
 
-                    Spacer(modifier = Modifier.height(25.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     authError?.let { err ->
                         Text(
                             text = err,
-                            color = Color(0xFFD32F2F),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
 
-                    Button(
+                    LegalButton(
+                        text = "S'inscrire",
                         onClick = {
                             firstNameError = firstName.isBlank()
                             lastNameError = lastName.isBlank()
                             emailError = email.isBlank() || !email.contains("@")
                             passwordError = password.length < 6
                             
-                            if (firstNameError || lastNameError || emailError || passwordError) return@Button
+                            if (firstNameError || lastNameError || emailError || passwordError) return@LegalButton
                             
                             authViewModel.registerNewUser(
                                 firstName = firstName,
@@ -235,35 +225,33 @@ fun RegistrationScreen(
                                 role = if (isLawyer) "lawyer" else "user"
                             )
                         },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                        shape = RoundedCornerShape(25.dp),
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
-                        } else {
-                            Text("S'inscrire", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        }
+                        enabled = !isLoading
+                    )
+
+                    if (isLoading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     Row(
                         modifier = Modifier.clickable { onNavigateBack() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             "Déjà un compte ? ",
-                            fontSize = 13.sp,
-                            color = Color.Gray,
-                            fontFamily = FontFamily.Serif
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
                         )
                         Text(
                             "Se connecter",
-                            fontSize = 13.sp,
-                            color = darkGreen,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Serif
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
                         )
                     }
                 }

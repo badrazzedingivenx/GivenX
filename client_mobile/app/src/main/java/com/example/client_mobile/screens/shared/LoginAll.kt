@@ -71,40 +71,27 @@ fun LoginScreen(
         }
     }
 
-    val darkGreen = Color(0xFF1B3124)
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.88f)
+                    .fillMaxWidth(0.92f)
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.50f),
-                                Color.White.copy(alpha = 0.65f)
-                            )
-                        )
-                    )
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
-                        color = Color.White.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(50.dp)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(32.dp)
                     )
-                    .padding(horizontal = 24.dp, vertical = 36.dp)
+                    .padding(horizontal = 24.dp, vertical = 40.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -113,17 +100,25 @@ fun LoginScreen(
                     Image(
                         painter = painterResource(id = R.drawable.logo_app),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(235.dp),
+                        modifier = Modifier.height(120.dp),
                         contentScale = ContentScale.Fit
                     )
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Connexion",
-                        fontSize = 32.sp,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = darkGreen
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     )
-                    Spacer(modifier = Modifier.height(35.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Accédez à votre espace sécurisé",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
                     CustomInputField(
                         value = email,
                         onValueChange = { 
@@ -153,77 +148,65 @@ fun LoginScreen(
                     )
                     Text(
                         text = "Mot de passe oublié ?",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Serif,
-                        color = darkGreen,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
                         modifier = Modifier
                             .align(Alignment.End)
-                            .padding(top = 10.dp)
+                            .padding(top = 12.dp)
                             .clickable { /* Action */ }
                     )
-                    Spacer(modifier = Modifier.height(35.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
                     // Auth error banner
                     authError?.let { err ->
                         Text(
                             text = err,
-                            color = Color(0xFFD32F2F),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 8.dp)
+                                .padding(bottom = 12.dp)
                         )
                     }
-                    Button(
+
+                    LegalButton(
+                        text = "Se connecter",
                         onClick = {
                             emailError = email.isBlank()
                             passwordError = password.isBlank()
-                            if (emailError || passwordError) return@Button
+                            if (emailError || passwordError) return@LegalButton
                             authViewModel.login(email, password)
                         },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                        shape = RoundedCornerShape(25.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(55.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = Color.White,
-                                strokeWidth = 2.5.dp
-                            )
-                        } else {
-                            Text(
-                                text = "Se connecter",
-                                fontSize = 18.sp,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
+                        enabled = !isLoading
+                    )
+
+                    if (isLoading) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
                     }
-                    Spacer(modifier = Modifier.height(25.dp))
+
+                    Spacer(modifier = Modifier.height(24.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Si vous n'avez pas de compte, ",
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold
+                            text = "Nouveau ici ? ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
                         )
                         Text(
-                            text = "Créez un compte",
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            color = darkGreen,
+                            text = "Créer un compte",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
+                            ),
                             modifier = Modifier.clickable { onNavigateToSignup(userType) }
                         )
                     }
@@ -251,8 +234,8 @@ fun CustomInputField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = Color.Gray, fontFamily = FontFamily.Serif) },
-            leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = darkGreen) },
+            placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = Color.Gray) },
+            leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
             trailingIcon = {
                 if (isPassword && onVisibilityToggle != null) {
                     IconButton(onClick = onVisibilityToggle) {
@@ -267,25 +250,24 @@ fun CustomInputField(
             visualTransformation = if (isPassword && !isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(25.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
             isError = isError,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.95f), 
-                unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                errorContainerColor = Color.White.copy(alpha = 0.95f),
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-                errorBorderColor = Color.Red
+                focusedContainerColor = Color.White, 
+                unfocusedContainerColor = Color.White,
+                errorContainerColor = Color.White,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                errorBorderColor = MaterialTheme.colorScheme.error
             )
         )
         if (isError) {
             Text(
                 text = errorMessage,
-                color = Color.Red,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Serif,
-                modifier = Modifier.padding(start = 16.dp, top = 2.dp)
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
     }

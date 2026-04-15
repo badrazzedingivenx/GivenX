@@ -67,11 +67,40 @@ data class LegalStory(
 fun UserDashboard(
     onNavigateToProfile: () -> Unit = {}
 ) {
-    UserCasesTabContent(
-        paddingValues = PaddingValues(0.dp)
-    )
+    AppScaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "GIVENX LEGAL",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profil",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
+            )
+        }
+    ) { innerPadding ->
+        UserCasesTabContent(
+            paddingValues = innerPadding
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun UserCasesTabContent(
     paddingValues: PaddingValues,
@@ -128,7 +157,6 @@ internal fun UserCasesTabContent(
         )
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh    = {
@@ -160,16 +188,15 @@ internal fun UserCasesTabContent(
             }
             Text(
                 text = greeting,
-                fontSize = 26.sp,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                color = AppDarkGreen
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             )
             Text(
                 text = "Comment puis-je vous aider aujourd'hui ?",
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Serif,
-                color = AppDarkGreen.copy(alpha = 0.60f)
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.60f)
             )
         }
 
@@ -252,9 +279,8 @@ internal fun UserCasesTabContent(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Affaire N° ${d.caseNumber}",
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = AppGoldColor,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(18.dp))
@@ -441,7 +467,7 @@ fun CaseStatusTimeline(steps: List<CaseStep>) {
                                     modifier = Modifier
                                         .size(7.dp)
                                         .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.85f))
+                                        .background(Color.White)
                                 )
                             }
                         }

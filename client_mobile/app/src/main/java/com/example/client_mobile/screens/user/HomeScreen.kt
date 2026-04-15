@@ -91,7 +91,7 @@ fun UserDashboardHost(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             val onNetworkingRoute = currentRoute == UserTab.Networking.route
             val showTitleBar    = onNetworkingRoute
@@ -224,43 +224,38 @@ fun UserDashboardHost(
                 } else {
                     innerNavController.navigate(tab.route) {
                         // Pop back to HomeTab without destroying its saved state
-                        popUpTo(UserTab.Home.route) { saveState = true }
+                        popUpTo(UserTab.Home.route) { 
+                            saveState = true 
+                        }
                         launchSingleTop = true
                         restoreState = true
                     }
                 }
             }
         },
-        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        DashBoardBackground {
-            NavHost(
-                navController = innerNavController,
-                startDestination = UserTab.Home.route
-            ) {
-                composable(UserTab.Home.route) {
-                    UserHomeTabContent(
-                        paddingValues = paddingValues,
-                        onNavigateToAbout = onNavigateToAbout,
-                        onNavigateToCategory = onNavigateToCategory
-                    )
-                }
-                composable(UserTab.Networking.route) {
-                    NetworkingScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Vault.route) {
-                    UserCasesTabContent(
-                        paddingValues = paddingValues,
-                        onNavigateToConsulter = onNavigateToAppointments,
-                        onNavigateToMessages = {
-                            // This might need a different handling now that Messages is not in bottom bar
-                        },
-                        onNavigateToDocuments = onNavigateToDocuments,
-                        onNavigateToFacturation = onNavigateToFacturation,
-                        onNavigateToDossier = onNavigateToDossier
-                    )
-                }
+        NavHost(
+            navController = innerNavController,
+            startDestination = UserTab.Home.route,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable(UserTab.Home.route) {
+                UserHomeTabContent(
+                    paddingValues = PaddingValues(0.dp),
+                    onNavigateToAbout = onNavigateToAbout,
+                    onNavigateToCategory = onNavigateToCategory
+                )
+            }
+            composable(UserTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer = false,
+                    paddingValues = PaddingValues(0.dp),
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+            composable(UserTab.Profile.route) {
+                Box(Modifier.fillMaxSize())
             }
         }
     }
@@ -499,7 +494,7 @@ private fun CategoryCard(
             .aspectRatio(1f)
             .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
-        color = Color.White.copy(alpha = 0.92f),
+        color = Color.White,
         border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
         shadowElevation = 2.dp
     ) {

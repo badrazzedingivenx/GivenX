@@ -95,63 +95,36 @@ fun AvocatProfile(
 
     var showLogOutDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Profil Avocat",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
+            StandardTopBar(
+                title = "Profil Avocat",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = {}) {
                         Icon(
                             Icons.Default.Share,
                             contentDescription = "Partager",
-                            tint = AppDarkGreen
+                            tint = AppGoldColor
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-
-            // ── Initial loading state ─────────────────────────────────────────────
-            if (isRefreshing && lawyerProfile == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator(color = AppGoldColor) }
-                return@DashBoardBackground
-            }
-
+        // ── Initial loading state ─────────────────────────────────────────────
+        if (isRefreshing && lawyerProfile == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator(color = AppGoldColor) }
+        } else if (isError && lawyerProfile == null) {
             // ── No-connection state ─────────────────────────────────────────
-            if (isError && lawyerProfile == null) {
-                NoConnectionScreen(
-                    onRetry  = { dashboardViewModel.fetch() },
-                    modifier = Modifier.padding(paddingValues)
-                )
-                return@DashBoardBackground
-            }
-
+            NoConnectionScreen(
+                onRetry  = { dashboardViewModel.fetch() },
+                modifier = Modifier.padding(paddingValues)
+            )
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()

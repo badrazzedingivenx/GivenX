@@ -148,37 +148,15 @@ fun DossierDetailScreen(
     LaunchedEffect(caseId) { vm.fetchById(caseId) }
     val screenState by vm.state.collectAsStateWithLifecycle()
 
-    DashBoardBackground {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Retour",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    },
-                    title = {
-                        Text(
-                            "Mon Dossier",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = AppDarkGreen
-                        )
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Transparent
-                    )
-                )
-            },
-            containerColor = Color.Transparent
-        ) { paddingValues ->
-
-            when (val s = screenState) {
+    AppScaffold(
+        topBar = {
+            StandardTopBar(
+                title = "Mon Dossier",
+                onBack = onBack
+            )
+        }
+    ) { paddingValues ->
+        when (val s = screenState) {
                 is DossierDetailState.Loading ->
                     Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = AppDarkGreen, strokeWidth = 2.5.dp)
@@ -333,7 +311,6 @@ fun DossierDetailScreen(
                     }
                 }
             }
-        }
     }
 }
 
@@ -376,7 +353,7 @@ private fun DossierTimelineRow(step: DossierStep, isLast: Boolean) {
                         modifier = Modifier
                             .size(9.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.9f))
+                            .background(Color.White)
                     )
                     else -> Box(
                         modifier = Modifier

@@ -66,106 +66,106 @@ fun ScreenSwipeInfo(
     val scope = rememberCoroutineScope()
     val goldColor = Color(0xFFD4AF37)
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Full Screen Background
-        Image(
-            painter = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
-        // Dark Gradient Overlay for text readability at the bottom
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                        startY = 500f
+                .padding(paddingValues)
+        ) {
+            // Dark Gradient Overlay for text readability at the bottom
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                            startY = 500f
+                        )
                     )
-                )
-        )
+            )
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.Top
-            ) { position ->
-                if (position < 3) {
-                    OnboardingPageContent(page = onboardingPages[position])
-                } else {
-                    TypeCompteScreen(
-                        showBackground = false,
-                        onNavigateToLogin = onNavigateToLogin
-                    )
+            Column(modifier = Modifier.fillMaxSize()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.Top
+                ) { position ->
+                    if (position < 3) {
+                        OnboardingPageContent(page = onboardingPages[position])
+                    } else {
+                        TypeCompteScreen(
+                            showBackground = false,
+                            onNavigateToLogin = onNavigateToLogin
+                        )
+                    }
                 }
-            }
 
-            // Bottom Navigation Area (Only for first 3 pages)
-            if (pagerState.currentPage < 3) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp)
-                        .padding(bottom = 60.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Page Indicators (Dots)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        repeat(4) { index ->
-                            val isSelected = pagerState.currentPage == index
-                            val dotWidth by animateDpAsState(
-                                targetValue = if (isSelected) 24.dp else 6.dp,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                ),
-                                label = "dotWidth_$index"
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .height(6.dp)
-                                    .width(dotWidth)
-                                    .clip(CircleShape)
-                                    .background(if (isSelected) goldColor else Color.White.copy(alpha = 0.3f))
+                // Bottom Navigation Area (Only for first 3 pages)
+                if (pagerState.currentPage < 3) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 30.dp)
+                            .padding(bottom = 60.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Page Indicators (Dots)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            repeat(4) { index ->
+                                val isSelected = pagerState.currentPage == index
+                                val dotWidth by animateDpAsState(
+                                    targetValue = if (isSelected) 24.dp else 6.dp,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "dotWidth_$index"
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .height(6.dp)
+                                        .width(dotWidth)
+                                        .clip(CircleShape)
+                                        .background(if (isSelected) goldColor else Color.White.copy(alpha = 0.3f))
+                                )
+                            }
+                        }
+
+                        // Next / Start Button
+                        val nextInteractionSource = remember { MutableInteractionSource() }
+                        val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+                        val nextScale by animateFloatAsState(
+                            targetValue = if (isNextPressed) 0.92f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessHigh
+                            ),
+                            label = "nextButtonScale"
+                        )
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                }
+                            },
+                            interactionSource = nextInteractionSource,
+                            modifier = Modifier.scale(nextScale),
+                            colors = ButtonDefaults.buttonColors(containerColor = goldColor),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                        ) {
+                            Text(
+                                text = "Suivant",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Serif,
+                                color = Color.White
                             )
                         }
-                    }
-
-                    // Next / Start Button
-                    val nextInteractionSource = remember { MutableInteractionSource() }
-                    val isNextPressed by nextInteractionSource.collectIsPressedAsState()
-                    val nextScale by animateFloatAsState(
-                        targetValue = if (isNextPressed) 0.92f else 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessHigh
-                        ),
-                        label = "nextButtonScale"
-                    )
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        },
-                        interactionSource = nextInteractionSource,
-                        modifier = Modifier.scale(nextScale),
-                        colors = ButtonDefaults.buttonColors(containerColor = goldColor),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-                    ) {
-                        Text(
-                            text = "Suivant",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Serif,
-                            color = Color.White
-                        )
                     }
                 }
             }

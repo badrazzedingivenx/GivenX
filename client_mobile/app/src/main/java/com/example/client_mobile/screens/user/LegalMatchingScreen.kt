@@ -493,7 +493,7 @@ private fun PremiumCardContent(card: MatchCard) {
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color.Transparent, Color(0xFF0E1F16).copy(alpha = 0.85f))
+                                listOf(Color.Transparent, Color(0xFF0E1F16))
                             )
                         )
                 )
