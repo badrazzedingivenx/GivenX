@@ -240,12 +240,26 @@ app.get('/api/lawyers', async (req, res) => {
 
         const [rows] = await pool.query(sql, params);
         res.json({ success: true, data: rows.map(r => ({
-            id: r.id.toString(),
-            name: `${r.first_name} ${r.last_name}`,
-            specialty: r.speciality,
-            rating: parseFloat(r.rating),
-            review_count: r.review_count,
-            is_verified: !!r.is_verified
+            id:            r.id.toString(),
+            name:          `${r.first_name ?? ''} ${r.last_name ?? ''}`.trim(),
+            full_name:     `${r.first_name ?? ''} ${r.last_name ?? ''}`.trim(),
+            specialty:     r.speciality   ?? '',
+            speciality:    r.speciality   ?? '',
+            domaine:       r.domaine      ?? r.speciality ?? '',
+            location:      r.city         ?? r.address    ?? '',
+            city:          r.city         ?? '',
+            avatar_url:    r.photo_url    ?? r.avatar_url ?? '',
+            avatarUrl:     r.photo_url    ?? r.avatar_url ?? '',
+            rating:        parseFloat(r.rating       ?? 0),
+            review_count:  r.review_count ?? 0,
+            reviewCount:   r.review_count ?? 0,
+            experience:    r.years_experience ?? r.experience ?? 0,
+            years_experience: r.years_experience ?? 0,
+            is_verified:   !!r.is_verified,
+            isVerified:    !!r.is_verified,
+            is_available:  r.is_available !== undefined ? !!r.is_available : true,
+            bio:           r.bio          ?? '',
+            status:        r.status       ?? ''
         })) });
     } catch (err) {
         res.status(500).json({ error: 'Erreur serveur' });

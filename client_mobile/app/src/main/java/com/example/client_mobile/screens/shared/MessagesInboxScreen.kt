@@ -1,12 +1,19 @@
 package com.example.client_mobile.screens.shared
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,19 +22,36 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
-// ─── Messages Inbox Screen ────────────────────────────────────────────────────
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+private val InboxBackground      = Color(0xFFF5F7F6)   // Very light warm-green tinted gray
+private val CardWhite            = Color(0xFFFFFFFF)
+private val NameColor            = Color(0xFF0F291E)    // AppDarkGreen alias – strong hierarchy
+private val SnippetColor         = Color(0xFF7A8C84)    // Medium gray-green
+private val TimeColor            = Color(0xFFADB8B3)    // Light gray
+private val UnreadDotBg          = Color(0xFF0F291E)    // AppDarkGreen badge
+private val UnreadTimeColor      = Color(0xFFD4AF37)    // AppGoldColor for unread time
+private val AvatarRingUnread     = Color(0xFFD4AF37)    // Gold ring when unread
+private val AvatarBg             = Color(0xFF1B4332)    // Rich dark-green avatar background
+private val AvatarInitialColor   = Color(0xFFD4AF37)    // Gold initials
+private val SearchBarBg          = Color(0xFFEEF1EF)    // Slightly darker than page bg
+private val SectionLabelColor    = Color(0xFF4A5D55)    // Muted green-gray
+
+// ─── Messages Inbox Screen ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesInboxScreen(
@@ -50,37 +74,33 @@ fun MessagesInboxScreen(
         }
     }
 
-    // ── No-connection full-screen state ───────────────────────────────────
+    // ── No-connection full-screen state ──────────────────────────────────────
     if (isError && conversations.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             NoConnectionScreen(
-                onRetry   = { conversationViewModel.refresh() },
-                modifier  = Modifier.fillMaxSize()
+                onRetry  = { conversationViewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
             )
             SnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier  = Modifier.align(Alignment.BottomCenter)
             )
         }
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-        // ── Loading state (Skeleton) ──────────────────────────────────────────
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(InboxBackground)
+            .padding(paddingValues)
+    ) {
+        // ── Loading skeleton ──────────────────────────────────────────────────
         if (isLoading && conversations.isEmpty()) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-                item { SkeletonBox(modifier = Modifier.width(150.dp).height(24.dp)) }
-                items(5) {
-                    SkeletonBox(modifier = Modifier.fillMaxWidth().height(80.dp), shape = RoundedCornerShape(18.dp))
-                }
-            }
+            InboxSkeleton()
         }
 
-        // ── Pull-to-refresh + conversation list ───────────────────────────────
+        // ── Pull-to-refresh + list ────────────────────────────────────────────
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh    = { conversationViewModel.refresh() },
@@ -89,7 +109,6 @@ fun MessagesInboxScreen(
             MessagesInboxContent(
                 conversations    = conversations,
                 isLawyer         = isLawyer,
-                paddingValues    = PaddingValues(0.dp),
                 onNavigateToChat = onNavigateToChat
             )
         }
@@ -101,69 +120,201 @@ fun MessagesInboxScreen(
     }
 }
 
-// ─── Inner content (list + empty state) ──────────────────────────────────
+// ─── Skeleton Loading ─────────────────────────────────────────────────────────
+@Composable
+private fun InboxSkeleton() {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { Spacer(Modifier.height(16.dp)) }
+        // Search bar skeleton
+        item {
+            SkeletonBox(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape    = RoundedCornerShape(16.dp)
+            )
+        }
+        item { Spacer(Modifier.height(8.dp)) }
+        // Card skeletons
+        items(6) {
+            SkeletonConversationCard()
+        }
+    }
+}
+
+@Composable
+private fun SkeletonConversationCard() {
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton_card")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue  = 0.55f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(1100, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation         = 2.dp,
+                shape             = RoundedCornerShape(20.dp),
+                ambientColor      = Color(0x14000000),
+                spotColor         = Color(0x14000000)
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .background(CardWhite)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Avatar circle
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray.copy(alpha = alpha))
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(130.dp)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.LightGray.copy(alpha = alpha))
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.75f)
+                        .height(11.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.LightGray.copy(alpha = alpha * 0.7f))
+                )
+            }
+        }
+    }
+}
+
+// ─── Inner content (list + empty state) ──────────────────────────────────────
 @Composable
 private fun MessagesInboxContent(
     conversations: List<Conversation>,
     isLawyer: Boolean,
-    paddingValues: PaddingValues,
     onNavigateToChat: (String) -> Unit
 ) {
     if (conversations.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ChatBubbleOutline,
-                    contentDescription = null,
-                    tint = AppDarkGreen.copy(alpha = 0.30f),
-                    modifier = Modifier.size(64.dp)
-                )
-                Text(
-                    text = "Aucune conversation",
-                    fontSize = 16.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen
-                )
-                Text(
-                    text = if (isLawyer)
-                        "Les messages de vos clients apparaîtront ici."
-                    else
-                        "Consultez un avocat et commencez une discussion.",
-                    fontSize = 13.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = Color.Gray
-                )
-            }
-        }
+        InboxEmptyState(isLawyer = isLawyer)
     } else {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item { Spacer(Modifier.height(12.dp)) }
+
+            // ── Section label ─────────────────────────────────────────────────
             item {
-                Spacer(modifier = Modifier.height(4.dp))
-                SectionHeader(title = "Conversations (${conversations.size})")
+                Text(
+                    text = "Messages",
+                    fontSize    = 22.sp,
+                    fontWeight  = FontWeight.Bold,
+                    color       = NameColor,
+                    letterSpacing = 0.sp
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "${conversations.size} conversation${if (conversations.size > 1) "s" else ""}",
+                    fontSize  = 13.sp,
+                    fontWeight = FontWeight.Normal,
+                    color     = SectionLabelColor
+                )
+                Spacer(Modifier.height(12.dp))
             }
-            items(conversations, key = { it.id }) { conv ->
+
+            // ── Conversation cards ────────────────────────────────────────────
+            itemsIndexed(conversations, key = { _, c -> c.id }) { index, conv ->
+                val enterAlpha by animateFloatAsState(
+                    targetValue   = 1f,
+                    animationSpec = tween(
+                        durationMillis = 320,
+                        delayMillis    = (index * 50).coerceAtMost(300),
+                        easing         = FastOutSlowInEasing
+                    ),
+                    label = "card_alpha_$index"
+                )
                 ConversationCard(
                     conversation = conv,
-                    isLawyer = isLawyer,
-                    onClick = { onNavigateToChat(conv.id) }
+                    isLawyer     = isLawyer,
+                    modifier     = Modifier.graphicsLayer(alpha = enterAlpha),
+                    onClick      = { onNavigateToChat(conv.id) }
                 )
             }
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+
+            item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+@Composable
+private fun InboxEmptyState(isLawyer: Boolean) {
+    Box(
+        modifier          = Modifier.fillMaxSize(),
+        contentAlignment  = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Icon container
+            Box(
+                modifier         = Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFF1B4332).copy(alpha = 0.12f),
+                                Color(0xFF0F291E).copy(alpha = 0.05f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector        = Icons.Default.ChatBubbleOutline,
+                    contentDescription = null,
+                    tint               = AppDarkGreen.copy(alpha = 0.35f),
+                    modifier           = Modifier.size(40.dp)
+                )
+            }
+            Text(
+                text       = "Aucune conversation",
+                fontSize   = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color      = NameColor
+            )
+            Text(
+                text    = if (isLawyer)
+                    "Les messages de vos clients apparaîtront ici."
+                else
+                    "Consultez un avocat et commencez une discussion.",
+                fontSize    = 14.sp,
+                color       = SnippetColor,
+                lineHeight  = 20.sp
+            )
         }
     }
 }
@@ -173,11 +324,13 @@ private fun MessagesInboxContent(
 private fun ConversationCard(
     conversation: Conversation,
     isLawyer: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val otherName = conversation.otherPartyName
+    val otherName   = conversation.otherPartyName
     val unreadCount = conversation.unreadCount
-    val isUnread = unreadCount > 0
+    val isUnread    = unreadCount > 0
+
     val initials = otherName
         .removePrefix("Maître ")
         .split(" ")
@@ -185,122 +338,174 @@ private fun ConversationCard(
         .take(2)
         .joinToString("")
 
-    Surface(
-        modifier = Modifier
+    // Outer shadow box wrapped around the card for the diffuse elevation effect
+    Box(
+        modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = if (isUnread) Color.White else Color.White.copy(alpha = 0.7f),
-        border = BorderStroke(
-            width = if (isUnread) 1.5.dp else 1.dp,
-            color = if (isUnread) AppGoldColor.copy(alpha = 0.4f) else AppDarkGreen.copy(alpha = 0.08f)
-        ),
-        shadowElevation = if (isUnread) 6.dp else 1.dp
+            .shadow(
+                elevation         = if (isUnread) 8.dp else 3.dp,
+                shape             = RoundedCornerShape(20.dp),
+                // Very soft, dispersed shadow – low opacity, high spread
+                ambientColor      = if (isUnread)
+                    Color(0xFF0F291E).copy(alpha = 0.10f)
+                else
+                    Color(0xFF000000).copy(alpha = 0.06f),
+                spotColor         = if (isUnread)
+                    Color(0xFFD4AF37).copy(alpha = 0.10f)
+                else
+                    Color(0xFF000000).copy(alpha = 0.06f)
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .background(CardWhite)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication        = null,
+                onClick           = onClick
+            )
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // Avatar with premium border if unread
+        // Unread left accent bar
+        if (isUnread) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(AppDarkGreen)
-                    .then(
-                        if (isUnread) Modifier.border(2.dp, AppGoldColor, CircleShape)
-                        else Modifier
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (conversation.avatarUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = conversation.avatarUrl,
-                        contentDescription = otherName,
-                        modifier = Modifier.fillMaxSize().clip(CircleShape)
-                    )
-                } else {
-                    Text(
-                        initials,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = AppGoldColor,
-                            fontFamily = FontFamily.Serif
+                    .align(Alignment.CenterStart)
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color(0xFFD4AF37), Color(0xFFC5A059))
                         )
                     )
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start  = if (isUnread) 20.dp else 16.dp,
+                    end    = 16.dp,
+                    top    = 16.dp,
+                    bottom = 16.dp
+                ),
+            verticalAlignment   = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // ── Avatar ────────────────────────────────────────────────────────
+            Box(
+                modifier         = Modifier.size(54.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Gold ring for unread
+                if (isUnread) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(CircleShape)
+                            .background(
+                                Brush.sweepGradient(
+                                    colors = listOf(
+                                        AvatarRingUnread,
+                                        AvatarRingUnread.copy(alpha = 0.4f),
+                                        AvatarRingUnread
+                                    )
+                                )
+                            )
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(if (isUnread) 48.dp else 54.dp)
+                        .clip(CircleShape)
+                        .background(AvatarBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (conversation.avatarUrl.isNotBlank()) {
+                        AsyncImage(
+                            model              = conversation.avatarUrl,
+                            contentDescription = otherName,
+                            contentScale       = ContentScale.Crop,
+                            modifier           = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Text(
+                            text       = initials,
+                            fontSize   = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = AvatarInitialColor
+                        )
+                    }
                 }
             }
 
+            // ── Text content ──────────────────────────────────────────────────
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
+                // Name + Date row
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment     = Alignment.Top
                 ) {
                     Text(
-                        otherName,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = if (isUnread) FontWeight.ExtraBold else FontWeight.Bold,
-                            color = AppDarkGreen,
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily.Serif
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        text       = otherName,
+                        fontSize   = 15.sp,
+                        fontWeight = if (isUnread) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        color      = NameColor,
+                        maxLines   = 1,
+                        overflow   = TextOverflow.Ellipsis,
+                        modifier   = Modifier.weight(1f).padding(end = 8.dp)
                     )
                     if (conversation.timestamp.isNotEmpty()) {
                         Text(
-                            conversation.timestamp,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = if (isUnread) AppGoldColor else AppDarkGreen.copy(alpha = 0.4f),
-                                fontWeight = if (isUnread) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 10.sp
-                            )
+                            text       = conversation.timestamp,
+                            fontSize   = 11.sp,
+                            fontWeight = if (isUnread) FontWeight.SemiBold else FontWeight.Normal,
+                            color      = if (isUnread) UnreadTimeColor else TimeColor
                         )
                     }
                 }
 
+                // Snippet + Badge row
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier              = Modifier.fillMaxWidth(),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        if (conversation.lastMessage.isNotEmpty()) conversation.lastMessage
+                        text     = if (conversation.lastMessage.isNotEmpty())
+                            conversation.lastMessage
                         else "Nouvelle conversation",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = AppDarkGreen.copy(alpha = if (isUnread) 0.85f else 0.55f),
-                            fontWeight = if (isUnread) FontWeight.SemiBold else FontWeight.Normal,
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        fontSize   = 13.sp,
+                        fontWeight = if (isUnread) FontWeight.Medium else FontWeight.Normal,
+                        color      = if (isUnread) SnippetColor.copy(alpha = 0.9f) else SnippetColor,
+                        maxLines   = 1,
+                        overflow   = TextOverflow.Ellipsis,
+                        modifier   = Modifier.weight(1f)
                     )
-                    
+
                     if (isUnread) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            shape = CircleShape,
-                            color = AppDarkGreen,
-                            modifier = Modifier.size(20.dp)
+                        Spacer(Modifier.width(10.dp))
+                        // Unread count badge
+                        Box(
+                            modifier         = Modifier
+                                .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                                .clip(CircleShape)
+                                .background(UnreadDotBg),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    if (unreadCount > 9) "9+" else "$unreadCount",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = AppGoldColor,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 9.sp
-                                    )
-                                )
-                            }
+                            Text(
+                                text       = if (unreadCount > 9) "9+" else "$unreadCount",
+                                fontSize   = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color      = AvatarInitialColor, // gold text on dark bg
+                                modifier   = Modifier.padding(horizontal = 5.dp, vertical = 3.dp)
+                            )
                         }
                     }
                 }

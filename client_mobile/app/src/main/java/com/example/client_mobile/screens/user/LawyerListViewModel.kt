@@ -56,8 +56,10 @@ class LawyerListViewModel : ViewModel() {
         _isRefreshing.value = !initial       // spinner for pull-to-refresh only
         viewModelScope.launch {
             try {
+                // Always fetch ALL lawyers — domain/specialty filtering is done
+                // client-side in the composable so "Tous" shows every lawyer.
                 val response = RetrofitClient.haqApi.getLawyers(
-                    domaine = activeDomaine,
+                    domaine = null,
                     limit   = 100
                 )
                 if (response.isSuccessful && response.body()?.success == true) {

@@ -99,12 +99,20 @@ fun LawyerListScreen(
             .sorted()
     }
 
-    // ── Selected filter chip ──────────────────────────────────────────────────
-    var selectedFilter by rememberSaveable { mutableStateOf("Tous") }
+    // ── Selected filter chip — pre-select the domain chip from nav arg ──────
+    // Map legacy "Droit Civil" nav arg → displayed chip label
+    val initialChip = remember(domaine) {
+        when {
+            domaine.isBlank()                           -> "Tous"
+            domaine.equals("Droit Civil", true)         -> "Droit de la Famille"
+            else                                        -> domaine
+        }
+    }
+    var selectedFilter by rememberSaveable { mutableStateOf(initialChip) }
 
     // Reset chip when mode changes so the selection stays valid
     LaunchedEffect(filterMode) {
-        selectedFilter = if (filterMode == FilterMode.SPECIALTY) "Tous" else "Toutes villes"
+        selectedFilter = if (filterMode == FilterMode.SPECIALTY) initialChip else "Toutes villes"
     }
 
     // ── Combined filter logic ─────────────────────────────────────────────────
