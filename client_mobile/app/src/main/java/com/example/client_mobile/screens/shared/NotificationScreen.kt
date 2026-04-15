@@ -77,7 +77,7 @@ fun NotificationScreen(
 
     val unreadCount = notifications.count { !it.isRead }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -131,8 +131,7 @@ fun NotificationScreen(
                     scrolledContainerColor = AppDarkGreen
                 )
             )
-        },
-        containerColor = Color(0xFFF4F6F4)
+        }
     ) { paddingValues ->
 
         if (notifications.isEmpty()) {

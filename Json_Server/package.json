@@ -4,9 +4,16 @@
   "dependencies": {
     "express": "^5.2.1",
     "json-server": "^0.17.4",
-    "json-server-auth": "^2.1.0"
+    "json-server-auth": "^2.1.0",
+    "ws": "^8.20.0"
   },
   "scripts": {
     "start": "json-server-auth db.json --port 3001"
-  }
+  },
+  "description": "",
+  "main": "auth.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }

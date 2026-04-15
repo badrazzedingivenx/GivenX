@@ -49,24 +49,34 @@ fun MessagesInboxScreen(
         }
     }
 
-    DashBoardBackground {
-        // ── No-connection full-screen state ───────────────────────────────────
-        if (isError && conversations.isEmpty()) {
+    // ── No-connection full-screen state ───────────────────────────────────
+    if (isError && conversations.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             NoConnectionScreen(
                 onRetry   = { conversationViewModel.refresh() },
-                modifier  = Modifier.padding(paddingValues)
+                modifier  = Modifier.fillMaxSize()
             )
-            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
-            return@DashBoardBackground
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
+        return
+    }
 
-        // ── Loading bar ───────────────────────────────────────────────────────
-        if (isLoading) {
-            LinearProgressIndicator(
-                modifier   = Modifier.fillMaxWidth().align(Alignment.TopCenter),
-                color      = AppGoldColor,
-                trackColor = AppDarkGreen.copy(alpha = 0.2f)
-            )
+    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        // ── Loading state (Skeleton) ──────────────────────────────────────────
+        if (isLoading && conversations.isEmpty()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { SkeletonBox(modifier = Modifier.width(150.dp).height(24.dp)) }
+                items(5) {
+                    SkeletonBox(modifier = Modifier.fillMaxWidth().height(80.dp), shape = RoundedCornerShape(18.dp))
+                }
+            }
         }
 
         // ── Pull-to-refresh + conversation list ───────────────────────────────
@@ -78,7 +88,7 @@ fun MessagesInboxScreen(
             MessagesInboxContent(
                 conversations    = conversations,
                 isLawyer         = isLawyer,
-                paddingValues    = paddingValues,
+                paddingValues    = PaddingValues(0.dp),
                 onNavigateToChat = onNavigateToChat
             )
         }
@@ -178,7 +188,7 @@ private fun ConversationCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        color = if (unreadCount > 0) Color.White else Color.White.copy(alpha = 0.78f),
+        color = Color.White,
         border = BorderStroke(
             width = if (unreadCount > 0) 1.dp else 0.5.dp,
             color = if (unreadCount > 0) AppGoldColor.copy(alpha = 0.55f) else AppDarkGreen.copy(alpha = 0.10f)

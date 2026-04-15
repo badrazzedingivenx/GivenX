@@ -94,7 +94,7 @@ fun NetworkingScreen(
         // ── Domaines populaires ───────────────────────────────────────────────
         item {
             NetworkingSectionHeader(
-                icon  = Icons.Default.WorkspacePremium,
+                icon  = Icons.Default.Gavel,
                 title = "Domaines juridiques"
             )
         }

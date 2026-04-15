@@ -26,20 +26,13 @@ fun TypeCompteScreen(
     onNavigateToLogin: (String) -> Unit
 ) {
     val darkGreen = Color(0xFF1B3124)
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (showBackground) {
-            Image(
-                painter = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
+    AppScaffold(
+        showBackground = showBackground
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -106,7 +99,7 @@ fun AccountOptionCard(
     Surface(
         modifier = modifier.height(350.dp),
         shape = RoundedCornerShape(35.dp),
-        color = Color.White.copy(alpha = 0.9f),
+        color = Color.White,
         shadowElevation = 2.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.3f))
     ) {
@@ -121,7 +114,7 @@ fun AccountOptionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .background(Color(0xFFF2F2F2).copy(alpha = 0.9f), RoundedCornerShape(25.dp)),
+                    .background(Color(0xFFF2F2F2), RoundedCornerShape(25.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(

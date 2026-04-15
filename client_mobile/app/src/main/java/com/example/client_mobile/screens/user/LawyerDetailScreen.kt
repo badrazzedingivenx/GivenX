@@ -44,27 +44,11 @@ fun LawyerDetailScreen(
 
     var showBookingDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Fiche Avocat",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
+            StandardTopBar(
+                title = "Fiche Avocat",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = {
                         val conv = ConversationRepository.getOrCreate(
@@ -80,53 +64,48 @@ fun LawyerDetailScreen(
                             tint = AppGoldColor
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            if (lawyers == null) {
-                // Still loading from Firestore
-                Box(
-                    Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
+        if (lawyers == null) {
+            // Still loading from Firestore
+            Box(
+                Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = AppDarkGreen, strokeWidth = 2.5.dp)
+            }
+        } else if (lawyer == null) {
+            Box(
+                Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    CircularProgressIndicator(color = AppDarkGreen, strokeWidth = 2.5.dp)
+                    Icon(
+                        Icons.Default.PersonOff,
+                        contentDescription = null,
+                        tint = AppDarkGreen.copy(alpha = 0.30f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Text(
+                        "Avocat introuvable",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = AppDarkGreen
+                    )
+                    Button(
+                        onClick = onBack,
+                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                        shape = RoundedCornerShape(14.dp)
+                    ) { Text("Retour", fontFamily = FontFamily.Serif, color = Color.White) }
                 }
-            } else if (lawyer == null) {
-                Box(
-                    Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.PersonOff,
-                            contentDescription = null,
-                            tint = AppDarkGreen.copy(alpha = 0.30f),
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Text(
-                            "Avocat introuvable",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = AppDarkGreen
-                        )
-                        Button(
-                            onClick = onBack,
-                            colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
-                            shape = RoundedCornerShape(14.dp)
-                        ) { Text("Retour", fontFamily = FontFamily.Serif, color = Color.White) }
-                    }
-                }
-            } else {
+            }
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -282,58 +261,57 @@ fun LawyerDetailScreen(
 
                 item { Spacer(modifier = Modifier.height(24.dp)) }
             }
-            } // end else (lawyer found)
-        }
-    }
+        } // end else (lawyer found)
 
-    // ── Booking Dialog ────────────────────────────────────────────────────────
-    if (showBookingDialog) {
-        AlertDialog(
-            onDismissRequest = { showBookingDialog = false },
-            shape = RoundedCornerShape(22.dp),
-            containerColor = Color.White,
-            icon = {
-                Icon(
-                    Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    tint = AppGoldColor,
-                    modifier = Modifier.size(32.dp)
-                )
-            },
-            title = {
-                Text(
-                    "Prendre Rendez-vous",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen,
-                    fontSize = 17.sp,
-                    textAlign = TextAlign.Center
-                )
-            },
-            text = {
-                Text(
-            "Votre demande de rendez-vous avec ${lawyer?.name ?: ""} sera envoyée. Vous recevrez une confirmation sous 24h.",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp,
-                    color = AppDarkGreen.copy(alpha = 0.65f),
-                    textAlign = TextAlign.Center
-                )
-            },
-            dismissButton = {
-                TextButton(onClick = { showBookingDialog = false }) {
-                    Text("Annuler", fontFamily = FontFamily.Serif, color = AppDarkGreen.copy(alpha = 0.55f))
+        // ── Booking Dialog ────────────────────────────────────────────────────────
+        if (showBookingDialog) {
+            AlertDialog(
+                onDismissRequest = { showBookingDialog = false },
+                shape = RoundedCornerShape(22.dp),
+                containerColor = Color.White,
+                icon = {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = AppGoldColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                },
+                title = {
+                    Text(
+                        "Prendre Rendez-vous",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        color = AppDarkGreen,
+                        fontSize = 17.sp,
+                        textAlign = TextAlign.Center
+                    )
+                },
+                text = {
+                    Text(
+                "Votre demande de rendez-vous avec ${lawyer?.name ?: ""} sera envoyée. Vous recevrez une confirmation sous 24h.",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 13.sp,
+                        color = AppDarkGreen.copy(alpha = 0.65f),
+                        textAlign = TextAlign.Center
+                    )
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBookingDialog = false }) {
+                        Text("Annuler", fontFamily = FontFamily.Serif, color = AppDarkGreen.copy(alpha = 0.55f))
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showBookingDialog = false },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)
+                    ) {
+                        Text("Confirmer", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showBookingDialog = false },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)
-                ) {
-                    Text("Confirmer", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
-                }
-            }
-        )
+            )
+        }
     }
 }
 

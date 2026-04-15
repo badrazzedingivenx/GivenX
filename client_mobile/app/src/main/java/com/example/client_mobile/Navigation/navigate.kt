@@ -130,12 +130,13 @@ fun AppNavigation() {
 
         // 5. Lawyer Home / Profile
         composable("LawyerHome") {
+            val lawyerId = TokenManager.getLawyerId()
             LawyerDashboardHost(
                 onNavigateToProfile = { navController.navigate("AvocatProfile") { launchSingleTop = true } },
                 onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToRequests = { navController.navigate("LawyerRequests") },
-                onNavigateToPayments = { navController.navigate("LawyerPayments") },
+                onNavigateToPayments = { navController.navigate("LawyerPayments?lawyerId=$lawyerId") },
                 onNavigateToCreator  = { navController.navigate("LawyerCreatorStudio") { launchSingleTop = true } }
             )
         }
@@ -144,8 +145,17 @@ fun AppNavigation() {
             LawyerRequestsScreen(onBack = { navController.popBackStack() })
         }
 
-        composable("LawyerPayments") {
-            LawyerPaymentsScreen(onBack = { navController.popBackStack() })
+        composable(
+            route = "LawyerPayments?lawyerId={lawyerId}",
+            arguments = listOf(navArgument("lawyerId") { type = NavType.IntType; defaultValue = -1 })
+        ) { backStackEntry ->
+            val lawyerId = backStackEntry.arguments?.getInt("lawyerId") ?: -1
+            // Use a specific Lawyer version of the payment screen or pass a flag
+            PaymentScreen(
+                onBack = { navController.popBackStack() },
+                // You can pass the ID to the ViewModel or via a factory
+                lawyerId = lawyerId
+            )
         }
 
         composable("LawyerCreatorStudio") {
@@ -173,6 +183,7 @@ fun AppNavigation() {
 
         // 6. User Home / Profile
         composable("UserHome") {
+            val clientId = TokenManager.getClientId()
             UserDashboardHost(
                 onNavigateToProfile = { navController.navigate("UserProfile") { launchSingleTop = true } },
                 onNavigateToAbout = { navController.navigate("About") },
@@ -184,7 +195,7 @@ fun AppNavigation() {
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToAppointments = { navController.navigate("Appointments") },
                 onNavigateToDocuments = { navController.navigate("DocumentVault") },
-                onNavigateToFacturation = { navController.navigate("Billing") },
+                onNavigateToFacturation = { navController.navigate("Billing?clientId=$clientId") },
                 onNavigateToDossier = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
@@ -224,7 +235,15 @@ fun AppNavigation() {
 
         composable("Appointments") { AppointmentsScreen(onBack = { navController.popBackStack() }) }
         composable("DocumentVault") { DocumentVaultScreen(onBack = { navController.popBackStack() }) }
-        composable("Billing") { BillingScreen(onBack = { navController.popBackStack() }) }
+        composable(
+            route = "Billing?clientId={clientId}",
+            arguments = listOf(navArgument("clientId") { type = NavType.IntType; defaultValue = -1 })
+        ) { backStackEntry ->
+            val clientId = backStackEntry.arguments?.getInt("clientId") ?: -1
+            PaymentScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable("About") { AboutScreen(onBack = { navController.popBackStack() }) }
 
         composable(
