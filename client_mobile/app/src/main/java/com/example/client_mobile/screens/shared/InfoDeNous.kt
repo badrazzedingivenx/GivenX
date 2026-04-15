@@ -62,9 +62,13 @@ fun ScreenSwipeInfo(
         )
     )
 
-    val pagerState = rememberPagerState(pageCount = { 4 })
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val scope = rememberCoroutineScope()
     val goldColor = Color(0xFFD4AF37)
+
+    LaunchedEffect(Unit) {
+        com.example.client_mobile.network.TokenManager.saveHasSeenOnboarding(true)
+    }
 
     AppScaffold(
         showBackground = true
@@ -92,19 +96,11 @@ fun ScreenSwipeInfo(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.Top
                 ) { position ->
-                    if (position < 3) {
-                        OnboardingPageContent(page = onboardingPages[position])
-                    } else {
-                        TypeCompteScreen(
-                            showBackground = false,
-                            onNavigateToLogin = onNavigateToLogin
-                        )
-                    }
+                    OnboardingPageContent(page = onboardingPages[position])
                 }
 
-                // Bottom Navigation Area (Only for first 3 pages)
-                if (pagerState.currentPage < 3) {
-                    Row(
+                // Bottom Navigation Area
+                Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 30.dp)
@@ -148,8 +144,12 @@ fun ScreenSwipeInfo(
                         )
                         Button(
                             onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                if (pagerState.currentPage < 2) {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    }
+                                } else {
+                                    onNavigateToLogin("user")
                                 }
                             },
                             interactionSource = nextInteractionSource,
@@ -171,7 +171,6 @@ fun ScreenSwipeInfo(
             }
         }
     }
-}
 
 @Composable
 fun OnboardingPageContent(page: OnboardingPage) {

@@ -31,6 +31,7 @@ import com.example.client_mobile.R
 
 @Composable
 fun RegistrationScreen(
+    userType: String,
     onNavigateBack: () -> Unit,
     onNavigateToLawyerHome: () -> Unit,
     onNavigateToUserHome: () -> Unit,
@@ -40,7 +41,7 @@ fun RegistrationScreen(
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var isLawyer by remember { mutableStateOf(false) }
+    var isLawyer by remember { mutableStateOf(userType == "lawyer") }
     
     var isPasswordVisible by remember { mutableStateOf(false) }
     

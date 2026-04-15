@@ -45,7 +45,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.client_mobile.R
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ fun StandardTopBar(
     StandardTopBar(
         title = {
             Image(
-                painter = painterResource(id = R.drawable.simple_logo),
+                painter = painterResource(id = R.drawable.simple_app),
                 contentDescription = "GivenX Logo",
                 modifier = Modifier.height(70.dp),
                 contentScale = ContentScale.Fit
@@ -466,7 +465,7 @@ fun StandardTopBar(
         title = {
             if (showLogo) {
                 Image(
-                    painter = painterResource(id = R.drawable.simple_logo),
+                    painter = painterResource(id = R.drawable.simple_app),
                     contentDescription = "GivenX Logo",
                     modifier = Modifier.height(70.dp),
                     contentScale = ContentScale.Fit

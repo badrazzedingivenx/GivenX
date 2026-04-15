@@ -60,6 +60,12 @@ object TokenManager {
 
     fun isLoggedIn(): Boolean = getToken() != null
 
+    // ── Onboarding ────────────────────────────────────────────────────────────
+    private const val KEY_HAS_SEEN_ONBOARDING = "has_seen_onboarding"
+    
+    fun saveHasSeenOnboarding(hasSeen: Boolean) = prefs.edit().putBoolean(KEY_HAS_SEEN_ONBOARDING, hasSeen).apply()
+    fun hasSeenOnboarding(): Boolean = prefs.getBoolean(KEY_HAS_SEEN_ONBOARDING, false)
+
     // ── User ID ───────────────────────────────────────────────────────────────
 
     fun saveUserId(id: Int) = prefs.edit().putInt(KEY_USER_ID, id).apply()

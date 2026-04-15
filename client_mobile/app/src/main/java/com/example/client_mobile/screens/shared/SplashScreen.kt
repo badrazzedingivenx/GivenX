@@ -24,13 +24,13 @@ import com.example.client_mobile.network.TokenManager
  * Set to true during development to always land on the Login screen,
  * regardless of any stored token. Flip to false to re-enable auto-login.
  */
-private const val FORCE_LOGIN = true
+private const val FORCE_LOGIN = false
 
 /**
  * Always the first screen rendered by AppNavigation.
  *
  * Flow:
- *  1. No stored token  → navigate to Login immediately (no API call needed).
+ *  1. No stored token  → Check if onboarding seen. If not -> Onboarding. If yes -> Login.
  *  2. Stored token     → call AuthRepository.autoLogin() to validate it with the server.
  *       • Server confirms role → navigate to the correct Dashboard.
  *       • Server rejects (401) or network error → token is cleared, navigate to Login.
@@ -41,6 +41,7 @@ private const val FORCE_LOGIN = true
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
+    onNavigateToOnboarding: () -> Unit,
     onNavigateToUserHome: () -> Unit,
     onNavigateToLawyerHome: () -> Unit
 ) {
@@ -90,7 +91,11 @@ fun SplashScreen(
         }
 
         if (!TokenManager.isLoggedIn()) {
-            onNavigateToLogin()
+            if (!TokenManager.hasSeenOnboarding()) {
+                onNavigateToOnboarding()
+            } else {
+                onNavigateToLogin()
+            }
             return@LaunchedEffect
         }
 

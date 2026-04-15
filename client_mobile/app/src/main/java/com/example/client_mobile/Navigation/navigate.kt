@@ -51,7 +51,12 @@ fun AppNavigation() {
         composable("Splash") {
             SplashScreen(
                 onNavigateToLogin = {
-                    navController.navigate("Login/user") {
+                    navController.navigate("TypeCompte") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                },
+                onNavigateToOnboarding = {
+                    navController.navigate("Onboarding") {
                         popUpTo("Splash") { inclusive = true }
                     }
                 },
@@ -77,12 +82,12 @@ fun AppNavigation() {
             )
         }
 
-        // 2. Manual Type Selection
+        // 2. Manual Type Selection (For Sign Up)
         composable("TypeCompte") {
             TypeCompteScreen(
                 showBackground = true,
-                onNavigateToLogin = { userType: String ->
-                    navController.navigate("Login/$userType")
+                onNavigateToRegister = { userType: String ->
+                    navController.navigate("Register/$userType")
                 }
             )
         }
@@ -96,7 +101,7 @@ fun AppNavigation() {
             LoginScreen(
                 userType = typeArg,
                 onNavigateToSignup = {
-                    navController.navigate("Register")
+                    navController.navigate("TypeCompte")
                 },
                 onNavigateToLawyerHome = { 
                     navController.navigate("LawyerHome") {
@@ -112,8 +117,13 @@ fun AppNavigation() {
         }
 
         // 4. Registration Screens
-        composable("Register") {
+        composable(
+            route = "Register/{userType}",
+            arguments = listOf(navArgument("userType") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userType = backStackEntry.arguments?.getString("userType") ?: "user"
             RegistrationScreen(
+                userType = userType,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUserHome = {
                     navController.navigate("UserHome") {

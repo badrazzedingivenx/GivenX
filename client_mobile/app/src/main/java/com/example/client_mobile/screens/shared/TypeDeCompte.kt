@@ -23,7 +23,7 @@ import com.example.client_mobile.R
 @Composable
 fun TypeCompteScreen(
     showBackground: Boolean = true,
-    onNavigateToLogin: (String) -> Unit
+    onNavigateToRegister: (String) -> Unit
 ) {
     val darkGreen = Color(0xFF1B3124)
     AppScaffold(
@@ -73,14 +73,14 @@ fun TypeCompteScreen(
                     iconRes = R.drawable.logo_user,
                     title = "Utilisateur",
                     description = "Je cherche un conseil juridique",
-                    onClick = { onNavigateToLogin("user") }
+                    onClick = { onNavigateToRegister("user") }
                 )
                 AccountOptionCard(
                     modifier = Modifier.weight(1f),
                     iconRes = R.drawable.logo_avocat,
                     title = "Avocat",
                     description = "Je souhaite offrir mes services",
-                    onClick = { onNavigateToLogin("lawyer") }
+                    onClick = { onNavigateToRegister("lawyer") }
                 )
             }
             Spacer(modifier = Modifier.weight(1.8f))
