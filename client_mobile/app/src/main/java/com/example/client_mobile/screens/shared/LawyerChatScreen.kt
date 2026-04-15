@@ -38,6 +38,7 @@ fun ChatScreen(
 ) {
     // Fetch messages from API on first composition
     val chatViewModel: ChatViewModel = viewModel(
+        key = conversationId,
         factory = ChatViewModel.Factory(conversationId)
     )
     val conversation = ConversationRepository.conversations.find { it.id == conversationId }

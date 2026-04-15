@@ -86,6 +86,15 @@ object UserSession {
         address = newAddress
         profileImageUri = newImageUri
     }
+
+    fun clear() {
+        name = ""
+        email = ""
+        phone = ""
+        address = ""
+        avatarUrl = ""
+        profileImageUri = null
+    }
 }
 
 // ─── Lawyer Session / Repository ──────────────────────────────────────────────

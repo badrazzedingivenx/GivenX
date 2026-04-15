@@ -119,4 +119,9 @@ object ConversationRepository {
 
     private fun currentTime(): String =
         SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+
+    fun clear() {
+        conversations.clear()
+        messageMap.clear()
+    }
 }

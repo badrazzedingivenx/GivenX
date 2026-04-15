@@ -39,6 +39,9 @@ fun LawyerDetailScreen(
     onNavigateToChat: (String) -> Unit = {},
     lawyerListViewModel: LawyerListViewModel = viewModel()
 ) {
+    LaunchedEffect(lawyerId) {
+        lawyerListViewModel.refresh()
+    }
     val lawyers by lawyerListViewModel.lawyers.collectAsStateWithLifecycle()
     val lawyer  = lawyers?.firstOrNull { it.id == lawyerId }
 

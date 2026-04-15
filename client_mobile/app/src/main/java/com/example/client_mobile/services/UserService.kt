@@ -4,6 +4,8 @@ import com.example.client_mobile.network.AuthRepository
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.UpdateProfileRequest
+import com.example.client_mobile.screens.shared.UserSession
+import com.example.client_mobile.screens.shared.ConversationRepository
 
 data class UserProfile(
     val uid: String = "",
@@ -30,7 +32,11 @@ object UserService {
     }
 
     /** Clears the stored JWT — the user is considered logged out. */
-    fun signOut() = TokenManager.clear()
+    fun signOut() {
+        TokenManager.clear()
+        UserSession.clear()
+        ConversationRepository.clear()
+    }
 
     /**
      * Fetches the current user profile via GET /auth/me.
