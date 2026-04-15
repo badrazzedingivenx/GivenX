@@ -6,6 +6,11 @@ import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.screens.shared.UserSession
 import com.example.client_mobile.screens.shared.ConversationRepository
+import com.example.client_mobile.screens.shared.LawyerSession
+import com.example.client_mobile.screens.shared.MessageRepository
+import com.example.client_mobile.screens.shared.DocumentRepository
+import com.example.client_mobile.screens.shared.CreatorRepository
+import com.example.client_mobile.screens.shared.NotificationRepository
 
 data class UserProfile(
     val uid: String = "",
@@ -35,7 +40,12 @@ object UserService {
     fun signOut() {
         TokenManager.clear()
         UserSession.clear()
+        LawyerSession.clear()
         ConversationRepository.clear()
+        MessageRepository.clear()
+        DocumentRepository.clear()
+        CreatorRepository.clear()
+        NotificationRepository.clear()
     }
 
     /**

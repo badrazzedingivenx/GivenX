@@ -36,9 +36,9 @@ import coil.compose.AsyncImage
 fun LawyerDetailScreen(
     lawyerId: String = "",
     onBack: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {},
-    lawyerListViewModel: LawyerListViewModel = viewModel()
+    onNavigateToChat: (String) -> Unit = {}
 ) {
+    val lawyerListViewModel: LawyerListViewModel = viewModel(key = "lawyer_list")
     LaunchedEffect(lawyerId) {
         lawyerListViewModel.refresh()
     }
