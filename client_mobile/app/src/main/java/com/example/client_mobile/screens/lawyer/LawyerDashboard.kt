@@ -127,65 +127,37 @@ fun LawyerDashboardHost(
     AppScaffold(
         topBar = {
             val onMessagesRoute = currentRoute == LawyerTab.Messages.route
-            val titleText = if (onMessagesRoute) "Messages" else null
+            val onClientsRoute  = currentRoute == LawyerTab.Clients.route
+            val titleText = when {
+                onMessagesRoute -> "Messages"
+                onClientsRoute  -> "Gestion des Clients"
+                else            -> null
+            }
+            val showLogo = titleText == null   // logo only on Home tab
 
             StandardTopBar(
-                title = titleText ?: "",
-                showLogo = !onMessagesRoute,
-                onBack = if (onMessagesRoute) { { innerNavController.popBackStack() } } else null,
+                title    = titleText ?: "",
+                showLogo = showLogo,
+                onBack = when {
+                    onMessagesRoute -> { { innerNavController.popBackStack() } }
+                    onClientsRoute  -> { {
+                        innerNavController.navigate(LawyerTab.Home.route) {
+                            popUpTo(LawyerTab.Home.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    } }
+                    else -> null
+                },
                 actions = {
-                    val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
-                    IconButton(onClick = onNavigateToNotifications) {
-                        BadgedBox(
-                            badge = {
-                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
-                                    Text(
-                                        if (unreadCount > 9) "9+" else "$unreadCount",
-                                        color = Color.White,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color.White)
-                        }
-                    }
-                    // Profile avatar
-                    val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == displayName }
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .clickable { onNavigateToProfile() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(if (hasActiveStory) 2.dp else 0.dp),
-                            shape    = CircleShape,
-                            color    = Color.White.copy(alpha = 0.2f),
-                            border   = if (!hasActiveStory) BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)) else null
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                if (profileImageUri != null) {
-                                    AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
-                                } else {
-                                    Icon(Icons.Default.Person, contentDescription = "Profil",
-                                        tint = AppGoldColor, modifier = Modifier.size(18.dp))
-                                }
-                            }
-                        }
-                        if (hasActiveStory) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .border(1.5.dp, AppGoldColor, CircleShape)
-                            )
-                        }
-                    }
+                    TopBarActions(
+                        unreadCount     = NotificationRepository.lawyerNotifications.count { !it.isRead },
+                        photoUrl        = profileImageUri?.toString(),
+                        initials        = displayName.trim().split(" ")
+                                            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                            .take(2).joinToString("").takeIf { it.isNotBlank() },
+                        onNotifications = onNavigateToNotifications,
+                        onProfile       = onNavigateToProfile
+                    )
                 }
             )
         },
@@ -351,8 +323,6 @@ private fun LawyerClientsTabContent(
             .padding(paddingValues)
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        SectionHeader(title = "Gestion des Clients")
         Spacer(modifier = Modifier.height(8.dp))
 
         // Search Bar

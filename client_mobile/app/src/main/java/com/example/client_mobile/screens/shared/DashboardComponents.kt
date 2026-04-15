@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.client_mobile.R
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
@@ -402,30 +404,54 @@ fun StandardTopBar(
 ) {
     StandardTopBar(
         title = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.simple_logo),
-                    contentDescription = "GivenX Logo",
-                    modifier = Modifier
-                        .height(55.dp)
-                        .padding(bottom = 6.dp),
-                    contentScale = ContentScale.Fit
-                )
-                Box(
-                    modifier = Modifier
-                        .width(45.dp)
-                        .height(3.dp)
-                        .clip(CircleShape)
-                        .background(AppGoldColor)
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.simple_logo),
+                contentDescription = "GivenX Logo",
+                modifier = Modifier.height(70.dp),
+                contentScale = ContentScale.Fit
+            )
         },
         onBack = onBack,
         actions = actions
     )
+}
+
+// ─── Shared Top Bar Action Slot ────────────────────────────────────────────────
+/**
+ * Reusable action cluster: [Bell + badge] · [Avatar: photo→initials→icon, gold ring + online dot]
+ * Used identically on every main dashboard (Client & Lawyer).
+ */
+@Composable
+fun RowScope.TopBarActions(
+    unreadCount:     Int,
+    photoUrl:        String?,
+    initials:        String?,
+    onNotifications: () -> Unit,
+    onProfile:       () -> Unit
+) {
+    // ── Notification bell ──────────────────────────────────────────────────────
+    IconButton(onClick = onNotifications) {
+        BadgedBox(
+            badge = {
+                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                    Text(
+                        text       = if (unreadCount > 9) "9+" else "$unreadCount",
+                        color      = Color.White,
+                        fontSize   = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        ) {
+            Icon(
+                imageVector        = Icons.Default.Notifications,
+                contentDescription = "Notifications",
+                tint               = Color.White,
+                modifier           = Modifier.size(24.dp)
+            )
+        }
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -439,23 +465,12 @@ fun StandardTopBar(
     StandardTopBar(
         title = {
             if (showLogo) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = R.drawable.simple_logo),
-                        contentDescription = "GivenX Logo",
-                        modifier = Modifier
-                            .height(55.dp)
-                            .padding(bottom = 6.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    Box(
-                        modifier = Modifier
-                            .width(45.dp)
-                            .height(3.dp)
-                            .clip(CircleShape)
-                            .background(AppGoldColor)
-                    )
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.simple_logo),
+                    contentDescription = "GivenX Logo",
+                    modifier = Modifier.height(70.dp),
+                    contentScale = ContentScale.Fit
+                )
             } else {
                 Text(
                     text = title.uppercase(),

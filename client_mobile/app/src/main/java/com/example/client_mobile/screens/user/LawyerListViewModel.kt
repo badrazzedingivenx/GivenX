@@ -12,6 +12,11 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel for the lawyer discovery screen.
  * Data source: GET /api/lawyers via HaqApiService.
+ *
+ * Supports:
+ *  - Server-side domaine pre-filter (passed from navigation argument)
+ *  - Client-side search & chip filtering (handled in the composable)
+ *  - Pull-to-refresh
  */
 class LawyerListViewModel : ViewModel() {
 
@@ -26,7 +31,21 @@ class LawyerListViewModel : ViewModel() {
     private val _isError = MutableStateFlow(false)
     val isError: StateFlow<Boolean> = _isError
 
+    /** The domaine used for the current API request (set once from navigation). */
+    private var activeDomaine: String? = null
+
     init { load(initial = true) }
+
+    /**
+     * Called by the screen when the [domaine] navigation argument is available.
+     * Only re-fetches if the domaine actually changed.
+     */
+    fun setDomaine(domaine: String) {
+        val trimmed = domaine.takeIf { it.isNotBlank() }
+        if (trimmed == activeDomaine) return
+        activeDomaine = trimmed
+        load(initial = true)
+    }
 
     /** Pull-to-refresh: shows the spinner immediately then re-fetches. */
     fun refresh() { load(initial = false) }
@@ -34,11 +53,13 @@ class LawyerListViewModel : ViewModel() {
     private fun load(initial: Boolean) {
         if (initial) _lawyers.value = null   // show skeleton on first load
         _isError.value = false
-        _isRefreshing.value = !initial        // spinner for pull-to-refresh only
+        _isRefreshing.value = !initial       // spinner for pull-to-refresh only
         viewModelScope.launch {
             try {
-                // Use HaqApiService for production-like backend
-                val response = RetrofitClient.haqApi.getLawyers(limit = 100)
+                val response = RetrofitClient.haqApi.getLawyers(
+                    domaine = activeDomaine,
+                    limit   = 100
+                )
                 if (response.isSuccessful && response.body()?.success == true) {
                     _lawyers.value = response.body()?.data?.map { it.toItem() } ?: emptyList()
                 } else {
