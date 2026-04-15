@@ -131,6 +131,7 @@ fun LawyerDashboardHost(
 
             StandardTopBar(
                 title = titleText ?: "",
+                showLogo = !onMessagesRoute,
                 onBack = if (onMessagesRoute) { { innerNavController.popBackStack() } } else null,
                 actions = {
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
@@ -147,7 +148,7 @@ fun LawyerDashboardHost(
                                 }
                             }
                         ) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = AppDarkGreen)
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color.White)
                         }
                     }
                     // Profile avatar
@@ -165,8 +166,8 @@ fun LawyerDashboardHost(
                                 .fillMaxSize()
                                 .padding(if (hasActiveStory) 2.dp else 0.dp),
                             shape    = CircleShape,
-                            color    = AppDarkGreen.copy(alpha = 0.10f),
-                            border   = if (!hasActiveStory) BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.5f)) else null
+                            color    = Color.White.copy(alpha = 0.2f),
+                            border   = if (!hasActiveStory) BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)) else null
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (profileImageUri != null) {

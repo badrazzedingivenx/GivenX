@@ -2,34 +2,28 @@ package com.example.client_mobile.screens.shared
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,10 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -53,8 +47,14 @@ import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
-val AppDarkGreen = Color(0xFF1B4332)
-val AppGoldColor = Color(0xFFC5A059)
+val AppDarkGreen = Color(0xFF0F291E) // Deeper green for premium feel
+val AppGoldColor = Color(0xFFD4AF37) // Metallic Gold
+val AppGoldGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    colors = listOf(Color(0xFFD4AF37), Color(0xFFC5A059))
+)
+val AppTopBarGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    colors = listOf(Color(0xFF1B4332), Color(0xFF0F291E))
+)
 
 // ─── Status Colors ────────────────────────────────────────────────────────────
 val StatusGreen      = Color(0xFF1B4332)   // Green-600
@@ -317,36 +317,81 @@ fun StandardTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    TopAppBar(
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_app),
-                    contentDescription = "GivenX Logo",
-                    modifier = Modifier.height(32.dp),
-                    contentScale = ContentScale.Fit
+    val containerHeight = 120.dp
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(containerHeight)
+    ) {
+        // The Custom Rounded Background with Gradient
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.Transparent,
+            shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
+            shadowElevation = 10.dp
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AppTopBarGradient)
+            ) {
+                // Subtle decorative element
+                Box(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .offset(x = (-50).dp, y = (-50).dp)
+                        .background(Color.White.copy(alpha = 0.03f), CircleShape)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                title()
-            }
-        },
-        navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = AppDarkGreen
-                    )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 16.dp, top = 20.dp, end = 16.dp)
+                ) {
+                    // Navigation Icon (Left)
+                    if (onBack != null) {
+                        Surface(
+                            modifier = Modifier.align(Alignment.CenterStart).padding(top = 20.dp),
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.1f)
+                        ) {
+                            IconButton(
+                                onClick = onBack,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Center Content (Logo/Title)
+                    Box(
+                        modifier = Modifier.align(Alignment.Center),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(modifier = Modifier.padding(top = 20.dp)) {
+                            title()
+                        }
+                    }
+
+                    // Actions (Right)
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(top = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        actions()
+                    }
                 }
             }
-        },
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            titleContentColor = AppDarkGreen
-        )
-    )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -355,31 +400,31 @@ fun StandardTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    TopAppBar(
+    StandardTopBar(
         title = {
-            Image(
-                painter = painterResource(id = R.drawable.logo_app),
-                contentDescription = "GivenX Logo",
-                modifier = Modifier.height(40.dp),
-                contentScale = ContentScale.Fit
-            )
-        },
-        navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = AppDarkGreen
-                    )
-                }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.simple_logo),
+                    contentDescription = "GivenX Logo",
+                    modifier = Modifier
+                        .height(55.dp)
+                        .padding(bottom = 6.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Box(
+                    modifier = Modifier
+                        .width(45.dp)
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(AppGoldColor)
+                )
             }
         },
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            titleContentColor = AppDarkGreen
-        )
+        onBack = onBack,
+        actions = actions
     )
 }
 
@@ -388,18 +433,41 @@ fun StandardTopBar(
 fun StandardTopBar(
     title: String,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
+    showLogo: Boolean = false
 ) {
     StandardTopBar(
         title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen,
-                    fontFamily = FontFamily.Serif
+            if (showLogo) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(
+                        painter = painterResource(id = R.drawable.simple_logo),
+                        contentDescription = "GivenX Logo",
+                        modifier = Modifier
+                            .height(55.dp)
+                            .padding(bottom = 6.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(45.dp)
+                            .height(3.dp)
+                            .clip(CircleShape)
+                            .background(AppGoldColor)
+                    )
+                }
+            } else {
+                Text(
+                    text = title.uppercase(),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 16.sp,
+                        letterSpacing = 2.sp
+                    )
                 )
-            )
+            }
         },
         onBack = onBack,
         actions = actions
@@ -540,11 +608,12 @@ fun LawyerNavBottomBar(
     
     Surface(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .height(70.dp),
-        shape = RoundedCornerShape(25.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
+            .height(72.dp),
+        shape = RoundedCornerShape(28.dp),
         color = AppDarkGreen,
-        shadowElevation = 8.dp
+        shadowElevation = 12.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -576,11 +645,12 @@ fun UserNavBottomBar(
 
     Surface(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .height(70.dp),
-        shape = RoundedCornerShape(25.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
+            .height(72.dp),
+        shape = RoundedCornerShape(28.dp),
         color = AppDarkGreen,
-        shadowElevation = 8.dp
+        shadowElevation = 12.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -607,11 +677,12 @@ fun AppBottomNavigation(
 ) {
     Surface(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .height(70.dp),
-        shape = RoundedCornerShape(25.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
+            .height(72.dp),
+        shape = RoundedCornerShape(28.dp),
         color = AppDarkGreen,
-        shadowElevation = 8.dp
+        shadowElevation = 12.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -647,32 +718,47 @@ private fun BottomNavItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val scale by animateFloatAsState(if (selected) 1.1f else 1f)
-    val indicatorWidth by animateDpAsState(
-        targetValue = if (selected) 16.dp else 0.dp,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
-    )
+    val scale by animateFloatAsState(if (selected) 1.15f else 1f)
+    val alpha by animateFloatAsState(if (selected) 1f else 0.5f)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 4.dp, horizontal = 12.dp)
             .scale(scale)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-            modifier = Modifier.size(24.dp)
+            tint = if (selected) AppGoldColor else Color.White,
+            modifier = Modifier.size(24.dp).graphicsLayer(alpha = alpha)
         )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            color = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
-        )
+        if (selected) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .size(4.dp)
+                    .clip(CircleShape)
+                    .background(AppGoldColor)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = Color.White.copy(alpha = 0.5f),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
     }
 }
 

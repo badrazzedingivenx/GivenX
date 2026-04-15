@@ -1,6 +1,8 @@
 package com.example.client_mobile.screens.shared
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -79,57 +81,49 @@ fun NotificationScreen(
 
     AppScaffold(
         topBar = {
-            TopAppBar(
+            StandardTopBar(
                 title = {
-                    Column {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            "Notifications",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
-                            color = Color.White
+                            "NOTIFICATIONS",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 16.sp,
+                                letterSpacing = 2.sp
+                            )
                         )
                         if (unreadCount > 0) {
                             Text(
-                                "$unreadCount non lue${if (unreadCount > 1) "s" else ""}",
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 11.sp,
-                                color = AppGoldColor.copy(alpha = 0.85f)
+                                "$unreadCount nouvelle${if (unreadCount > 1) "s" else ""}",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = AppGoldColor,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 11.sp
+                                )
                             )
                         }
                     }
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = Color.White
-                        )
-                    }
-                },
+                onBack = onBack,
                 actions = {
                     if (unreadCount > 0) {
-                        TextButton(
+                        IconButton(
                             onClick = {
                                 if (isLawyer) NotificationRepository.markAllReadLawyer()
                                 else notifViewModel.markAllRead()
                             }
                         ) {
-                            Text(
-                                "Tout lire",
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp,
-                                color = AppGoldColor
+                            Icon(
+                                Icons.Default.DoneAll,
+                                contentDescription = "Tout lire",
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppDarkGreen,
-                    scrolledContainerColor = AppDarkGreen
-                )
+                }
             )
         }
     ) { paddingValues ->
@@ -215,41 +209,40 @@ private fun NotificationCard(
     notification: AppNotification,
     onRead: () -> Unit
 ) {
-    val bgColor = if (notification.isRead) Color.White else Color(0xFFEAF4EE)
-    val borderColor = if (notification.isRead)
-        AppDarkGreen.copy(alpha = 0.07f)
-    else
-        AppDarkGreen.copy(alpha = 0.22f)
-
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation = if (notification.isRead) 1.dp else 4.dp
+    val isRead = notification.isRead
+    
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { if (!isRead) onRead() },
+        shape = RoundedCornerShape(16.dp),
+        color = if (isRead) Color.White.copy(alpha = 0.6f) else Color.White,
+        border = BorderStroke(
+            width = if (isRead) 1.dp else 1.5.dp,
+            color = if (isRead) AppDarkGreen.copy(alpha = 0.05f) else AppGoldColor.copy(alpha = 0.3f)
         ),
-        colors = CardDefaults.elevatedCardColors(containerColor = bgColor),
-        onClick = { if (!notification.isRead) onRead() }
+        shadowElevation = if (isRead) 0.dp else 4.dp
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // ── Icon tile ─────────────────────────────────────────────────────
+            // ── Icon tile with soft background ────────────────────────────────
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(13.dp))
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (notification.isRead) AppDarkGreen.copy(alpha = 0.07f)
-                        else AppDarkGreen
+                        if (isRead) AppDarkGreen.copy(alpha = 0.05f)
+                        else AppDarkGreen.copy(alpha = 0.1f)
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = notificationIcon(notification.type),
                     contentDescription = null,
-                    tint = if (notification.isRead) AppDarkGreen.copy(alpha = 0.50f) else AppGoldColor,
+                    tint = if (isRead) AppDarkGreen.copy(alpha = 0.4f) else AppDarkGreen,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -263,63 +256,62 @@ private fun NotificationCard(
                 ) {
                     Text(
                         notification.title,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = AppDarkGreen,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = if (isRead) FontWeight.SemiBold else FontWeight.ExtraBold,
+                            color = AppDarkGreen,
+                            fontSize = 14.sp
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Spacer(Modifier.width(8.dp))
                     Text(
                         notification.time,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 10.sp,
-                        color = AppDarkGreen.copy(alpha = 0.40f)
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = AppDarkGreen.copy(alpha = 0.4f),
+                            fontSize = 10.sp
+                        )
                     )
                 }
 
                 Text(
                     notification.message,
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    color = AppDarkGreen.copy(alpha = if (notification.isRead) 0.55f else 0.75f),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = AppDarkGreen.copy(alpha = if (isRead) 0.5f else 0.8f),
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp
+                    ),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // ── Type chip + unread dot ─────────────────────────────────────
+                Spacer(modifier = Modifier.height(2.dp))
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = AppGoldColor.copy(alpha = if (notification.isRead) 0.08f else 0.15f)
+                        shape = RoundedCornerShape(4.dp),
+                        color = AppGoldColor.copy(alpha = 0.1f)
                     ) {
                         Text(
-                            notificationTypeLabel(notification.type),
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AppDarkGreen.copy(alpha = 0.65f),
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                            notificationTypeLabel(notification.type).uppercase(),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = AppGoldColor,
+                                fontSize = 9.sp,
+                                letterSpacing = 0.5.sp
+                            )
                         )
                     }
-                    if (!notification.isRead) {
+                    if (!isRead) {
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF34A853))
-                        )
-                        Text(
-                            "Non lu",
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 10.sp,
-                            color = Color(0xFF34A853),
-                            fontWeight = FontWeight.SemiBold
+                                .background(AppGoldColor)
                         )
                     }
                 }

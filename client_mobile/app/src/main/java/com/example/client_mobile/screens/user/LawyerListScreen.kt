@@ -134,39 +134,30 @@ fun LawyerListScreen(
 
     AppScaffold(
         topBar = {
-            TopAppBar(
+            StandardTopBar(
                 title = {
-                    Column {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = displayTitle,
+                            text = displayTitle.uppercase(),
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
                             color = Color.White,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            letterSpacing = 1.2.sp
                         )
                         Text(
-                            text = "${domaineTotalCount} avocat${if (domaineTotalCount > 1) "s" else ""} disponible${if (domaineTotalCount > 1) "s" else ""}",
+                            text = "${domaineTotalCount} AVOCAT${if (domaineTotalCount > 1) "S" else ""} DISPONIBLE${if (domaineTotalCount > 1) "S" else ""}",
                             fontFamily = FontFamily.Serif,
-                            fontSize = 11.sp,
-                            color = AppGoldColor.copy(alpha = 0.80f)
+                            fontSize = 10.sp,
+                            color = AppGoldColor.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 1.sp
                         )
                     }
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppDarkGreen,
-                    scrolledContainerColor = AppDarkGreen
-                )
+                onBack = onBack
             )
         }
     ) { paddingValues ->
