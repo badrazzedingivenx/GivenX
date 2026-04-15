@@ -127,36 +127,11 @@ fun LawyerDashboardHost(
     AppScaffold(
         topBar = {
             val onMessagesRoute = currentRoute == LawyerTab.Messages.route
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    if (onMessagesRoute) {
-                        IconButton(onClick = { innerNavController.popBackStack() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Retour",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                },
-                title = {
-                    if (onMessagesRoute) {
-                        Text(
-                            "Messages",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = AppDarkGreen
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Haqqi",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.height(68.dp)
-                        )
-                    }
-                },
+            val titleText = if (onMessagesRoute) "Messages" else null
+
+            StandardTopBar(
+                title = titleText ?: "",
+                onBack = if (onMessagesRoute) { { innerNavController.popBackStack() } } else null,
                 actions = {
                     val unreadCount = NotificationRepository.lawyerNotifications.count { !it.isRead }
                     IconButton(onClick = onNavigateToNotifications) {
@@ -179,8 +154,8 @@ fun LawyerDashboardHost(
                     val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == displayName }
                     Box(
                         modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(40.dp)
+                            .padding(end = 16.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .clickable { onNavigateToProfile() },
                         contentAlignment = Alignment.Center
@@ -188,17 +163,17 @@ fun LawyerDashboardHost(
                         Surface(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(if (hasActiveStory) 3.dp else 0.dp),
+                                .padding(if (hasActiveStory) 2.dp else 0.dp),
                             shape    = CircleShape,
                             color    = AppDarkGreen.copy(alpha = 0.10f),
-                            border   = if (!hasActiveStory) BorderStroke(1.5.dp, AppGoldColor.copy(alpha = 0.5f)) else null
+                            border   = if (!hasActiveStory) BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.5f)) else null
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 if (profileImageUri != null) {
                                     AsyncImage(model = profileImageUri, contentDescription = "Avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
                                 } else {
                                     Icon(Icons.Default.Person, contentDescription = "Profil",
-                                        tint = AppGoldColor, modifier = Modifier.size(20.dp))
+                                        tint = AppGoldColor, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -206,20 +181,11 @@ fun LawyerDashboardHost(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .border(2.dp, AppGoldColor, CircleShape)
+                                    .border(1.5.dp, AppGoldColor, CircleShape)
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .size(11.dp)
-                                .align(Alignment.BottomEnd)
-                                .background(Color.White, CircleShape)
-                                .padding(2.dp)
-                                .background(Color(0xFF34A853), CircleShape)
-                        )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                }
             )
         },
         floatingActionButton = {
@@ -313,14 +279,9 @@ fun LawyerPaymentsScreen(onBack: () -> Unit) {
 
     AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Suivi des Paiements", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AppDarkGreen) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Suivi des Paiements",
+                onBack = onBack
             )
         }
     ) { paddingValues ->
@@ -328,8 +289,8 @@ fun LawyerPaymentsScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
             items(payments) { payment ->
@@ -387,11 +348,11 @@ private fun LawyerClientsTabContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Spacer(modifier = Modifier.height(8.dp))
         SectionHeader(title = "Gestion des Clients")
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Search Bar
         OutlinedTextField(
@@ -619,26 +580,9 @@ fun LawyerRequestsScreen(
     AppScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Nouvelles Demandes",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize   = 18.sp,
-                        color      = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Nouvelles Demandes",
+                onBack = onBack
             )
         }
     ) { paddingValues ->
@@ -683,17 +627,12 @@ fun LawyerRequestsScreen(
                     LazyColumn(
                         modifier            = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         item { Spacer(modifier = Modifier.height(4.dp)) }
                         item {
-                            Text(
-                                "À traiter (${pending.size})",
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                color      = AppDarkGreen
-                            )
+                            SectionHeader(title = "À traiter (${pending.size})")
                         }
                         items(pending, key = { it.id }) { dossier ->
                             DemandCard(
@@ -768,21 +707,21 @@ fun DemandCard(dossier: DossierData, onAccept: () -> Unit, onDecline: () -> Unit
             ) {
                 Button(
                     onClick          = onAccept,
-                    modifier         = Modifier.weight(1f),
+                    modifier         = Modifier.weight(1f).height(42.dp),
                     colors           = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
-                    shape            = RoundedCornerShape(10.dp),
+                    shape            = RoundedCornerShape(12.dp),
                     contentPadding   = PaddingValues(0.dp)
                 ) {
-                    Text("Accepter", fontSize = 12.sp, color = Color.White)
+                    Text("Accepter", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White, fontFamily = FontFamily.Serif)
                 }
                 OutlinedButton(
                     onClick          = onDecline,
-                    modifier         = Modifier.weight(0.6f),
+                    modifier         = Modifier.weight(0.6f).height(42.dp),
                     border           = BorderStroke(1.dp, StatusRed.copy(alpha = 0.5f)),
-                    shape            = RoundedCornerShape(10.dp),
+                    shape            = RoundedCornerShape(12.dp),
                     contentPadding   = PaddingValues(0.dp)
                 ) {
-                    Text("Refuser", fontSize = 12.sp, color = StatusRed)
+                    Text("Refuser", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = StatusRed, fontFamily = FontFamily.Serif)
                 }
             }
         }
@@ -815,9 +754,9 @@ private fun LawyerHomeTabContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -859,7 +798,7 @@ private fun LawyerHomeTabContent(
         }
 
         // ── RBAC KPI Cards: Mes Clients / Audiences du Jour / Honoraires ──────
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RbacKpiCard(
                 modifier  = Modifier.weight(1f),
                 icon      = Icons.Default.Groups,

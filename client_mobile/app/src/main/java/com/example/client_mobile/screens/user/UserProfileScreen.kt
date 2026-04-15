@@ -199,8 +199,6 @@ fun UserProfileScreen(
                         }
                     }
 
-                    // ── Membership Badge ──────────────────────────────────────
-                    item { MembershipBanner() }
 
                     // ── Footer Actions ────────────────────────────────────────
                     item {
@@ -387,31 +385,6 @@ private fun ProfileHeaderCard(userName: String, photoUrl: String? = null) {
                         fontSize = 22.sp,
                         color = Color.White
                     )
-                    Surface(
-                        shape = RoundedCornerShape(50.dp),
-                        color = AppGoldColor.copy(alpha = 0.18f),
-                        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.60f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = null,
-                                tint = AppGoldColor,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Text(
-                                text = "Client Premium",
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = AppGoldColor
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -625,61 +598,6 @@ private fun LegalFeatureRow(
     }
 }
 
-// ─── Membership Banner ────────────────────────────────────────────────────────
-@Composable
-private fun MembershipBanner() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = AppDarkGreen,
-        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.45f)),
-        shadowElevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.WorkspacePremium,
-                contentDescription = null,
-                tint = AppGoldColor,
-                modifier = Modifier.size(36.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Abonnement Premium",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color.White
-                )
-                Text(
-                    text = "Valide jusqu'au 31 Déc 2026",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    color = AppGoldColor.copy(alpha = 0.80f)
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = AppGoldColor.copy(alpha = 0.18f),
-                border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.60f))
-            ) {
-                Text(
-                    text = "Actif",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    color = AppGoldColor,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                )
-            }
-        }
-    }
-}
 
 // ─── Row Divider ─────────────────────────────────────────────────────────────
 @Composable

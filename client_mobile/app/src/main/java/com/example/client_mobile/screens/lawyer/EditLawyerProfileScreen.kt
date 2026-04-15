@@ -115,8 +115,8 @@ fun EditLawyerProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
@@ -155,14 +155,8 @@ fun EditLawyerProfileScreen(
 
             item { SectionHeader(title = "Identité Professionnelle") }
             item {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp),
-                    color = Color.White,
-                    border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
-                    shadowElevation = 2.dp
-                ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                AppCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         LegalInputField(value = name, onValueChange = { name = it; nameError = "" }, label = "Nom complet", leadingIcon = Icons.Default.Person, isError = nameError.isNotEmpty(), errorMessage = nameError)
                         LegalInputField(value = title, onValueChange = { title = it; titleError = "" }, label = "Titre professionnel", leadingIcon = Icons.Default.Gavel, isError = titleError.isNotEmpty(), errorMessage = titleError)
                         LegalInputField(value = email, onValueChange = { email = it; emailError = "" }, label = "Adresse e-mail", leadingIcon = Icons.Default.Email, isError = emailError.isNotEmpty(), errorMessage = emailError, keyboardType = KeyboardType.Email, enabled = false)
@@ -174,31 +168,17 @@ fun EditLawyerProfileScreen(
 
             item { SectionHeader(title = "Biographie") }
             item {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp),
-                    color = Color.White,
-                    border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
-                    shadowElevation = 2.dp
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        LegalInputField(value = bio, onValueChange = { bio = it }, label = "À propos de vous", leadingIcon = Icons.Default.FormatQuote)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = "${bio.length} caractères", fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppDarkGreen.copy(alpha = 0.40f))
-                    }
+                AppCard {
+                    LegalInputField(value = bio, onValueChange = { bio = it }, label = "À propos de vous", leadingIcon = Icons.Default.FormatQuote)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(text = "${bio.length} caractères", fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppDarkGreen.copy(alpha = 0.40f))
                 }
             }
 
             item { SectionHeader(title = "Domaines d'Expertise") }
             item {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp),
-                    color = Color.White,
-                    border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
-                    shadowElevation = 2.dp
-                ) {
-                    Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                AppCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (specs.isNotEmpty()) {
                             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 specs.forEach { spec -> SpecEditChip(label = spec, onRemove = { specs.remove(spec) }) }

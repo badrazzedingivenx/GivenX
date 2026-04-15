@@ -95,7 +95,7 @@ fun AppScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.70f))
+                    .background(Color.White.copy(alpha = 0.20f))
             )
         }
 
@@ -201,7 +201,7 @@ fun SectionHeader(
     onAction: (() -> Unit)? = null
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -210,7 +210,8 @@ fun SectionHeader(
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = AppDarkGreen,
-                fontSize = 18.sp
+                fontSize = 18.sp,
+                fontFamily = FontFamily.Serif
             )
         )
         if (actionLabel != null && onAction != null) {
@@ -317,7 +318,52 @@ fun StandardTopBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
-        title = title,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_app),
+                    contentDescription = "GivenX Logo",
+                    modifier = Modifier.height(32.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                title()
+            }
+        },
+        navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = AppDarkGreen
+                    )
+                }
+            }
+        },
+        actions = actions,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            titleContentColor = AppDarkGreen
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StandardTopBar(
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    TopAppBar(
+        title = {
+            Image(
+                painter = painterResource(id = R.drawable.logo_app),
+                contentDescription = "GivenX Logo",
+                modifier = Modifier.height(40.dp),
+                contentScale = ContentScale.Fit
+            )
+        },
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {

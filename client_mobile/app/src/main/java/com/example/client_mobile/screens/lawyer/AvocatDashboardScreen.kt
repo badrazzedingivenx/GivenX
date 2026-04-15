@@ -84,8 +84,8 @@ fun AvocatDashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { DashHeader(profile = profile, isLoading = isLoading) }
         item { DashStatsGrid(stats = stats, isLoading = isLoading) }
@@ -106,8 +106,6 @@ fun AvocatDashboardScreen(
 // ─── Header ───────────────────────────────────────────────────────────────────
 @Composable
 private fun DashHeader(profile: LawyerProfileDto?, isLoading: Boolean) {
-    var showSuspendDialog by remember { mutableStateOf(false) }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -121,69 +119,25 @@ private fun DashHeader(profile: LawyerProfileDto?, isLoading: Boolean) {
             } else {
                 Text(
                     text = "Bonjour, Maître",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = AppSubtitleGray,
+                        fontSize = 14.sp
+                    )
                 )
                 val displayName = profile?.fullName?.ifBlank { null }
                     ?: LawyerSession.fullName.ifBlank { "Avocat" }
                 Text(
                     text = displayName,
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
                     color = AppDarkGreen,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
-            if (!isLoading) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Subscription badge
-                    StatusChip(
-                        label = "Premium",
-                        containerColor = AppGoldColor.copy(alpha = 0.12f),
-                        textColor = AppGoldColor
-                    )
-                    TextButton(
-                        onClick = { showSuspendDialog = true },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text("Suspendre", fontSize = 11.sp, color = StatusRed)
-                    }
-                }
-            }
-    }
-
-    if (showSuspendDialog) {
-        AlertDialog(
-            onDismissRequest = { showSuspendDialog = false },
-            title = {
-                Text(
-                    "Suspendre l'abonnement",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    "Voulez-vous vraiment suspendre votre abonnement Premium ?",
-                    fontFamily = FontFamily.Serif
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showSuspendDialog = false }) {
-                    Text("Confirmer", color = StatusRed, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSuspendDialog = false }) {
-                    Text("Annuler", color = AppDarkGreen)
-                }
-            }
-        )
     }
 }
 
@@ -282,14 +236,18 @@ private fun DashStatCard(
             } else {
                 Text(
                     text = value ?: "—",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
                     color = AppDarkGreen,
                     maxLines = 1
                 )
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = AppSubtitleGray
+                    ),
                     maxLines = 1
                 )
             }
@@ -312,7 +270,10 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
             ) {
                 Text(
                     "Revenus — 6 mois",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
                     color = AppDarkGreen
                 )
                 Surface(
@@ -443,7 +404,10 @@ private fun DashConsultationsCard(
             ) {
                 Text(
                     "Consultations récentes",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    ),
                     color = AppDarkGreen
                 )
                 if (!isLoading && consultations.isNotEmpty()) {
@@ -614,7 +578,10 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
         ) {
             Text(
                 text = consultation.clientName.ifBlank { "Client" },
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Serif
+                ),
                 color = AppDarkGreen,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -630,8 +597,9 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
             }.ifBlank { "—" }
             Text(
                 text = consultSubtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = AppSubtitleGray
+                ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

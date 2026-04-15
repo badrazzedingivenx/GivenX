@@ -129,8 +129,8 @@ fun AvocatProfile(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
 
@@ -632,15 +632,15 @@ private fun LawyerBioCard(bio: String) {
                     text = "Bio professionnelle",
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     color = AppDarkGreen
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = bio,
                 fontFamily = FontFamily.Serif,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 color = AppDarkGreen.copy(alpha = 0.72f),
                 lineHeight = 20.sp
             )

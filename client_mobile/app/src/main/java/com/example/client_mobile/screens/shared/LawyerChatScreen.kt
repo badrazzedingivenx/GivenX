@@ -110,7 +110,7 @@ fun ChatScreen(
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
-                                color = Color.White,
+                                color = AppDarkGreen,
                                 maxLines = 1
                             )
                             Row(

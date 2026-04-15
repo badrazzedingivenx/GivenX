@@ -101,7 +101,7 @@ fun RegistrationScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Créez votre compte premium",
+                        text = "Créez votre compte",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                     )

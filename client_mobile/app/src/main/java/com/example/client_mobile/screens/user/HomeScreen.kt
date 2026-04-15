@@ -94,51 +94,23 @@ fun UserDashboardHost(
     AppScaffold(
         topBar = {
             val onNetworkingRoute = currentRoute == UserTab.Networking.route
-            val showTitleBar    = onNetworkingRoute
-            val titleBarText    = when {
-                onNetworkingRoute -> "Réseaux"
-                else            -> ""
-            }
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    if (showTitleBar) {
-                        IconButton(onClick = {
-                            if (onNetworkingRoute) {
-                                innerNavController.navigate(UserTab.Home.route) {
-                                    popUpTo(innerNavController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            } else {
-                                innerNavController.popBackStack()
+            val showBackButton = onNetworkingRoute
+            val titleText = if (onNetworkingRoute) "Réseaux" else null
+
+            StandardTopBar(
+                title = titleText ?: "",
+                onBack = if (showBackButton) {
+                    {
+                        if (onNetworkingRoute) {
+                            innerNavController.navigate(UserTab.Home.route) {
+                                popUpTo(innerNavController.graph.startDestinationId)
+                                launchSingleTop = true
                             }
-                        }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Retour",
-                                tint = AppDarkGreen
-                            )
+                        } else {
+                            innerNavController.popBackStack()
                         }
                     }
-                },
-                title = {
-                    if (showTitleBar) {
-                        Text(
-                            titleBarText,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = AppDarkGreen
-                        )
-                    } else {
-                        Text(
-                            "GivenX",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = AppDarkGreen
-                        )
-                    }
-                },
+                } else null,
                 actions = {
                     val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
                     // ── Notification bell ──────────────────────────────────
@@ -213,8 +185,7 @@ fun UserDashboardHost(
                                 .background(Color(0xFF34A853), CircleShape)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                }
             )
         },
         bottomBar = {
@@ -310,8 +281,8 @@ internal fun UserHomeTabContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { Spacer(modifier = Modifier.height(4.dp)) }
 
@@ -326,7 +297,7 @@ internal fun UserHomeTabContent(
         item { SectionHeader(title = "En chiffres") }
         item { HomeQuickStats() }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
     }
 }
 

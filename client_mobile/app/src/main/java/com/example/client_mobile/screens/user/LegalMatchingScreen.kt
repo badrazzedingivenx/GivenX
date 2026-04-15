@@ -358,7 +358,7 @@ private fun SwipeableMatchCard(
                 )
             }
     ) {
-        PremiumCardContent(card = card)
+        CardContent(card = card)
 
         // Colour glow overlay
         if (glowColor != Color.Transparent) {
@@ -412,10 +412,10 @@ private fun SwipeableMatchCard(
     }
 }
 
-// ─── Premium Card Content ─────────────────────────────────────────────────────
+// ─── Card Content ─────────────────────────────────────────────────────
 
 @Composable
-private fun PremiumCardContent(card: MatchCard) {
+private fun CardContent(card: MatchCard) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         shape    = RoundedCornerShape(32.dp),

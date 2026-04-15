@@ -69,28 +69,17 @@ fun UserDashboard(
 ) {
     AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "GIVENX LEGAL",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                },
+            StandardTopBar(
+                onBack = null,
                 actions = {
                     IconButton(onClick = onNavigateToProfile) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Profil",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = AppDarkGreen
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
         }
     ) { innerPadding ->
