@@ -95,7 +95,7 @@ fun AppScaffold(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.15f))
+                    .background(Color.White.copy(alpha = 0.70f))
             )
         }
 
@@ -324,7 +324,7 @@ fun StandardTopBar(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.White
+                        tint = AppDarkGreen
                     )
                 }
             }
@@ -332,7 +332,7 @@ fun StandardTopBar(
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
-            titleContentColor = Color.White
+            titleContentColor = AppDarkGreen
         )
     )
 }
@@ -350,7 +350,8 @@ fun StandardTopBar(
                 text = title,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = AppDarkGreen,
+                    fontFamily = FontFamily.Serif
                 )
             )
         },
@@ -375,10 +376,10 @@ fun LegalButton(
         enabled = enabled,
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.secondary,
-            contentColor = Color.White
+            containerColor = AppGoldColor,
+            contentColor = AppDarkGreen
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
     ) {
         Text(
             text = text,
