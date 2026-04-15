@@ -28,10 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
@@ -51,16 +49,15 @@ fun LoginScreen(
     var passwordError by remember { mutableStateOf(false) }
 
     val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
-    val isLoading = loginState is AuthViewModel.LoginUiState.Loading
-    val authError = (loginState as? AuthViewModel.LoginUiState.Error)?.message
-    val context   = LocalContext.current
+    val isLoading  = loginState is AuthViewModel.LoginUiState.Loading
+    val authError  = (loginState as? AuthViewModel.LoginUiState.Error)?.message
+    val context    = LocalContext.current
 
-    // Show Toast on every new error, then keep inline text as well
     LaunchedEffect(authError) {
         if (!authError.isNullOrBlank()) {
             Toast.makeText(context, authError, Toast.LENGTH_LONG).show()
         }
- }
+    }
 
     LaunchedEffect(loginState) {
         if (loginState is AuthViewModel.LoginUiState.Success) {
@@ -71,160 +68,143 @@ fun LoginScreen(
         }
     }
 
-    val darkGreen = Color(0xFF1B3124)
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image
         Image(
-            painter = painterResource(id = R.drawable.background_app),
+            painter            = painterResource(id = R.drawable.background_app),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            modifier           = Modifier.fillMaxSize(),
+            contentScale       = ContentScale.Crop
         )
+
+        // Centered glassmorphism card
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier         = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(50.dp))
+                    .clip(RoundedCornerShape(40.dp))
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.50f),
-                                Color.White.copy(alpha = 0.65f)
+                                Color.White.copy(alpha = 0.52f),
+                                Color.White.copy(alpha = 0.68f)
                             )
                         )
                     )
                     .border(
                         width = 1.dp,
-                        color = Color.White.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(50.dp)
+                        color = Color.White.copy(alpha = 0.45f),
+                        shape = RoundedCornerShape(40.dp)
                     )
                     .padding(horizontal = 24.dp, vertical = 36.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier            = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Logo
                     Image(
-                        painter = painterResource(id = R.drawable.logo_app),
+                        painter            = painterResource(id = R.drawable.logo_app),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(235.dp),
-                        contentScale = ContentScale.Fit
+                        modifier           = Modifier.size(220.dp),
+                        contentScale       = ContentScale.Fit
                     )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = "Connexion",
-                        fontSize = 32.sp,
+                        text       = "Connexion",
+                        fontSize   = 28.sp,
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
-                        color = darkGreen
+                        color      = AppDarkGreen
                     )
-                    Spacer(modifier = Modifier.height(35.dp))
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // Email field
                     CustomInputField(
-                        value = email,
-                        onValueChange = { 
-                            email = it
-                            emailError = false 
-                        },
-                        placeholder = "E-mail",
-                        leadingIcon = Icons.Default.Email,
-                        isError = emailError,
-                        errorMessage = "Veuillez saisir votre e-mail",
-                        keyboardType = KeyboardType.Email
+                        value         = email,
+                        onValueChange = { email = it; emailError = false },
+                        placeholder   = "E-mail",
+                        leadingIcon   = Icons.Default.Email,
+                        isError       = emailError,
+                        errorMessage  = "Veuillez saisir votre e-mail",
+                        keyboardType  = KeyboardType.Email
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Password field
                     CustomInputField(
-                        value = password,
-                        onValueChange = { 
-                            password = it
-                            passwordError = false 
-                        },
-                        placeholder = "Mot de passe",
-                        leadingIcon = Icons.Default.Lock,
-                        isError = passwordError,
-                        errorMessage = "Veuillez saisir votre mot de passe",
-                        isPassword = true,
-                        isPasswordVisible = isPasswordVisible,
+                        value              = password,
+                        onValueChange      = { password = it; passwordError = false },
+                        placeholder        = "Mot de passe",
+                        leadingIcon        = Icons.Default.Lock,
+                        isError            = passwordError,
+                        errorMessage       = "Veuillez saisir votre mot de passe",
+                        isPassword         = true,
+                        isPasswordVisible  = isPasswordVisible,
                         onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
                     )
+
+                    // Forgot password
                     Text(
-                        text = "Mot de passe oublié ?",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                        text       = "Mot de passe oublié ?",
+                        fontSize   = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.Serif,
-                        color = darkGreen,
-                        modifier = Modifier
+                        color      = AppDarkGreen,
+                        modifier   = Modifier
                             .align(Alignment.End)
                             .padding(top = 10.dp)
                             .clickable { /* Action */ }
                     )
-                    Spacer(modifier = Modifier.height(35.dp))
-                    // Auth error banner
-                    authError?.let { err ->
-                        Text(
-                            text = err,
-                            color = Color(0xFFD32F2F),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            emailError = email.isBlank()
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Inline error banner
+                    ErrorBanner(message = authError)
+
+                    if (authError != null) Spacer(modifier = Modifier.height(8.dp))
+
+                    // Login button — uses the standardised AppButton
+                    AppButton(
+                        text      = "Se connecter",
+                        onClick   = {
+                            emailError    = email.isBlank()
                             passwordError = password.isBlank()
-                            if (emailError || passwordError) return@Button
+                            if (emailError || passwordError) return@AppButton
                             authViewModel.login(email, password)
                         },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                        shape = RoundedCornerShape(25.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(55.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = Color.White,
-                                strokeWidth = 2.5.dp
-                            )
-                        } else {
-                            Text(
-                                text = "Se connecter",
-                                fontSize = 18.sp,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(25.dp))
+                        isLoading = isLoading
+                    )
+
+                    Spacer(modifier = Modifier.height(22.dp))
+
+                    // Sign-up link
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Si vous n'avez pas de compte, ",
-                            fontSize = 12.sp,
+                            text       = "Pas encore de compte ? ",
+                            fontSize   = 12.sp,
                             fontFamily = FontFamily.Serif,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold
+                            color      = AppDarkGreen.copy(alpha = 0.55f),
+                            fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Créez un compte",
-                            fontSize = 12.sp,
+                            text       = "Créer un compte",
+                            fontSize   = 12.sp,
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
-                            color = darkGreen,
-                            modifier = Modifier.clickable { onNavigateToSignup(userType) }
+                            color      = AppDarkGreen,
+                            modifier   = Modifier.clickable { onNavigateToSignup(userType) }
                         )
                     }
                 }
@@ -233,6 +213,7 @@ fun LoginScreen(
     }
 }
 
+// ─── Custom Input Field ───────────────────────────────────────────────────────
 @Composable
 fun CustomInputField(
     value: String,
@@ -246,46 +227,63 @@ fun CustomInputField(
     onVisibilityToggle: (() -> Unit)? = null,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    val darkGreen = Color(0xFF1B3124)
     Column(modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
-            value = value,
+            value         = value,
             onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = Color.Gray, fontFamily = FontFamily.Serif) },
-            leadingIcon = { Icon(leadingIcon, contentDescription = null, tint = darkGreen) },
-            trailingIcon = {
+            placeholder   = {
+                Text(
+                    placeholder,
+                    color      = AppDarkGreen.copy(alpha = 0.40f),
+                    fontFamily = FontFamily.Serif,
+                    fontSize   = 14.sp
+                )
+            },
+            leadingIcon   = {
+                Icon(
+                    leadingIcon,
+                    contentDescription = null,
+                    tint     = if (isError) Color(0xFFD32F2F) else AppDarkGreen.copy(alpha = 0.65f),
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon  = {
                 if (isPassword && onVisibilityToggle != null) {
                     IconButton(onClick = onVisibilityToggle) {
                         Icon(
-                            imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            imageVector        = if (isPasswordVisible) Icons.Default.Visibility
+                                                 else Icons.Default.VisibilityOff,
                             contentDescription = null,
-                            tint = Color.Gray
+                            tint               = AppDarkGreen.copy(alpha = 0.45f)
                         )
                     }
                 }
             },
-            visualTransformation = if (isPassword && !isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(25.dp),
-            singleLine = true,
-            isError = isError,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.95f), 
-                unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                errorContainerColor = Color.White.copy(alpha = 0.95f),
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-                errorBorderColor = Color.Red
+            visualTransformation = if (isPassword && !isPasswordVisible)
+                PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (isPassword) KeyboardType.Password else keyboardType
+            ),
+            modifier    = Modifier.fillMaxWidth(),
+            shape       = RoundedCornerShape(20.dp),
+            singleLine  = true,
+            isError     = isError,
+            colors      = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor   = Color.White.copy(alpha = 0.96f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.90f),
+                errorContainerColor     = Color.White.copy(alpha = 0.96f),
+                focusedBorderColor      = AppDarkGreen.copy(alpha = 0.70f),
+                unfocusedBorderColor    = AppDarkGreen.copy(alpha = 0.20f),
+                errorBorderColor        = Color(0xFFD32F2F)
             )
         )
-        if (isError) {
+        if (isError && errorMessage.isNotEmpty()) {
             Text(
-                text = errorMessage,
-                color = Color.Red,
+                text     = errorMessage,
+                color    = Color(0xFFD32F2F),
                 fontSize = 11.sp,
                 fontFamily = FontFamily.Serif,
-                modifier = Modifier.padding(start = 16.dp, top = 2.dp)
+                modifier = Modifier.padding(start = 16.dp, top = 3.dp)
             )
         }
     }

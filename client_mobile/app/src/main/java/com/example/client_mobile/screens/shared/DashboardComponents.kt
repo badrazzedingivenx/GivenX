@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
@@ -627,4 +628,201 @@ fun ProfileTextField(
             )
         }
     }
+}
+
+// ─── Standard Primary Button ───────────────────────────────────────────────────
+/**
+ * Standard app-wide primary button.
+ * Height is fixed at [AppButtonDefaults.Height] (52 dp) for consistency.
+ * Shows a [CircularProgressIndicator] when [isLoading] is true.
+ */
+object AppButtonDefaults {
+    val Height: Dp = 52.dp
+    val Shape = RoundedCornerShape(26.dp)
+}
+
+@Composable
+fun AppButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    enabled: Boolean = true,
+    containerColor: Color = AppDarkGreen,
+    contentColor: Color = Color.White
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled && !isLoading,
+        shape = AppButtonDefaults.Shape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor   = contentColor,
+            disabledContainerColor = containerColor.copy(alpha = 0.55f),
+            disabledContentColor   = contentColor.copy(alpha = 0.55f)
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(AppButtonDefaults.Height)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier    = Modifier.size(22.dp),
+                color       = contentColor,
+                strokeWidth = 2.5.dp
+            )
+        } else {
+            Text(
+                text       = text,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize   = 16.sp
+            )
+        }
+    }
+}
+
+// ─── Standard Outlined Button ─────────────────────────────────────────────────
+@Composable
+fun AppOutlinedButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    borderColor: Color = AppDarkGreen,
+    contentColor: Color = AppDarkGreen
+) {
+    OutlinedButton(
+        onClick = onClick,
+        shape   = AppButtonDefaults.Shape,
+        border  = BorderStroke(1.dp, borderColor),
+        colors  = ButtonDefaults.outlinedButtonColors(contentColor = contentColor),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(AppButtonDefaults.Height)
+    ) {
+        Text(
+            text       = text,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.SemiBold,
+            fontSize   = 15.sp
+        )
+    }
+}
+
+// ─── Empty-State View ─────────────────────────────────────────────────────────
+/**
+ * Standardised empty-state composable used across all screens.
+ * Renders an icon tile, a bold title and a muted subtitle.
+ */
+@Composable
+fun EmptyStateView(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    iconTint: Color = AppDarkGreen.copy(alpha = 0.30f),
+    titleColor: Color = AppDarkGreen,
+    subtitleColor: Color = AppDarkGreen.copy(alpha = 0.48f)
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(AppDarkGreen.copy(alpha = 0.06f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector        = icon,
+                contentDescription = null,
+                tint               = iconTint,
+                modifier           = Modifier.size(38.dp)
+            )
+        }
+        Text(
+            text       = title,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize   = 16.sp,
+            color      = titleColor,
+            textAlign  = TextAlign.Center
+        )
+        Text(
+            text       = subtitle,
+            fontFamily = FontFamily.Serif,
+            fontSize   = 13.sp,
+            color      = subtitleColor,
+            textAlign  = TextAlign.Center,
+            lineHeight = 19.sp
+        )
+    }
+}
+
+// ─── Inline Error Banner ──────────────────────────────────────────────────────
+/**
+ * A small, centered error text block used below form fields or buttons
+ * to display authentication / validation error messages.
+ */
+@Composable
+fun ErrorBanner(
+    message: String?,
+    modifier: Modifier = Modifier
+) {
+    if (!message.isNullOrBlank()) {
+        Text(
+            text       = message,
+            color      = Color(0xFFD32F2F),
+            fontSize   = 12.sp,
+            fontFamily = FontFamily.Serif,
+            textAlign  = TextAlign.Center,
+            lineHeight = 17.sp,
+            modifier   = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp)
+        )
+    }
+}
+
+// ─── Info Chip ────────────────────────────────────────────────────────────────
+/**
+ * A lightweight pill chip used for type labels, status indicators and tags.
+ */
+@Composable
+fun InfoChip(
+    label: String,
+    containerColor: Color = AppGoldColor.copy(alpha = 0.15f),
+    textColor: Color = AppDarkGreen.copy(alpha = 0.70f),
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape    = RoundedCornerShape(8.dp),
+        color    = containerColor
+    ) {
+        Text(
+            text       = label,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.SemiBold,
+            fontSize   = 10.sp,
+            color      = textColor,
+            modifier   = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+// ─── Section Divider ─────────────────────────────────────────────────────────
+/**
+ * Subtle horizontal divider for visual grouping within scrollable content.
+ */
+@Composable
+fun SectionDivider(modifier: Modifier = Modifier) {
+    HorizontalDivider(
+        modifier  = modifier.padding(vertical = 4.dp),
+        thickness = 0.5.dp,
+        color     = AppDarkGreen.copy(alpha = 0.10f)
+    )
 }

@@ -22,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,21 +36,21 @@ fun RegistrationScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var isLawyer by remember { mutableStateOf(false) }
-    
+    var lastName  by remember { mutableStateOf("") }
+    var email     by remember { mutableStateOf("") }
+    var password  by remember { mutableStateOf("") }
+    var isLawyer  by remember { mutableStateOf(false) }
+
     var isPasswordVisible by remember { mutableStateOf(false) }
-    
+
     var firstNameError by remember { mutableStateOf(false) }
-    var lastNameError by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf(false) }
+    var lastNameError  by remember { mutableStateOf(false) }
+    var emailError     by remember { mutableStateOf(false) }
+    var passwordError  by remember { mutableStateOf(false) }
 
     val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
-    val isLoading = registerState is AuthViewModel.RegisterUiState.Loading
-    val authError = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
+    val isLoading  = registerState is AuthViewModel.RegisterUiState.Loading
+    val authError  = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
 
     LaunchedEffect(registerState) {
         when (val state = registerState) {
@@ -64,21 +63,21 @@ fun RegistrationScreen(
         }
     }
 
-    val darkGreen = Color(0xFF1B3124)
-
     Box(modifier = Modifier.fillMaxSize()) {
+        // Background image
         Image(
-            painter = painterResource(id = R.drawable.background_app),
+            painter            = painterResource(id = R.drawable.background_app),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            modifier           = Modifier.fillMaxSize(),
+            contentScale       = ContentScale.Crop
         )
-        
+
+        // Scrollable centered card
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 40.dp),
+                .padding(vertical = 44.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -90,178 +89,149 @@ fun RegistrationScreen(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.50f),
-                                Color.White.copy(alpha = 0.65f)
+                                Color.White.copy(alpha = 0.52f),
+                                Color.White.copy(alpha = 0.68f)
                             )
                         )
                     )
                     .border(
                         width = 1.dp,
-                        color = Color.White.copy(alpha = 0.4f),
+                        color = Color.White.copy(alpha = 0.45f),
                         shape = RoundedCornerShape(40.dp)
                     )
-                    .padding(horizontal = 24.dp, vertical = 30.dp)
+                    .padding(horizontal = 24.dp, vertical = 32.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier            = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Inscription",
-                        fontSize = 28.sp,
+                        text       = "Inscription",
+                        fontSize   = 28.sp,
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
-                        color = darkGreen
+                        color      = AppDarkGreen
                     )
+
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // User Type Selector
+                    // ── Account type toggle ──────────────────────────────────
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(25.dp))
-                            .background(Color.White.copy(alpha = 0.3f))
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(AppDarkGreen.copy(alpha = 0.08f))
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        val selectedColor = darkGreen
-                        val unselectedColor = Color.Transparent
-                        val selectedTextColor = Color.White
-                        val unselectedTextColor = darkGreen
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(if (!isLawyer) selectedColor else unselectedColor)
-                                .clickable { isLawyer = false },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "Client",
-                                color = if (!isLawyer) selectedTextColor else unselectedTextColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(if (isLawyer) selectedColor else unselectedColor)
-                                .clickable { isLawyer = true },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "Avocat",
-                                color = if (isLawyer) selectedTextColor else unselectedTextColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
+                        listOf("Client" to false, "Avocat" to true).forEach { (label, isLawyerType) ->
+                            val isSelected = isLawyer == isLawyerType
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(40.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(if (isSelected) AppDarkGreen else Color.Transparent)
+                                    .clickable { isLawyer = isLawyerType },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text       = label,
+                                    color      = if (isSelected) Color.White else AppDarkGreen,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize   = 14.sp
+                                )
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // ── Form fields ──────────────────────────────────────────
                     CustomInputField(
-                        value = firstName,
+                        value         = firstName,
                         onValueChange = { firstName = it; firstNameError = false },
-                        placeholder = "Prénom",
-                        leadingIcon = Icons.Default.Person,
-                        isError = firstNameError,
-                        errorMessage = "Veuillez saisir votre prénom"
+                        placeholder   = "Prénom",
+                        leadingIcon   = Icons.Default.Person,
+                        isError       = firstNameError,
+                        errorMessage  = "Veuillez saisir votre prénom"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     CustomInputField(
-                        value = lastName,
+                        value         = lastName,
                         onValueChange = { lastName = it; lastNameError = false },
-                        placeholder = "Nom",
-                        leadingIcon = Icons.Default.Person,
-                        isError = lastNameError,
-                        errorMessage = "Veuillez saisir votre nom"
+                        placeholder   = "Nom",
+                        leadingIcon   = Icons.Default.Person,
+                        isError       = lastNameError,
+                        errorMessage  = "Veuillez saisir votre nom"
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     CustomInputField(
-                        value = email,
+                        value         = email,
                         onValueChange = { email = it; emailError = false },
-                        placeholder = "E-mail",
-                        leadingIcon = Icons.Default.Email,
-                        isError = emailError,
-                        errorMessage = "Veuillez saisir un e-mail valide",
-                        keyboardType = KeyboardType.Email
+                        placeholder   = "E-mail",
+                        leadingIcon   = Icons.Default.Email,
+                        isError       = emailError,
+                        errorMessage  = "Veuillez saisir un e-mail valide",
+                        keyboardType  = KeyboardType.Email
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     CustomInputField(
-                        value = password,
-                        onValueChange = { password = it; passwordError = false },
-                        placeholder = "Mot de passe",
-                        leadingIcon = Icons.Default.Lock,
-                        isError = passwordError,
-                        errorMessage = "Mot de passe requis",
-                        isPassword = true,
-                        isPasswordVisible = isPasswordVisible,
+                        value              = password,
+                        onValueChange      = { password = it; passwordError = false },
+                        placeholder        = "Mot de passe",
+                        leadingIcon        = Icons.Default.Lock,
+                        isError            = passwordError,
+                        errorMessage       = "Mot de passe requis (6 caractères min)",
+                        isPassword         = true,
+                        isPasswordVisible  = isPasswordVisible,
                         onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
                     )
 
-                    Spacer(modifier = Modifier.height(25.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    authError?.let { err ->
-                        Text(
-                            text = err,
-                            color = Color(0xFFD32F2F),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily.Serif,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                    }
+                    // ── Error banner ─────────────────────────────────────────
+                    ErrorBanner(message = authError)
+                    if (authError != null) Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(
-                        onClick = {
+                    // ── Submit button ────────────────────────────────────────
+                    AppButton(
+                        text      = "S'inscrire",
+                        isLoading = isLoading,
+                        onClick   = {
                             firstNameError = firstName.isBlank()
-                            lastNameError = lastName.isBlank()
-                            emailError = email.isBlank() || !email.contains("@")
-                            passwordError = password.length < 6
-                            
-                            if (firstNameError || lastNameError || emailError || passwordError) return@Button
-                            
+                            lastNameError  = lastName.isBlank()
+                            emailError     = email.isBlank() || !email.contains("@")
+                            passwordError  = password.length < 6
+                            if (firstNameError || lastNameError || emailError || passwordError) return@AppButton
                             authViewModel.registerNewUser(
                                 firstName = firstName,
-                                lastName = lastName,
-                                email = email,
-                                password = password,
-                                role = if (isLawyer) "lawyer" else "user"
+                                lastName  = lastName,
+                                email     = email,
+                                password  = password,
+                                role      = if (isLawyer) "lawyer" else "user"
                             )
-                        },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                        shape = RoundedCornerShape(25.dp),
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
-                        } else {
-                            Text("S'inscrire", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
-                    }
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
+
+                    // ── Back to login link ───────────────────────────────────
                     Row(
-                        modifier = Modifier.clickable { onNavigateBack() },
+                        modifier          = Modifier.clickable { onNavigateBack() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             "Déjà un compte ? ",
-                            fontSize = 13.sp,
-                            color = Color.Gray,
+                            fontSize   = 13.sp,
+                            color      = AppDarkGreen.copy(alpha = 0.55f),
                             fontFamily = FontFamily.Serif
                         )
                         Text(
                             "Se connecter",
-                            fontSize = 13.sp,
-                            color = darkGreen,
+                            fontSize   = 13.sp,
+                            color      = AppDarkGreen,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Serif
                         )

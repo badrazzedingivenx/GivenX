@@ -106,18 +106,11 @@ fun AppointmentsScreen(
                                 fontFamily = FontFamily.Serif, fontSize = 12.sp,
                                 color = AppDarkGreen.copy(alpha = 0.55f),
                                 textAlign = TextAlign.Center, lineHeight = 18.sp)
-                            Button(
-                                onClick = {},
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
-                                border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.55f))
-                            ) {
-                                Icon(Icons.Default.CalendarMonth, contentDescription = null,
-                                    tint = AppGoldColor, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Trouver un avocat", fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AppGoldColor)
-                            }
+                            AppButton(
+                                text       = "Trouver un avocat",
+                                onClick    = {},
+                                modifier   = Modifier.wrapContentWidth()
+                            )
                         }
                     }
                 }
@@ -155,16 +148,37 @@ private fun AppointmentCard(lawyerName: String, specialty: String, datetime: Str
                 Text(initials, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
                     fontSize = 16.sp, color = AppGoldColor)
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(lawyerName, fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppDarkGreen)
-                Text(specialty, fontFamily = FontFamily.Serif, fontSize = 11.sp, color = AppGoldColor)
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.AccessTime, contentDescription = null,
-                        tint = AppDarkGreen.copy(alpha = 0.45f), modifier = Modifier.size(12.dp))
-                    Text(datetime, fontFamily = FontFamily.Serif, fontSize = 11.sp,
-                        color = AppDarkGreen.copy(alpha = 0.60f))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    lawyerName,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 15.sp,
+                    color      = AppDarkGreen
+                )
+                Text(
+                    specialty,
+                    fontFamily = FontFamily.Serif,
+                    fontSize   = 12.sp,
+                    color      = AppGoldColor,
+                    fontWeight = FontWeight.Medium
+                )
+                Row(
+                    verticalAlignment      = Alignment.CenterVertically,
+                    horizontalArrangement  = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.AccessTime,
+                        contentDescription = null,
+                        tint               = AppDarkGreen.copy(alpha = 0.40f),
+                        modifier           = Modifier.size(12.dp)
+                    )
+                    Text(
+                        datetime,
+                        fontFamily = FontFamily.Serif,
+                        fontSize   = 11.sp,
+                        color      = AppDarkGreen.copy(alpha = 0.55f)
+                    )
                 }
             }
             Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFF34A853).copy(alpha = 0.12f)) {

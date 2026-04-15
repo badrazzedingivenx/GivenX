@@ -130,8 +130,6 @@ fun AvocatDashboardScreen(
 // ─── Header ───────────────────────────────────────────────────────────────────
 @Composable
 private fun DashHeader(profile: LawyerProfileDto?, isLoading: Boolean) {
-    var showSuspendDialog by remember { mutableStateOf(false) }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -162,72 +160,6 @@ private fun DashHeader(profile: LawyerProfileDto?, isLoading: Boolean) {
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
-        if (!isLoading) {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Subscription badge
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = BrandGoldLight
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .background(BrandGold, CircleShape)
-                        )
-                        Text(
-                            "Premium",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandGold
-                        )
-                    }
-                }
-                TextButton(
-                    onClick = { showSuspendDialog = true },
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                ) {
-                    Text("Suspendre", fontSize = 11.sp, color = DashRed)
-                }
-            }
-        }
-    }
-
-    if (showSuspendDialog) {
-        AlertDialog(
-            onDismissRequest = { showSuspendDialog = false },
-            title = {
-                Text(
-                    "Suspendre l'abonnement",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    "Voulez-vous vraiment suspendre votre abonnement Premium ?",
-                    fontFamily = FontFamily.Serif
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showSuspendDialog = false }) {
-                    Text("Confirmer", color = DashRed, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSuspendDialog = false }) {
-                    Text("Annuler", color = BrandGreen)
-                }
-            }
-        )
     }
 }
 

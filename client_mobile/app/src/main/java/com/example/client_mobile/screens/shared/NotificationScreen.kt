@@ -138,43 +138,16 @@ fun NotificationScreen(
         if (notifications.isEmpty()) {
             // ── Empty state ────────────────────────────────────────────────────
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(AppDarkGreen.copy(alpha = 0.07f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.NotificationsNone,
-                            contentDescription = null,
-                            tint = AppDarkGreen.copy(alpha = 0.30f),
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
-                    Text(
-                        "Aucune notification",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = AppDarkGreen
-                    )
-                    Text(
-                        "Vous êtes à jour !",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 13.sp,
-                        color = AppDarkGreen.copy(alpha = 0.45f)
-                    )
-                }
+                EmptyStateView(
+                    icon     = Icons.Default.NotificationsNone,
+                    title    = "Aucune notification",
+                    subtitle = "Vous êtes à jour !"
+                )
             }
         } else {
             LazyColumn(
@@ -290,24 +263,15 @@ private fun NotificationCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // ── Type chip + unread dot ─────────────────────────────────────
+                // ── Type chip + unread dot ────────────────────────────────────
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = AppGoldColor.copy(alpha = if (notification.isRead) 0.08f else 0.15f)
-                    ) {
-                        Text(
-                            notificationTypeLabel(notification.type),
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AppDarkGreen.copy(alpha = 0.65f),
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
-                        )
-                    }
+                    InfoChip(
+                        label          = notificationTypeLabel(notification.type),
+                        containerColor = AppGoldColor.copy(alpha = if (notification.isRead) 0.08f else 0.15f)
+                    )
                     if (!notification.isRead) {
                         Box(
                             modifier = Modifier
@@ -318,8 +282,8 @@ private fun NotificationCard(
                         Text(
                             "Non lu",
                             fontFamily = FontFamily.Serif,
-                            fontSize = 10.sp,
-                            color = Color(0xFF34A853),
+                            fontSize   = 10.sp,
+                            color      = Color(0xFF34A853),
                             fontWeight = FontWeight.SemiBold
                         )
                     }

@@ -7,6 +7,10 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -54,17 +58,12 @@ fun ScreenAvocat(
     onNavigateToProfile: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val goldColor = Color(0xFFD4AF37)
-    val darkGreen = Color(0xFF1B3124)
-    
     var showPermissionDialog by remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> 
-        if (uri != null) {
-            LawyerSession.profileImageUri = uri
-        }
+    ) { uri: Uri? ->
+        if (uri != null) LawyerSession.profileImageUri = uri
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -77,8 +76,11 @@ fun ScreenAvocat(
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
-        val status = ContextCompat.checkSelfPermission(context, permission)
-        if (status == PermissionChecker.PERMISSION_GRANTED) galleryLauncher.launch("image/*") else showPermissionDialog = true
+        if (ContextCompat.checkSelfPermission(context, permission) == PermissionChecker.PERMISSION_GRANTED) {
+            galleryLauncher.launch("image/*")
+        } else {
+            showPermissionDialog = true
+        }
     }
 
     if (showPermissionDialog) {
@@ -86,16 +88,18 @@ fun ScreenAvocat(
             onDismiss = { showPermissionDialog = false },
             onConfirm = {
                 showPermissionDialog = false
-                val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
+                val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                    Manifest.permission.READ_MEDIA_IMAGES
+                else
+                    Manifest.permission.READ_EXTERNAL_STORAGE
                 permissionLauncher.launch(permission)
-            },
-            darkGreen = darkGreen,
-            goldColor = goldColor
+            }
         )
     }
 
     val scrollState = rememberScrollState()
-    val selectedTab by remember { mutableIntStateOf(0) } // Home is 0
+    // Home tab is always selected on this standalone screen (index 0)
+    val selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -103,9 +107,9 @@ fun ScreenAvocat(
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_app),
+                            painter      = painterResource(id = R.drawable.logo_app),
                             contentDescription = "Logo",
-                            modifier = Modifier.size(330.dp),
+                            modifier     = Modifier.size(330.dp),
                             contentScale = ContentScale.Fit
                         )
                     }
@@ -115,22 +119,17 @@ fun ScreenAvocat(
         },
         bottomBar = {
             AvocatBottomBar(
-                backgroundColor = darkGreen,
-                selectedColor = goldColor,
-                selectedTab = selectedTab,
-                onTabSelected = { index ->
-                    if (index == 3) {
-                        onNavigateToProfile()
-                    }
-                }
+                selectedTab    = selectedTab,
+                onTabSelected  = { index -> if (index == 3) onNavigateToProfile() }
             )
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
+            // Background
             Image(
-                painter = painterResource(id = R.drawable.background_app),
+                painter      = painterResource(id = R.drawable.background_app),
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+                modifier     = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
             Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.65f)))
@@ -143,205 +142,370 @@ fun ScreenAvocat(
                     .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
+                // ── Welcome Heading ──────────────────────────────────────────
                 Text(
-                    text = "Bienvenue ${if (isMasculine) "Maître" else "Maîtresse"}",
-                    fontSize = 28.sp,
+                    text       = "Bienvenue ${if (isMasculine) "Maître" else "Maîtresse"}",
+                    fontSize   = 28.sp,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    color = darkGreen
+                    color      = AppDarkGreen
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Gérez vos activités facilement",
-                    fontSize = 14.sp,
+                    text       = "Gérez vos activités facilement",
+                    fontSize   = 14.sp,
                     fontFamily = FontFamily.Serif,
-                    color = darkGreen.copy(alpha = 0.7f)
+                    color      = AppDarkGreen.copy(alpha = 0.60f)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Profile Card
+                // ── Profile Card ─────────────────────────────────────────────
                 Surface(
-                    modifier = Modifier
+                    modifier       = Modifier
                         .fillMaxWidth()
                         .clickable { onNavigateToProfile() },
-                    shape = RoundedCornerShape(30.dp),
-                    color = darkGreen,
-                    border = BorderStroke(1.dp, goldColor.copy(alpha = 0.5f)),
-                    shadowElevation = 4.dp
+                    shape          = RoundedCornerShape(28.dp),
+                    color          = AppDarkGreen,
+                    border         = BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.45f)),
+                    shadowElevation = 6.dp
                 ) {
                     Row(
-                        modifier = Modifier.padding(20.dp),
+                        modifier          = Modifier.padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Avatar with camera overlay
                         Box(
-                            modifier = Modifier.clickable { onProfileImageClick() },
+                            modifier         = Modifier.clickable { onProfileImageClick() },
                             contentAlignment = Alignment.BottomEnd
                         ) {
                             if (profileImageUri != null) {
                                 AsyncImage(
-                                    model = profileImageUri,
+                                    model              = profileImageUri,
                                     contentDescription = "Profile",
-                                    modifier = Modifier
+                                    modifier           = Modifier
                                         .size(80.dp)
                                         .clip(CircleShape)
-                                        .border(2.dp, goldColor, CircleShape),
+                                        .border(2.dp, AppGoldColor, CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
                                 Image(
-                                    painter = painterResource(id = R.drawable.logo_user),
+                                    painter            = painterResource(id = R.drawable.logo_user),
                                     contentDescription = "Default Profile",
-                                    modifier = Modifier
+                                    modifier           = Modifier
                                         .size(80.dp)
                                         .clip(CircleShape)
-                                        .border(2.dp, goldColor, CircleShape),
+                                        .border(2.dp, AppGoldColor, CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
                             }
+                            // Camera badge
                             Surface(
-                                modifier = Modifier.size(26.dp),
-                                shape = CircleShape,
-                                color = Color.White,
-                                border = BorderStroke(1.dp, goldColor)
+                                modifier  = Modifier.size(26.dp),
+                                shape     = CircleShape,
+                                color     = Color.White,
+                                border    = BorderStroke(1.dp, AppGoldColor)
                             ) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = darkGreen, modifier = Modifier.padding(5.dp))
+                                Icon(
+                                    Icons.Default.CameraAlt,
+                                    contentDescription = null,
+                                    tint     = AppDarkGreen,
+                                    modifier = Modifier.padding(5.dp)
+                                )
                             }
                         }
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        Column {
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(
-                                text = "${if (isMasculine) "Maître" else "Maîtresse"} $fullName",
-                                fontSize = 18.sp,
+                                text       = "${if (isMasculine) "Maître" else "Maîtresse"} $fullName",
+                                fontSize   = 18.sp,
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color      = Color.White
                             )
                             Text(
-                                text = speciality,
-                                fontSize = 13.sp,
+                                text       = speciality,
+                                fontSize   = 13.sp,
                                 fontFamily = FontFamily.Serif,
-                                color = goldColor,
+                                color      = AppGoldColor,
                                 fontWeight = FontWeight.Medium
                             )
+                            // Subtle "Voir profil" hint
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text       = "Voir le profil",
+                                    fontSize   = 11.sp,
+                                    fontFamily = FontFamily.Serif,
+                                    color      = Color.White.copy(alpha = 0.50f)
+                                )
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint     = Color.White.copy(alpha = 0.50f),
+                                    modifier = Modifier.size(11.dp)
+                                )
+                            }
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // ── Stats Row ────────────────────────────────────────────────
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    StatItemCompact(modifier = Modifier.weight(1f), Icons.Default.Groups, clientCount, "Clients", darkGreen, goldColor)
-                    StatItemCompact(modifier = Modifier.weight(1f), Icons.Default.Email, messageCount, "Messages", darkGreen, goldColor)
-                    StatItemCompact(modifier = Modifier.weight(1f), Icons.Default.Description, demandeCount, "Demandes", darkGreen, goldColor)
+                    CompactStatTile(
+                        modifier = Modifier.weight(1f),
+                        icon     = Icons.Default.Groups,
+                        count    = clientCount,
+                        label    = "Clients"
+                    )
+                    CompactStatTile(
+                        modifier = Modifier.weight(1f),
+                        icon     = Icons.Default.Email,
+                        count    = messageCount,
+                        label    = "Messages"
+                    )
+                    CompactStatTile(
+                        modifier = Modifier.weight(1f),
+                        icon     = Icons.Default.Description,
+                        count    = demandeCount,
+                        label    = "Demandes"
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                    ActionMenuItemAvocat(Icons.AutoMirrored.Filled.Assignment, "Voir les demandes", "Consulter et répondre aux nouvelles demandes", darkGreen, goldColor) {}
-                    ActionMenuItemAvocat(Icons.Default.ChatBubble, "Messages", "Voir vos conversations", darkGreen, goldColor) {}
-                    ActionMenuItemAvocat(Icons.Default.Person, "Mon profil", "Gérer vos informations", darkGreen, goldColor) {
-                        onNavigateToProfile()
-                    }
+                // ── Action Menu ──────────────────────────────────────────────
+                SectionHeader(title = "Actions rapides")
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ActionMenuItemAvocat(
+                        icon      = Icons.AutoMirrored.Filled.Assignment,
+                        title     = "Voir les demandes",
+                        subTitle  = "Consulter et répondre aux nouvelles demandes",
+                        onClick   = {}
+                    )
+                    ActionMenuItemAvocat(
+                        icon      = Icons.Default.ChatBubble,
+                        title     = "Messages",
+                        subTitle  = "Voir vos conversations",
+                        onClick   = {}
+                    )
+                    ActionMenuItemAvocat(
+                        icon      = Icons.Default.Person,
+                        title     = "Mon profil",
+                        subTitle  = "Gérer vos informations",
+                        onClick   = { onNavigateToProfile() }
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(20.dp))
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 }
 
+// ─── Permission Dialog ────────────────────────────────────────────────────────
 @Composable
-fun PermissionRequestDialog(onDismiss: () -> Unit, onConfirm: () -> Unit, darkGreen: Color, goldColor: Color) {
+fun PermissionRequestDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Accès à la galerie", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
-        text = { Text("Nous avons besoin de votre autorisation pour accéder à vos photos.", fontFamily = FontFamily.Serif) },
+        title = {
+            Text(
+                "Accès à la galerie",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize   = 16.sp,
+                color      = AppDarkGreen
+            )
+        },
+        text = {
+            Text(
+                "Nous avons besoin de votre autorisation pour accéder à vos photos.",
+                fontFamily = FontFamily.Serif,
+                fontSize   = 14.sp,
+                color      = AppDarkGreen.copy(alpha = 0.70f)
+            )
+        },
         confirmButton = {
-            Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = darkGreen)) {
-                Text("Autoriser", color = Color.White)
+            Button(
+                onClick = onConfirm,
+                colors  = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                shape   = RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    "Autoriser",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color      = Color.White
+                )
             }
         },
         dismissButton = {
-            TextButton(onClick = { onDismiss() }) {
-                Text("Plus tard", color = Color.Gray)
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Plus tard",
+                    fontFamily = FontFamily.Serif,
+                    color      = AppDarkGreen.copy(alpha = 0.50f)
+                )
             }
         },
-        shape = RoundedCornerShape(20.dp),
+        shape          = RoundedCornerShape(24.dp),
         containerColor = Color.White
     )
 }
 
+// ─── Action Menu Item ─────────────────────────────────────────────────────────
 @Composable
-fun StatItemCompact(modifier: Modifier, icon: ImageVector, count: String, label: String, containerColor: Color, accentColor: Color) {
+fun ActionMenuItemAvocat(
+    icon: ImageVector,
+    title: String,
+    subTitle: String,
+    onClick: () -> Unit
+) {
     Surface(
-        modifier = modifier.height(90.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = containerColor,
-        border = BorderStroke(0.5.dp, accentColor.copy(alpha = 0.5f))
+        modifier       = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 76.dp)
+            .clickable { onClick() },
+        shape          = RoundedCornerShape(22.dp),
+        color          = AppDarkGreen,
+        border         = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.30f)),
+        shadowElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Row(
+            modifier          = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(22.dp))
-            Text(text = count, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp, fontFamily = FontFamily.Serif)
-            Text(text = label, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontFamily = FontFamily.Serif)
-        }
-    }
-}
-
-@Composable
-fun ActionMenuItemAvocat(icon: ImageVector, title: String, subTitle: String, backgroundColor: Color, iconColor: Color, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().height(80.dp).clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        color = backgroundColor,
-        border = BorderStroke(0.5.dp, iconColor.copy(alpha = 0.3f))
-    ) {
-        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(45.dp).background(Color.White.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+            // Icon tile
+            Box(
+                modifier         = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color.White.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint     = AppGoldColor,
+                    modifier = Modifier.size(24.dp)
+                )
             }
+
             Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, fontFamily = FontFamily.Serif)
-                Text(text = subTitle, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontFamily = FontFamily.Serif)
+
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    text       = title,
+                    color      = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 15.sp,
+                    fontFamily = FontFamily.Serif
+                )
+                Text(
+                    text       = subTitle,
+                    color      = Color.White.copy(alpha = 0.55f),
+                    fontSize   = 12.sp,
+                    fontFamily = FontFamily.Serif
+                )
             }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = iconColor.copy(alpha = 0.9f), modifier = Modifier.size(20.dp))
+
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint     = AppGoldColor.copy(alpha = 0.80f),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
 
+// ─── Avocat Bottom Bar (with animated indicator) ──────────────────────────────
 @Composable
-fun AvocatBottomBar(backgroundColor: Color, selectedColor: Color, selectedTab: Int, onTabSelected: (Int) -> Unit) {
+fun AvocatBottomBar(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    val tabs = listOf(
+        Pair(Icons.Default.Home,                "Accueil"),
+        Pair(Icons.AutoMirrored.Filled.Chat,    "Messages"),
+        Pair(Icons.Default.Groups,              "Clients"),
+        Pair(Icons.Default.Person,              "Profil")
+    )
+
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(16.dp).height(70.dp),
-        shape = RoundedCornerShape(25.dp),
-        color = backgroundColor,
-        shadowElevation = 8.dp
+        modifier       = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(70.dp),
+        shape          = RoundedCornerShape(28.dp),
+        color          = AppDarkGreen,
+        shadowElevation = 10.dp
     ) {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
-            BottomNavItemAvocat(Icons.Default.Home, "Accueil", selectedTab == 0, selectedColor) { onTabSelected(0) }
-            BottomNavItemAvocat(Icons.AutoMirrored.Filled.Chat, "Messages", selectedTab == 1, selectedColor) { onTabSelected(1) }
-            BottomNavItemAvocat(Icons.Default.Groups, "Clients", selectedTab == 2, selectedColor) { onTabSelected(2) }
-            BottomNavItemAvocat(Icons.Default.Person, "Profil", selectedTab == 3, selectedColor) { onTabSelected(3) }
+        Row(
+            modifier              = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment     = Alignment.CenterVertically
+        ) {
+            tabs.forEachIndexed { index, (icon, label) ->
+                val selected = selectedTab == index
+                val indicatorWidth by animateDpAsState(
+                    targetValue   = if (selected) 16.dp else 0.dp,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness    = Spring.StiffnessMedium
+                    ),
+                    label = "avocatTabIndicator_$index"
+                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable { onTabSelected(index) }
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Icon(
+                        imageVector        = icon,
+                        contentDescription = label,
+                        tint               = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+                        modifier           = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text       = label,
+                        color      = if (selected) AppGoldColor else Color.White.copy(alpha = 0.50f),
+                        fontSize   = 10.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    // Animated selection indicator pill
+                    Box(
+                        modifier = Modifier
+                            .height(3.dp)
+                            .width(indicatorWidth)
+                            .clip(CircleShape)
+                            .background(AppGoldColor)
+                    )
+                }
+            }
         }
-    }
-}
-
-@Composable
-fun BottomNavItemAvocat(icon: ImageVector, label: String, selected: Boolean, selectedColor: Color, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clip(CircleShape).clickable { onClick() }.padding(8.dp)) {
-        Icon(icon, contentDescription = label, tint = if (selected) selectedColor else Color.White.copy(alpha = 0.5f), modifier = Modifier.size(24.dp))
-        Text(text = label, color = if (selected) selectedColor else Color.White.copy(alpha = 0.5f), fontSize = 10.sp, fontFamily = FontFamily.Serif, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
     }
 }
