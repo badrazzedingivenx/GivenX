@@ -10,6 +10,7 @@ import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.screens.shared.LawyerSession
+import com.example.client_mobile.screens.shared.NotificationViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,6 +85,10 @@ class LawyerDashboardViewModel : ViewModel() {
             profileJob.await()
             statsJob.await()
             consultationsJob.await()
+
+            // Trigger notification sync
+            NotificationViewModel().fetch()
+
             _isRefreshing.value = false
         }
     }

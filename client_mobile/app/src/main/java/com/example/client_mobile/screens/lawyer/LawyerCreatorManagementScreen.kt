@@ -108,23 +108,18 @@ fun LawyerCreatorManagementScreen(
         )
     }
 
-    AppScaffold(
-        topBar = {
-            // ── Top Bar — texte "Studio Créateur" sur fond dégradé ────────────
-            StandardTopBar(
-                title  = "Studio Créateur",
-                onBack = onBack,
-                actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            imageVector        = Icons.Default.Refresh,
-                            contentDescription = "Actualiser",
-                            tint               = Color.White,
-                            modifier           = Modifier.size(22.dp)
-                        )
-                    }
-                }
-            )
+    BaseScreen(
+        title  = "Studio Créateur",
+        onBack = onBack,
+        actions = {
+            IconButton(onClick = { viewModel.refresh() }) {
+                Icon(
+                    imageVector        = Icons.Default.Refresh,
+                    contentDescription = "Actualiser",
+                    tint               = Color.White,
+                    modifier           = Modifier.size(22.dp)
+                )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -144,7 +139,7 @@ fun LawyerCreatorManagementScreen(
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = AppDarkGreen)
             }
-            return@AppScaffold
+            return@BaseScreen
         }
 
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(

@@ -29,7 +29,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DocumentVaultScreen(
     onBack: () -> Unit = {},
@@ -51,13 +50,9 @@ fun DocumentVaultScreen(
     }
 
     // ── Layout ─────────────────────────────────────────────────────────────
-    AppScaffold(
-        topBar = {
-            StandardTopBar(
-                title = "Coffre-fort Numérique",
-                onBack = onBack
-            )
-        }
+    BaseScreen(
+        title = "Coffre-fort Numérique",
+        onBack = onBack
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

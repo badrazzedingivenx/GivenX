@@ -68,23 +68,10 @@ private val FeedBackground = Color(0xFFF9F5F0)  // Warm Beige
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FeedTopBar(onNotifications: () -> Unit = {}) {
-    StandardTopBar(
-        onBack = null,
-        actions = {
-            TopBarActions(
-                onNotifications = onNotifications,
-                onProfile = {}
-            )
-        }
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun HaqqiSocialFeedScreen(
     paddingValues: PaddingValues = PaddingValues(),
     isLawyer: Boolean = TokenManager.getUserType() == "lawyer",
+    onNavigateToNotifications: () -> Unit = {},
     onCreatePost: () -> Unit = {},
     viewModel: SocialFeedViewModel = viewModel()
 ) {
@@ -97,9 +84,10 @@ fun HaqqiSocialFeedScreen(
 
     Scaffold(
         topBar = { 
-            FeedTopBar(onNotifications = {
-                // Notifications can be triggered here
-            }) 
+            StandardTopBar(
+                onBack = null,
+                onNotifications = onNavigateToNotifications
+            )
         },
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0,0,0,0)

@@ -43,9 +43,8 @@ fun PaymentScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     BaseScreen(
-        title = "Suivi des Paiements",
-        onBack = onBack,
-        showBottomBar = false
+        title = "PAIEMENTS",
+        onBack = onBack
     ) { padding ->
         Box(
             modifier = Modifier

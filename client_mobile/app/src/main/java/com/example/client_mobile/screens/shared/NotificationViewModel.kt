@@ -4,15 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.dto.NotificationDto
+import com.example.client_mobile.network.TokenManager
 import kotlinx.coroutines.launch
 
 /**
- * Fetches user notifications from /api/notifications and writes them into
- * [NotificationRepository.userNotifications] — the observable list consumed by
- * both [NotificationScreen] (list of cards) and the notification badge in HomeScreen.
+ * Fetches notifications from /api/notifications and writes them into
+ * [NotificationRepository] — the observable list consumed by
+ * both [NotificationScreen] (list of cards) and the notification badge in TopBarActions.
  *
- * Also exposes helpers for mark-read / remove that the screen calls so the
- * mutations flow through a single ViewModel rather than calling the repository object directly.
+ * Automatically handles routing to userNotifications or lawyerNotifications
+ * based on the logged-in [TokenManager.getUserType].
  */
 class NotificationViewModel : ViewModel() {
 
@@ -21,11 +22,19 @@ class NotificationViewModel : ViewModel() {
     fun fetch() {
         viewModelScope.launch {
             try {
+                val isLawyer = TokenManager.getUserType() == "lawyer"
                 val response = RetrofitClient.haqApi.getNotifications()
+                
                 if (response.isSuccessful && response.body()?.success == true) {
                     val items = response.body()?.data?.map { it.toAppNotification() } ?: return@launch
-                    NotificationRepository.userNotifications.clear()
-                    NotificationRepository.userNotifications.addAll(items)
+                    
+                    if (isLawyer) {
+                        NotificationRepository.lawyerNotifications.clear()
+                        NotificationRepository.lawyerNotifications.addAll(items)
+                    } else {
+                        NotificationRepository.userNotifications.clear()
+                        NotificationRepository.userNotifications.addAll(items)
+                    }
                 }
             } catch (_: Exception) {
                 // Keep existing state on network failure
@@ -33,9 +42,20 @@ class NotificationViewModel : ViewModel() {
         }
     }
 
-    fun markRead(id: String)   = NotificationRepository.markReadUser(id)
-    fun remove(id: String)     = NotificationRepository.removeUser(id)
-    fun markAllRead()          = NotificationRepository.markAllReadUser()
+    fun markRead(id: String, isLawyer: Boolean = false) {
+        if (isLawyer) NotificationRepository.markReadLawyer(id)
+        else NotificationRepository.markReadUser(id)
+    }
+
+    fun remove(id: String, isLawyer: Boolean = false) {
+        if (isLawyer) NotificationRepository.removeLawyer(id)
+        else NotificationRepository.removeUser(id)
+    }
+
+    fun markAllRead(isLawyer: Boolean = false) {
+        if (isLawyer) NotificationRepository.markAllReadLawyer()
+        else NotificationRepository.markAllReadUser()
+    }
 
     // ── Mapping ───────────────────────────────────────────────────────────────
 

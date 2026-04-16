@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppointmentsScreen(
     onBack: () -> Unit = {},
@@ -34,13 +33,9 @@ fun AppointmentsScreen(
     val appointments by viewModel.appointments.collectAsStateWithLifecycle()
     val isLoading = appointments == null
 
-    AppScaffold(
-        topBar = {
-            StandardTopBar(
-                title = "Mes Rendez-vous",
-                onBack = onBack
-            )
-        }
+    BaseScreen(
+        title = "Mes Rendez-vous",
+        onBack = onBack
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

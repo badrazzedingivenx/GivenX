@@ -192,13 +192,9 @@ fun LawyerDashboardHost(
 fun LawyerPaymentsScreen(onBack: () -> Unit) {
     val payments = LawyerSession.payments
 
-    AppScaffold(
-        topBar = {
-            StandardTopBar(
-                title = "Suivi des Paiements",
-                onBack = onBack
-            )
-        }
+    BaseScreen(
+        title = "Suivi des Paiements",
+        onBack = onBack
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -490,14 +486,10 @@ fun LawyerRequestsScreen(
         }
     }
 
-    AppScaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            StandardTopBar(
-                title = "Nouvelles Demandes",
-                onBack = onBack
-            )
-        }
+    BaseScreen(
+        title        = "Nouvelles Demandes",
+        onBack       = onBack,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -738,8 +730,8 @@ private fun LawyerHomeTabContent(
         // ── Creator Mode Quick Access ────────────────────────────────────────
         SectionHeader(
             title = "Studio Créateur",
-            actionLabel = "Gérer",
-            onAction = { onNavigateToCreator() }
+            actionText = "Gérer",
+            onActionClick = { onNavigateToCreator() }
         )
         DashCard {
             Row(
@@ -766,7 +758,7 @@ private fun LawyerHomeTabContent(
         }
 
         // ── Nouvelles Demandes quick view ─────────────────────────────────────
-        SectionHeader(title = "Dernières Demandes", actionLabel = "Voir tout", onAction = onNavigateToRequests)
+        SectionHeader(title = "Dernières Demandes", actionText = "Voir tout", onActionClick = onNavigateToRequests)
         DashCard {
             if (stats?.newRequests == 0) {
                 Text("Aucune nouvelle demande.", fontSize = 13.sp, color = Color.Gray, fontFamily = FontFamily.Serif)

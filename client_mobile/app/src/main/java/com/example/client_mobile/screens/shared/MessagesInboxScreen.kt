@@ -57,6 +57,7 @@ private val SectionLabelColor    = Color(0xFF4A5D55)    // Muted green-gray
 fun MessagesInboxScreen(
     isLawyer: Boolean,
     paddingValues: PaddingValues = PaddingValues(),
+    onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
     conversationViewModel: ConversationViewModel = viewModel()
 ) {
@@ -76,7 +77,14 @@ fun MessagesInboxScreen(
 
     Scaffold(
         topBar = {
-            StandardTopBar(title = "Messages")
+            StandardTopBar(
+                title = "MESSAGES",
+                actions = {
+                    TopBarActions(
+                        onNotifications = onNavigateToNotifications
+                    )
+                }
+            )
         },
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0,0,0,0)
@@ -123,7 +131,7 @@ fun MessagesInboxScreen(
                     .fillMaxSize()
                     .padding(
                         top = localPadding.calculateTopPadding(),
-                        bottom = paddingValues.calculateBottomPadding()
+                        bottom = paddingValues.calculateBottomPadding() + 100.dp
                     )
             ) {
                 MessagesInboxContent(

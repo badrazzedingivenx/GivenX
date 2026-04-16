@@ -1,7 +1,8 @@
 package com.example.client_mobile.screens.user
 
-import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.shared.TopBarActions
+import com.example.client_mobile.screens.shared.NotificationRepository
+import com.example.client_mobile.screens.shared.*
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -112,6 +113,7 @@ fun MainDashboardHost(
                 HaqqiSocialFeedScreen(
                     paddingValues = padding, // Pass padding so it can be applied securely to final item spacer
                     isLawyer      = isLawyer,
+                    onNavigateToNotifications = onNavigateToNotifications,
                     onCreatePost  = {
                         // Lawyer create post → navigate to Creator Studio
                         onNavigateToCreator()
@@ -153,6 +155,7 @@ fun MainDashboardHost(
                 MessagesInboxScreen(
                     isLawyer      = isLawyer,
                     paddingValues = padding,
+                    onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToChat = onNavigateToChat
                 )
             }
@@ -210,7 +213,7 @@ fun UserDashboardHost(
         topBar = {
             StandardTopBar(
                 title = "ACCUEIL",
-                showLogo = true,
+                onNotifications = onNavigateToNotifications,
                 actions = {
                     TopBarActions(
                         unreadCount     = NotificationRepository.userNotifications.count(),
@@ -287,25 +290,32 @@ internal fun UserHomeTabContent(
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(
-            top = paddingValues.calculateTopPadding() + 12.dp,
-            bottom = paddingValues.calculateBottomPadding() + 32.dp
+            top = paddingValues.calculateTopPadding(),
+            bottom = paddingValues.calculateBottomPadding() + 100.dp
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { Spacer(modifier = Modifier.height(4.dp)) }
+        // ── Top balancing spacer ─────────────────────────────────────
+        item { Spacer(modifier = Modifier.height(12.dp)) }
 
         // ── Hero Section ─────────────────────────────────────────────
         item { HomeHeroSection(onAbout = onNavigateToAbout) }
 
         // ── Service Grid ─────────────────────────────────────────────
-        item { SectionHeader(title = "Domaines Juridiques") }
-        item { ServiceCategoryGrid(categories = categories, onCategoryClick = onNavigateToCategory) }
+        item { 
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionHeader(title = "Domaines Juridiques")
+                ServiceCategoryGrid(categories = categories, onCategoryClick = onNavigateToCategory)
+            }
+        }
 
         // ── Quick Stats ──────────────────────────────────────────────
-        item { SectionHeader(title = "En chiffres") }
-        item { HomeQuickStats() }
-
-        item { Spacer(modifier = Modifier.height(12.dp)) }
+        item { 
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionHeader(title = "En chiffres")
+                HomeQuickStats()
+            }
+        }
     }
 }
 
@@ -349,7 +359,7 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(195.dp),
+            .height(175.dp), // Reduced from 195dp
         shape = RoundedCornerShape(24.dp),
         color = AppDarkGreen,
         border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f)),
@@ -360,36 +370,36 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawCircle(
                     color = Color(0xFFD4AF37).copy(alpha = 0.08f),
-                    radius = 200.dp.toPx(),
+                    radius = 180.dp.toPx(), // Slightly scaled down
                     center = Offset(size.width * 0.88f, -size.height * 0.15f)
                 )
                 drawCircle(
                     color = Color(0xFFD4AF37).copy(alpha = 0.05f),
-                    radius = 140.dp.toPx(),
+                    radius = 120.dp.toPx(),
                     center = Offset(0f, size.height * 1.05f)
                 )
             }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp), // Reduced from 24.dp
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) { // Reduced from 6.dp
                     Text(
                         text = "Votre droit,\nnos experts.",
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 27.sp,
+                        fontSize = 24.sp, // Reduced from 27.sp
                         color = Color.White,
-                        lineHeight = 33.sp
+                        lineHeight = 30.sp
                     )
                     Text(
                         text = "Trouvez l'avocat qu'il vous faut en quelques secondes.",
                         fontFamily = FontFamily.Serif,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp, // Reduced from 13.sp
                         color = Color.White.copy(alpha = 0.68f),
-                        lineHeight = 19.sp
+                        lineHeight = 17.sp
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -397,13 +407,13 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
                         onClick = {},
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = AppGoldColor),
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = "Consulter",
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = AppDarkGreen
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -411,19 +421,19 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
                             Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
                             tint = AppDarkGreen,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                     OutlinedButton(
                         onClick = onAbout,
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.60f)),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = "À Propos",
                             fontFamily = FontFamily.Serif,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = Color.White
                         )
                     }
@@ -536,31 +546,31 @@ private fun HomeQuickStats() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 14.dp, horizontal = 6.dp),
+                        .padding(vertical = 12.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        icon,
+                        imageVector = icon,
                         contentDescription = null,
                         tint = AppGoldColor,
                         modifier = Modifier.size(20.dp)
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        value,
-                        color = Color.White,
+                        text = value,
+                        fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        fontFamily = FontFamily.Serif,
-                        textAlign = TextAlign.Center
+                        color = Color.White
                     )
                     Text(
-                        label,
-                        color = Color.White.copy(alpha = 0.62f),
-                        fontSize = 9.sp,
+                        text = label,
                         fontFamily = FontFamily.Serif,
+                        fontSize = 9.sp,
+                        color = Color.White.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,
-                        lineHeight = 12.sp
+                        lineHeight = 11.sp
                     )
                 }
             }

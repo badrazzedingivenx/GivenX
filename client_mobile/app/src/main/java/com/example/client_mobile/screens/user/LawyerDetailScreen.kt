@@ -47,28 +47,24 @@ fun LawyerDetailScreen(
 
     var showBookingDialog by remember { mutableStateOf(false) }
 
-    AppScaffold(
-        topBar = {
-            StandardTopBar(
-                title = "Fiche Avocat",
-                onBack = onBack,
-                actions = {
-                    IconButton(onClick = {
-                        val conv = ConversationRepository.getOrCreate(
-                            lawyerId   = lawyerId,
-                            lawyerName = lawyer?.name ?: "",
-                            clientName = UserSession.name
-                        )
-                        onNavigateToChat(conv.id)
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "Message",
-                            tint = AppGoldColor
-                        )
-                    }
-                }
-            )
+    BaseScreen(
+        title = "Fiche Avocat",
+        onBack = onBack,
+        actions = {
+            IconButton(onClick = {
+                val conv = ConversationRepository.getOrCreate(
+                    lawyerId   = lawyerId,
+                    lawyerName = lawyer?.name ?: "",
+                    clientName = UserSession.name
+                )
+                onNavigateToChat(conv.id)
+            }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = "Message",
+                    tint = AppGoldColor
+                )
+            }
         }
     ) { paddingValues ->
         if (lawyers == null) {
@@ -178,7 +174,7 @@ fun LawyerDetailScreen(
                 item { LocationCard(city = lawyer.city) }
 
                 // ── Reviews ───────────────────────────────────────────────────
-                item { SectionHeader(title = "Avis Clients", actionLabel = "${lawyer.reviewCount} avis") }
+                item { SectionHeader(title = "Avis Clients", actionText = "${lawyer.reviewCount} avis") }
                 item {
                     DashCard {
                         if (sampleReviews.isEmpty()) {

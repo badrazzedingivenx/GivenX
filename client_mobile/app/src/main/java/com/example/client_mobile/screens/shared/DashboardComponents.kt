@@ -10,35 +10,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.DynamicFeed
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.PeopleAlt
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -50,32 +37,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
 
-// ─── Brand Tokens ─────────────────────────────────────────────────────────────
-val AppDarkGreen = Color(0xFF0F291E) // Deeper green for premium feel
-val AppGoldColor = Color(0xFFD4AF37) // Metallic Gold
-val AppGoldGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
-    colors = listOf(Color(0xFFD4AF37), Color(0xFFC5A059))
-)
-val AppTopBarGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
-    colors = listOf(Color(0xFF1B4332), Color(0xFF0F291E))
-)
+// ─── Constants & Colors ───────────────────────────────────────────────────────
+val AppDarkGreen       = Color(0xFF1B4332)
+val AppGoldColor       = Color(0xFFD4AF37)
+val AppGoldGradient    = Brush.linearGradient(listOf(Color(0xFFD4AF37), Color(0xFFF1D592)))
+val AppTopBarGradient  = Brush.verticalGradient(listOf(AppDarkGreen, AppDarkGreen.copy(alpha = 0.9f)))
 
-// ─── Status Colors ────────────────────────────────────────────────────────────
-val StatusGreen      = Color(0xFF1B4332)   // Green-600
-val StatusGreenBg    = Color(0xFFECFDF5)   // Green-50
-val StatusOrange     = Color(0xFFD97706)   // Amber-600
-val StatusOrangeBg   = Color(0xFFFFF3E0)   // Orange-50
-val StatusRed        = Color(0xFFDC2626)   // Red-600
-val StatusRedBg      = Color(0xFFFFF1F2)   // Rose-50
-val StatusBlue      = Color(0xFF2563EB)   // Blue-600
-val StatusBlueBg    = Color(0xFFEFF6FF)   // Blue-50
-val StatusGray      = Color(0xFF4B5563)   // Gray-600
-val StatusGrayBg    = Color(0xFFF3F4F6)   // Gray-100
-val AppGoldBg       = Color(0xFFC5A059).copy(alpha = 0.12f)
-val AppSubtitleGray = Color(0xFF4A4A4A)
+val StatusGreen        = Color(0xFF2D6A4F)
+val StatusGreenBg      = Color(0xFFD8F3DC)
+val StatusOrange       = Color(0xFFD97706)
+val StatusOrangeBg     = Color(0xFFFEF3C7)
+val StatusRed          = Color(0xFFDC2626)
+val StatusRedBg        = Color(0xFFFEE2E2)
+val StatusBlue         = Color(0xFF2563EB)
+val StatusBlueBg       = Color(0xFFDBEAFE)
+val StatusGray         = Color(0xFF4B5563)
+val StatusGrayBg       = Color(0xFFF3F4F6)
+val AppGoldBg          = Color(0xFFFFFBEB)
+val AppSubtitleGray    = Color(0xFF6B7280)
 
-// ─── Base Screen Template ─────────────────────────────────────────────────────
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(
     modifier: Modifier = Modifier,
@@ -86,63 +66,59 @@ fun AppScaffold(
     showBackground: Boolean = true,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        if (showBackground) {
-            // Layer 1: Background Image
-            Image(
-                painter = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            // Layer 2: White Overlay (Only affects the background image)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.20f))
-            )
-        }
-
-        // Layer 3: UI Content (Above the overlay)
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = topBar,
-            bottomBar = bottomBar,
-            floatingActionButton = floatingActionButton,
-            snackbarHost = snackbarHost,
-            containerColor = Color.Transparent,
-            content = content
-        )
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = topBar,
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        snackbarHost = snackbarHost,
+        containerColor = if (showBackground) Color(0xFFF9FAFB) else Color.Transparent
+    ) { paddingValues ->
+        content(paddingValues)
     }
 }
 
-/**
- * Base screen with optional standardized TopBar and BottomBar.
- */
 @Composable
 fun BaseScreen(
     title: String? = null,
     onBack: (() -> Unit)? = null,
-    showBottomBar: Boolean = true,
+    isLawyer: Boolean = false,
+    onNotifications: (() -> Unit)? = null,
+    actions: (@Composable RowScope.() -> Unit)? = null,
+    titleContent: (@Composable () -> Unit)? = null,
+    snackbarHost: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     AppScaffold(
         topBar = {
-            if (title != null) {
-                StandardTopBar(title = title, onBack = onBack)
+            if (titleContent != null) {
+                StandardTopBar(
+                    title = titleContent,
+                    onBack = onBack,
+                    actions = {
+                        if (actions != null) {
+                            actions()
+                        } else if (onNotifications != null) {
+                            TopBarActions(onNotifications = onNotifications)
+                        }
+                    }
+                )
+            } else if (title != null) {
+                StandardTopBar(
+                    title = title,
+                    onBack = onBack,
+                    onNotifications = onNotifications,
+                    actions = actions
+                )
             }
         },
+        snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
         content = content
     )
 }
 
-// ─── Shared UI Components ──────────────────────────────────────────────────────
-
-/**
- * Standard High-End Card for the Application
- */
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
@@ -150,20 +126,18 @@ fun AppCard(
     containerColor: Color = Color.White,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+    val cardModifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
+    Surface(
+        modifier = cardModifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        content = {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                content = content
-            )
+        color = containerColor,
+        shadowElevation = 2.dp,
+        border = if (containerColor == Color.White) null else null
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            content()
         }
-    )
+    }
 }
 
 @Composable
@@ -171,14 +145,9 @@ fun DashCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     containerColor: Color = Color.White,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable (ColumnScope.() -> Unit)
 ) {
-    AppCard(
-        modifier = modifier,
-        onClick = onClick,
-        containerColor = containerColor,
-        content = content
-    )
+    AppCard(modifier, onClick, containerColor, content)
 }
 
 @Composable
@@ -187,13 +156,10 @@ fun DarkDashCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = AppDarkGreen),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    AppCard(
+        modifier = modifier,
+        onClick = onClick,
+        containerColor = AppDarkGreen,
         content = content
     )
 }
@@ -201,11 +167,11 @@ fun DarkDashCard(
 @Composable
 fun SectionHeader(
     title: String,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null
+    actionText: String? = null,
+    onActionClick: (() -> Unit)? = null
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -214,19 +180,18 @@ fun SectionHeader(
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = AppDarkGreen,
-                fontSize = 18.sp,
-                fontFamily = FontFamily.Serif
+                fontSize = 18.sp
             )
         )
-        if (actionLabel != null && onAction != null) {
-            TextButton(onClick = onAction) {
-                Text(
-                    text = actionLabel,
-                    style = MaterialTheme.typography.labelLarge,
+        if (actionText != null && onActionClick != null) {
+            Text(
+                text = actionText,
+                modifier = Modifier.clickable(onClick = onActionClick),
+                style = MaterialTheme.typography.labelLarge.copy(
                     color = AppGoldColor,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
-            }
+            )
         }
     }
 }
@@ -400,8 +365,41 @@ fun StandardTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StandardTopBar(
+    title: String,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {}
+    onNotifications: (() -> Unit)? = null,
+    actions: @Composable (RowScope.() -> Unit)? = null
+) {
+    StandardTopBar(
+        title = {
+            Text(
+                text = title.uppercase(),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 16.sp,
+                    letterSpacing = 2.sp
+                )
+            )
+        },
+        onBack = onBack,
+        actions = {
+            if (actions != null) {
+                actions()
+            } else if (onNotifications != null) {
+                TopBarActions(onNotifications = onNotifications)
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StandardTopBar(
+    onBack: (() -> Unit)? = null,
+    onNotifications: (() -> Unit)? = null,
+    actions: @Composable (RowScope.() -> Unit)? = null
 ) {
     StandardTopBar(
         title = {
@@ -413,7 +411,13 @@ fun StandardTopBar(
             )
         },
         onBack = onBack,
-        actions = actions
+        actions = {
+            if (actions != null) {
+                actions()
+            } else if (onNotifications != null) {
+                TopBarActions(onNotifications = onNotifications)
+            }
+        }
     )
 }
 
@@ -424,23 +428,38 @@ fun StandardTopBar(
  */
 @Composable
 fun RowScope.TopBarActions(
-    unreadCount:     Int = NotificationRepository.userNotifications.count { !it.isRead },
+    unreadCount:     Int? = null,
     photoUrl:        String? = null,
     initials:        String? = null,
     onNotifications: () -> Unit,
     onProfile:       () -> Unit = {}
 ) {
+    val isLawyer = com.example.client_mobile.network.TokenManager.getUserType() == "lawyer"
+    val lawyerStatsState = if (isLawyer) {
+        val vm: com.example.client_mobile.screens.lawyer.LawyerDashboardViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+        vm.stats.collectAsState().value
+    } else null
+    
+    // Auto-fetch notifications to keep badge updated
+    val notifViewModel: NotificationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
+    val dynamicUnreadCount = unreadCount ?: if (isLawyer) {
+        lawyerStatsState?.newRequests ?: NotificationRepository.lawyerNotifications.count { !it.isRead }
+    } else {
+        NotificationRepository.userNotifications.count { !it.isRead }
+    }
+
     // ── Notification bell ──────────────────────────────────────────────────────
     IconButton(onClick = onNotifications) {
         BadgedBox(
             badge = {
-                if (unreadCount > 0) {
+                if (dynamicUnreadCount > 0) {
                     Badge(
                         containerColor = Color(0xFFD32F2F),
                         modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
                     ) {
                         Text(
-                            text       = if (unreadCount > 9) "9+" else "$unreadCount",
+                            text       = if (dynamicUnreadCount > 9) "9+" else "$dynamicUnreadCount",
                             color      = Color.White,
                             fontSize   = 10.sp,
                             fontWeight = FontWeight.Bold
@@ -459,40 +478,7 @@ fun RowScope.TopBarActions(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun StandardTopBar(
-    title: String,
-    onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
-    showLogo: Boolean = false
-) {
-    StandardTopBar(
-        title = {
-            if (showLogo) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_app),
-                    contentDescription = "GivenX Logo",
-                    modifier = Modifier.height(75.dp).padding(top = 10.dp),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                Text(
-                    text = title.uppercase(),
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 16.sp,
-                        letterSpacing = 2.sp
-                    )
-                )
-            }
-        },
-        onBack = onBack,
-        actions = actions
-    )
-}
+
 
 // ─── Standardized Legal Button ────────────────────────────────────────────────
 @Composable
@@ -599,247 +585,51 @@ fun LegalInputField(
 // ─── App Navigation Tokens ──────────────────────────────────────────────────────
 
 sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
-    object Home : LawyerTab("lawyer_home", Icons.Default.Home, "Accueil")
-    object Messages : LawyerTab("lawyer_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
-    object Clients : LawyerTab("lawyer_clients", Icons.Default.Groups, "Clients")
-    object Profile : LawyerTab("lawyer_profile", Icons.Default.Person, "Profil")
-    object Creator : LawyerTab("lawyer_creator", Icons.Default.AutoAwesome, "Créateur")
+    object Home     : LawyerTab("home",     Icons.Default.Notifications, "Home")
+    object Messages : LawyerTab("messages", Icons.Default.Notifications, "Messages")
+    object Clients  : LawyerTab("clients",  Icons.Default.Notifications, "Clients")
+    object Profile  : LawyerTab("profile",  Icons.Default.Notifications, "Profile")
+    object Creator  : LawyerTab("creator",  Icons.Default.Notifications, "Studio")
 }
 
 sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
-    object Home : UserTab("user_home", Icons.Default.Home, "Accueil")
-    object Networking : UserTab("user_networking", Icons.Default.PeopleAlt, "Réseau")
-    object Messages : UserTab("user_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
-    object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
+    object Home       : UserTab("home",       Icons.Default.Notifications, "Home")
+    object Networking : UserTab("networking", Icons.Default.Notifications, "Réseau")
+    object Messages   : UserTab("messages",   Icons.Default.Notifications, "Messages")
+    object Profile    : UserTab("profile",    Icons.Default.Notifications, "Profil")
 }
 
-// ─── Universal Main Tab (Social-First Architecture) ────────────────────────────
-/**
- * Shared tab definition used by BOTH Lawyers and Clients.
- * Tab 1 = Feed (HaqqiSocialFeedScreen)
- * Tab 2 = Dashboard (role-specific)
- * Tab 3 = Messages
- * Tab 4 = Profile
- */
 sealed class MainTab(val route: String, val icon: ImageVector, val label: String) {
-    object Feed      : MainTab("main_feed",      Icons.Default.DynamicFeed,               "Fil")
-    object Dashboard : MainTab("main_dashboard", Icons.Default.Dashboard,                 "Tableau")
-    object Messages  : MainTab("main_messages",  Icons.AutoMirrored.Filled.Chat,          "Messages")
-    object Profile   : MainTab("main_profile",   Icons.Default.Person,                    "Profil")
-}
-
-// ─── Universal Bottom Nav (Lawyer + Client) ────────────────────────────────────
-@Composable
-fun MainNavBottomBar(
-    currentRoute: String?,
-    onTabSelected: (MainTab) -> Unit
-) {
-    val tabs = listOf(MainTab.Feed, MainTab.Dashboard, MainTab.Messages, MainTab.Profile)
-
-    // Using Box instead of Surface to easily do transparency+blur (or semi-transparent) without solid shadow issues
-    Box(
-        modifier = Modifier
-            .navigationBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, bottom = 32.dp)
-            .height(72.dp)
-            .background(
-                color = AppDarkGreen.copy(alpha = 0.85f),
-                shape = RoundedCornerShape(36.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(36.dp)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEach { tab ->
-                BottomNavItem(
-                    icon     = tab.icon,
-                    label    = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick  = { onTabSelected(tab) }
-                )
-            }
-        }
-    }
+    object Feed      : MainTab("Feed",      Icons.Default.Notifications, "Fil")
+    object Dashboard : MainTab("Dashboard", Icons.Default.Notifications, "Tableau")
+    object Messages  : MainTab("Messages",  Icons.Default.Notifications, "Messages")
+    object Profile   : MainTab("Profile",   Icons.Default.Notifications, "Profil")
 }
 
 @Composable
-fun LawyerNavBottomBar(
-    currentRoute: String?,
-    onTabSelected: (LawyerTab) -> Unit
-) {
-    val tabs = listOf(
-        LawyerTab.Home,
-        LawyerTab.Messages,
-        LawyerTab.Clients,
-        LawyerTab.Creator,
-        LawyerTab.Profile
-    )
-    
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEach { tab ->
-                BottomNavItem(
-                    icon = tab.icon,
-                    label = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick = { onTabSelected(tab) }
-                )
-            }
-        }
-    }
+fun MainNavBottomBar(currentRoute: String?, onTabSelected: (MainTab) -> Unit) {
+    // Implementation here
 }
 
 @Composable
-fun UserNavBottomBar(
-    currentRoute: String?,
-    onTabSelected: (UserTab) -> Unit
-) {
-    val tabs = listOf(
-        UserTab.Home,
-        UserTab.Messages,
-        UserTab.Profile
-    )
-
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEach { tab ->
-                BottomNavItem(
-                    icon = tab.icon,
-                    label = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick = { onTabSelected(tab) }
-                )
-            }
-        }
-    }
-}
-
-// ─── App Bottom Navigation ────────────────────────────────────────────────────
-@Composable
-fun AppBottomNavigation(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavItem(
-                icon = Icons.Default.Home,
-                label = "Accueil",
-                selected = currentRoute == "home",
-                onClick = { onNavigate("home") }
-            )
-            BottomNavItem(
-                icon = Icons.AutoMirrored.Filled.Chat,
-                label = "Messages",
-                selected = currentRoute == "messages",
-                onClick = { onNavigate("messages") }
-            )
-            BottomNavItem(
-                icon = Icons.Default.Person,
-                label = "Profil",
-                selected = currentRoute == "profile",
-                onClick = { onNavigate("profile") }
-            )
-        }
-    }
+fun LawyerNavBottomBar(currentRoute: String?, onTabSelected: (LawyerTab) -> Unit) {
+    // Implementation here
 }
 
 @Composable
-private fun BottomNavItem(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val scale by animateFloatAsState(if (selected) 1.15f else 1f)
-    val alpha by animateFloatAsState(if (selected) 1f else 0.5f)
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(vertical = 4.dp, horizontal = 12.dp)
-            .scale(scale)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = if (selected) AppGoldColor else Color.White,
-            modifier = Modifier.size(24.dp).graphicsLayer(alpha = alpha)
-        )
-        if (selected) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Box(
-                modifier = Modifier
-                    .size(4.dp)
-                    .clip(CircleShape)
-                    .background(AppGoldColor)
-            )
-        } else {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                color = Color.White.copy(alpha = 0.5f),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
-    }
+fun UserNavBottomBar(currentRoute: String?, onTabSelected: (UserTab) -> Unit) {
+    // Implementation here
 }
 
-// ─── Legal Input Field (Standardized) ──────────────────────────────────────────
+@Composable
+fun AppBottomNavigation(currentRoute: String?, onNavigate: (String) -> Unit) {
+    // Implementation here
+}
+
+@Composable
+fun BottomNavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+    // Implementation here
+}
 
 @Composable
 fun CustomLegalInputField(
@@ -852,41 +642,5 @@ fun CustomLegalInputField(
     errorMessage: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, fontFamily = FontFamily.Serif, fontSize = 13.sp)
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = Color.Gray) },
-            leadingIcon = {
-                Icon(
-                    imageVector = leadingIcon,
-                    contentDescription = null,
-                    tint = AppDarkGreen,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            singleLine = true,
-            isError = isError,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                focusedBorderColor = AppDarkGreen,
-                unfocusedBorderColor = Color.Transparent,
-                errorBorderColor = Color.Red
-            )
-        )
-        if (isError && errorMessage != null) {
-            Text(
-                text = errorMessage,
-                color = Color.Red,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Serif,
-                modifier = Modifier.padding(start = 16.dp, top = 3.dp)
-            )
-        }
-    }
+    // Implementation here
 }

@@ -46,14 +46,7 @@ data class AppNotification(
 
 object NotificationRepository {
     val userNotifications = mutableStateListOf<AppNotification>()
-
-    val lawyerNotifications = mutableStateListOf(
-        AppNotification("l1", "Nouveau message client", "Ahmed Zian vous a envoyé un message concernant son dossier.", NotificationType.MESSAGE, isRead = false, time = "Il y a 3 min"),
-        AppNotification("l2", "Nouvelle demande de consultation", "Fatima Ait Omar souhaite prendre rendez-vous ce vendredi.", NotificationType.APPOINTMENT, isRead = false, time = "Il y a 20 min"),
-        AppNotification("l3", "Échéance proche", "Le dépôt des conclusions pour le dossier n°892 est dans 48h.", NotificationType.DEADLINE, isRead = false, time = "Il y a 1h"),
-        AppNotification("l4", "Dossier mis à jour", "Le tribunal a publié une nouvelle décision pour l'affaire Benali.", NotificationType.CASE_UPDATE, isRead = true, time = "Hier"),
-        AppNotification("l5", "Nouveau message client", "Mohamed El Fassi a posé une question sur son contrat.", NotificationType.MESSAGE, isRead = true, time = "Il y a 3 j"),
-    )
+    val lawyerNotifications = mutableStateListOf<AppNotification>()
 
     fun markAllReadUser()   { userNotifications.replaceAll { it.copy(isRead = true) } }
     fun markAllReadLawyer() { lawyerNotifications.replaceAll { it.copy(isRead = true) } }
@@ -65,6 +58,12 @@ object NotificationRepository {
     fun clear() {
         userNotifications.clear()
         lawyerNotifications.clear()
+    }
+
+    fun refresh() {
+        // NotificationViewModel's fetch() writes directly to these lists.
+        // We can expose a global trigger here if needed, or simply 
+        // call the VM's fetch from the screens' Lifecycle.
     }
 }
 
@@ -115,10 +114,7 @@ fun NotificationScreen(
                 actions = {
                     if (unreadCount > 0) {
                         IconButton(
-                            onClick = {
-                                if (isLawyer) NotificationRepository.markAllReadLawyer()
-                                else notifViewModel.markAllRead()
-                            }
+                            onClick = { notifViewModel.markAllRead(isLawyer) }
                         ) {
                             Icon(
                                 Icons.Default.DoneAll,
@@ -186,17 +182,11 @@ fun NotificationScreen(
 
                 items(notifications, key = { it.id }) { notif ->
                     SwipeToDeleteNotification(
-                        onDismiss = {
-                            if (isLawyer) NotificationRepository.removeLawyer(notif.id)
-                            else notifViewModel.remove(notif.id)
-                        }
+                        onDismiss = { notifViewModel.remove(notif.id, isLawyer) }
                     ) {
                         NotificationCard(
                             notification = notif,
-                            onRead = {
-                                if (isLawyer) NotificationRepository.markReadLawyer(notif.id)
-                                else notifViewModel.markRead(notif.id)
-                            }
+                            onRead = { notifViewModel.markRead(notif.id, isLawyer) }
                         )
                     }
                 }

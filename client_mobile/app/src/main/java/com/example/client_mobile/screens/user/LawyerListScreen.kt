@@ -147,34 +147,30 @@ fun LawyerListScreen(
         }
     }
 
-    AppScaffold(
-        topBar = {
-            StandardTopBar(
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = displayTitle.uppercase(),
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            letterSpacing = 1.2.sp
-                        )
-                        Text(
-                            text = "${domaineTotalCount} AVOCAT${if (domaineTotalCount > 1) "S" else ""} DISPONIBLE${if (domaineTotalCount > 1) "S" else ""}",
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 10.sp,
-                            color = AppGoldColor.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                },
-                onBack = onBack
-            )
-        }
+    BaseScreen(
+        titleContent = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = displayTitle.uppercase(),
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    letterSpacing = 1.2.sp
+                )
+                Text(
+                    text = "${domaineTotalCount} AVOCAT${if (domaineTotalCount > 1) "S" else ""} DISPONIBLE${if (domaineTotalCount > 1) "S" else ""}",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 10.sp,
+                    color = AppGoldColor.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.sp
+                )
+            }
+        },
+        onBack = onBack
     ) { paddingValues ->
 
         // ── No-connection state ───────────────────────────────────────────────

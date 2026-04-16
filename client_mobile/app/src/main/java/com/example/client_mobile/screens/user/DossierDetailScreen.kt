@@ -137,7 +137,6 @@ private fun DossierData.toCase(): DossierCase {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DossierDetailScreen(
     caseId: String,
@@ -148,13 +147,9 @@ fun DossierDetailScreen(
     LaunchedEffect(caseId) { vm.fetchById(caseId) }
     val screenState by vm.state.collectAsStateWithLifecycle()
 
-    AppScaffold(
-        topBar = {
-            StandardTopBar(
-                title = "Mon Dossier",
-                onBack = onBack
-            )
-        }
+    BaseScreen(
+        title = "Mon Dossier",
+        onBack = onBack
     ) { paddingValues ->
         when (val s = screenState) {
                 is DossierDetailState.Loading ->
