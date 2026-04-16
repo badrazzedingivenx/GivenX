@@ -46,7 +46,7 @@ fun ScreenSwipeInfo(
 ) {
     val onboardingPages = listOf(
         OnboardingPage(
-            "Bienvenue sur HAQ",
+            "Bienvenue sur HAQQI",
             "Votre partenaire juridique moderne, accessible partout et à tout moment.",
             R.drawable.illustat_premier
         ),
@@ -70,107 +70,121 @@ fun ScreenSwipeInfo(
         com.example.client_mobile.network.TokenManager.saveHasSeenOnboarding(true)
     }
 
-    AppScaffold(
-        showBackground = true
-    ) { paddingValues ->
+    // ── True edge-to-edge root — no Scaffold, no inset padding on the background ──
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // Layer 1: Full-screen background image — draws behind status bar & nav handle
+        Image(
+            painter = painterResource(id = R.drawable.background_app),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // Layer 2: Dark scrim gradient — improves text legibility on lower half
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Dark Gradient Overlay for text readability at the bottom
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                            startY = 500f
-                        )
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.15f),
+                            Color.Black.copy(alpha = 0.75f)
+                        ),
+                        startY = 400f
                     )
-            )
+                )
+        )
 
-            Column(modifier = Modifier.fillMaxSize()) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.Top
-                ) { position ->
-                    OnboardingPageContent(page = onboardingPages[position])
-                }
+        // Layer 3: Foreground content — inset only for safe interactive zones
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding()          // keeps content away from notch & nav handle
+        ) {
+            // Swipeable pages — each fills remaining space above the bottom row
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.Top
+            ) { position ->
+                OnboardingPageContent(page = onboardingPages[position])
+            }
 
-                // Bottom Navigation Area
-                Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 30.dp)
-                            .padding(bottom = 60.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Page Indicators (Dots)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            repeat(4) { index ->
-                                val isSelected = pagerState.currentPage == index
-                                val dotWidth by animateDpAsState(
-                                    targetValue = if (isSelected) 24.dp else 6.dp,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    ),
-                                    label = "dotWidth_$index"
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 4.dp)
-                                        .height(6.dp)
-                                        .width(dotWidth)
-                                        .clip(CircleShape)
-                                        .background(if (isSelected) goldColor else Color.White.copy(alpha = 0.3f))
-                                )
-                            }
-                        }
-
-                        // Next / Start Button
-                        val nextInteractionSource = remember { MutableInteractionSource() }
-                        val isNextPressed by nextInteractionSource.collectIsPressedAsState()
-                        val nextScale by animateFloatAsState(
-                            targetValue = if (isNextPressed) 0.92f else 1f,
+            // Bottom row: dots + Suivant button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 30.dp)
+                    .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Page indicator dots
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    repeat(3) { index ->
+                        val isSelected = pagerState.currentPage == index
+                        val dotWidth by animateDpAsState(
+                            targetValue = if (isSelected) 24.dp else 6.dp,
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessHigh
+                                stiffness = Spring.StiffnessMedium
                             ),
-                            label = "nextButtonScale"
+                            label = "dotWidth_$index"
                         )
-                        Button(
-                            onClick = {
-                                if (pagerState.currentPage < 2) {
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                    }
-                                } else {
-                                    onNavigateToLogin("user")
-                                }
-                            },
-                            interactionSource = nextInteractionSource,
-                            modifier = Modifier.scale(nextScale),
-                            colors = ButtonDefaults.buttonColors(containerColor = goldColor),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-                        ) {
-                            Text(
-                                text = "Suivant",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Serif,
-                                color = Color.White
-                            )
-                        }
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .height(6.dp)
+                                .width(dotWidth)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) goldColor
+                                    else Color.White.copy(alpha = 0.3f)
+                                )
+                        )
                     }
+                }
+
+                // Next / Start button
+                val nextInteractionSource = remember { MutableInteractionSource() }
+                val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+                val nextScale by animateFloatAsState(
+                    targetValue = if (isNextPressed) 0.92f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessHigh
+                    ),
+                    label = "nextButtonScale"
+                )
+                Button(
+                    onClick = {
+                        if (pagerState.currentPage < 2) {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        } else {
+                            onNavigateToLogin("user")
+                        }
+                    },
+                    interactionSource = nextInteractionSource,
+                    modifier = Modifier.scale(nextScale),
+                    colors = ButtonDefaults.buttonColors(containerColor = goldColor),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = if (pagerState.currentPage < 2) "Suivant" else "Commencer",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif,
+                        color = Color.White
+                    )
                 }
             }
         }
     }
+}
 
 @Composable
 fun OnboardingPageContent(page: OnboardingPage) {

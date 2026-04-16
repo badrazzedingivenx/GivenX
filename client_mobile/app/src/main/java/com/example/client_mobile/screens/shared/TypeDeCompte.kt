@@ -36,23 +36,31 @@ fun TypeCompteScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(65.dp))
+            // Adaptive top spacer: smaller weight shifts the entire block upwards
+            Spacer(modifier = Modifier.weight(0.5f))
+            
             Image(
                 painter = painterResource(id = R.drawable.logo_app),
                 contentDescription = "HAQ Logo",
                 modifier = Modifier.size(235.dp),
                 contentScale = ContentScale.Fit
             )
-            Spacer(modifier = Modifier.height(5.dp))
+            
+            // Spacing optimization: reduced top margin between Logo and Bienvenue
+            Spacer(modifier = Modifier.height(0.dp))
+            
             Text(
-                text = "Bienvenue sur HAQ",
+                text = "Bienvenue sur HAQQI",
                 fontSize = 32.sp,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 color = darkGreen, // Color updated to Gold for consistency
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Spacing optimization: tightened space between Title and Subtitle
+            Spacer(modifier = Modifier.height(4.dp))
+            
             Text(
                 text = "Choisissez votre espace pour commencer",
                 fontSize = 15.sp,
@@ -61,7 +69,9 @@ fun TypeCompteScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
-            Spacer(modifier = Modifier.weight(1f))
+            
+            // Spacing optimization: brought cards closer to the text block
+            Spacer(modifier = Modifier.weight(0.6f))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -83,7 +93,8 @@ fun TypeCompteScreen(
                     onClick = { onNavigateToRegister("lawyer") }
                 )
             }
-            Spacer(modifier = Modifier.weight(1.8f))
+            // Adaptive bottom spacer: larger weight firmly pushes content upwards
+            Spacer(modifier = Modifier.weight(2f))
         }
     }
 }
@@ -175,4 +186,4 @@ fun AccountOptionCard(
             }
         }
     }
-}
+}            
