@@ -73,9 +73,6 @@ private fun FeedTopBar(onNotifications: () -> Unit = {}) {
         onBack = null,
         actions = {
             TopBarActions(
-                unreadCount = 0,
-                photoUrl = null,
-                initials = null,
                 onNotifications = onNotifications,
                 onProfile = {}
             )

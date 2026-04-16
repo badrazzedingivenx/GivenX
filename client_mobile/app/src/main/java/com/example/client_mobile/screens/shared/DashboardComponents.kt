@@ -424,23 +424,28 @@ fun StandardTopBar(
  */
 @Composable
 fun RowScope.TopBarActions(
-    unreadCount:     Int,
-    photoUrl:        String?,
-    initials:        String?,
+    unreadCount:     Int = NotificationRepository.userNotifications.count { !it.isRead },
+    photoUrl:        String? = null,
+    initials:        String? = null,
     onNotifications: () -> Unit,
-    onProfile:       () -> Unit
+    onProfile:       () -> Unit = {}
 ) {
     // ── Notification bell ──────────────────────────────────────────────────────
     IconButton(onClick = onNotifications) {
         BadgedBox(
             badge = {
-                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
-                    Text(
-                        text       = if (unreadCount > 9) "9+" else "$unreadCount",
-                        color      = Color.White,
-                        fontSize   = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                if (unreadCount > 0) {
+                    Badge(
+                        containerColor = Color(0xFFD32F2F),
+                        modifier = Modifier.offset(x = (-4).dp, y = 4.dp)
+                    ) {
+                        Text(
+                            text       = if (unreadCount > 9) "9+" else "$unreadCount",
+                            color      = Color.White,
+                            fontSize   = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         ) {
@@ -452,7 +457,6 @@ fun RowScope.TopBarActions(
             )
         }
     }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
