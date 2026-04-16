@@ -25,14 +25,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
 
 @Composable
 fun CreeAvocatScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -60,18 +64,26 @@ fun CreeAvocatScreen(
     var addressError by remember { mutableStateOf(false) }
     var specialityError by remember { mutableStateOf(false) }
 
+    val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
+    val isLoading = registerState is AuthViewModel.RegisterUiState.Loading
+    val authError = (registerState as? AuthViewModel.RegisterUiState.Error)?.message
+
+    LaunchedEffect(registerState) {
+        if (registerState is AuthViewModel.RegisterUiState.Success) {
+            authViewModel.resetRegisterState()
+            onNavigateToHome()
+        }
+    }
+
     val darkGreen = Color(0xFF1B3124)
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.background_app),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
+    AppScaffold(
+        showBackground = true
+    ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
 
@@ -80,14 +92,7 @@ fun CreeAvocatScreen(
                     .fillMaxWidth(0.9f)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(50.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.50f),
-                                Color.White.copy(alpha = 0.65f)
-                            )
-                        )
-                    )
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
                         color = Color.White.copy(alpha = 0.3f),
@@ -203,9 +208,9 @@ fun CreeAvocatScreen(
                                     shape = RoundedCornerShape(25.dp),
                                     isError = specialityError,
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedContainerColor = Color.White.copy(alpha = 0.95f),
-                                        unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                                        errorContainerColor = Color.White.copy(alpha = 0.95f),
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        errorContainerColor = Color.White,
                                         focusedBorderColor = Color.Transparent,
                                         unfocusedBorderColor = Color.Transparent,
                                         errorBorderColor = Color.Red
@@ -250,15 +255,43 @@ fun CreeAvocatScreen(
                             specialityError = speciality.isBlank()
 
                             if (!fullNameError && !emailError && !phoneError && !passwordError && !confirmPasswordError && !addressError && !specialityError) {
-                                // Logic for API call will go here
-                                onNavigateToHome()
+                                authViewModel.register(
+                                    fullName   = fullName,
+                                    email      = email,
+                                    password   = password,
+                                    phone      = phone,
+                                    role       = "lawyer",
+                                    speciality = speciality
+                                )
                             }
                         },
+                        enabled = !isLoading,
                         colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                         shape = RoundedCornerShape(25.dp),
                         modifier = Modifier.fillMaxWidth().height(55.dp).offset(y = (-45).dp)
                     ) {
-                        Text("S'inscrire", fontSize = 18.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = Color.White,
+                                strokeWidth = 2.5.dp
+                            )
+                        } else {
+                            Text("S'inscrire", fontSize = 18.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                    authError?.let { err ->
+                        Text(
+                            text = err,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Serif,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(y = (-40).dp)
+                                .padding(bottom = 4.dp)
+                        )
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth().offset(y = (-40).dp),
@@ -312,9 +345,9 @@ fun CustomInputFieldAvocatCompact(
             singleLine = true,
             isError = isError,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.95f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
-                errorContainerColor = Color.White.copy(alpha = 0.95f),
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                errorContainerColor = Color.White,
                 focusedBorderColor = Color.Transparent,
                 unfocusedBorderColor = Color.Transparent,
                 errorBorderColor = Color.Red

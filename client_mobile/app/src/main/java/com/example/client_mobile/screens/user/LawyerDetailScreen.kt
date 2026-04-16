@@ -8,7 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,62 +20,91 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 
 // ─── Lawyer Detail Screen ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LawyerDetailScreen(
-    lawyerId: String = "1",
+    lawyerId: String = "",
     onBack: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {}
 ) {
-    val lawyer = sampleLawyers.find { it.id == lawyerId } ?: sampleLawyers.first()
+    val lawyerListViewModel: LawyerListViewModel = viewModel(key = "lawyer_list")
+    LaunchedEffect(lawyerId) {
+        lawyerListViewModel.refresh()
+    }
+    val lawyers by lawyerListViewModel.lawyers.collectAsStateWithLifecycle()
+    val lawyer  = lawyers?.firstOrNull { it.id == lawyerId }
 
     var showBookingDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
+    BaseScreen(
+        title = "Fiche Avocat",
+        onBack = onBack,
+        actions = {
+            IconButton(onClick = {
+                val conv = ConversationRepository.getOrCreate(
+                    lawyerId   = lawyerId,
+                    lawyerName = lawyer?.name ?: "",
+                    clientName = UserSession.name
+                )
+                onNavigateToChat(conv.id)
+            }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = "Message",
+                    tint = AppGoldColor
+                )
+            }
+        }
+    ) { paddingValues ->
+        if (lawyers == null) {
+            // Still loading from Firestore
+            Box(
+                Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = AppDarkGreen, strokeWidth = 2.5.dp)
+            }
+        } else if (lawyer == null) {
+            Box(
+                Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.PersonOff,
+                        contentDescription = null,
+                        tint = AppDarkGreen.copy(alpha = 0.30f),
+                        modifier = Modifier.size(64.dp)
+                    )
                     Text(
-                        "Fiche Avocat",
+                        "Avocat introuvable",
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = AppDarkGreen
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { onNavigateToChat(lawyerId) }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "Message",
-                            tint = AppGoldColor
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
-            )
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
+                    Button(
+                        onClick = onBack,
+                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen),
+                        shape = RoundedCornerShape(14.dp)
+                    ) { Text("Retour", fontFamily = FontFamily.Serif, color = Color.White) }
+                }
+            }
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -146,16 +174,26 @@ fun LawyerDetailScreen(
                 item { LocationCard(city = lawyer.city) }
 
                 // ── Reviews ───────────────────────────────────────────────────
-                item { SectionHeader(title = "Avis Clients", actionLabel = "${lawyer.reviewCount} avis") }
+                item { SectionHeader(title = "Avis Clients", actionText = "${lawyer.reviewCount} avis") }
                 item {
                     DashCard {
-                        sampleReviews.forEach { review ->
-                            ReviewItem(review = review)
-                            if (review != sampleReviews.last()) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 10.dp),
-                                    color = AppDarkGreen.copy(alpha = 0.07f)
-                                )
+                        if (sampleReviews.isEmpty()) {
+                            Text(
+                                "Aucun avis pour le moment.",
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 13.sp,
+                                color = AppDarkGreen.copy(alpha = 0.45f),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        } else {
+                            sampleReviews.forEach { review ->
+                                ReviewItem(review = review)
+                                if (review != sampleReviews.last()) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 10.dp),
+                                        color = AppDarkGreen.copy(alpha = 0.07f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -165,7 +203,14 @@ fun LawyerDetailScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Button(
-                            onClick = { onNavigateToChat(lawyerId) },
+                            onClick = {
+                                val conv = ConversationRepository.getOrCreate(
+                                    lawyerId   = lawyerId,
+                                    lawyerName = lawyer?.name ?: "",
+                                    clientName = UserSession.name
+                                )
+                                onNavigateToChat(conv.id)
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(54.dp),
@@ -215,57 +260,57 @@ fun LawyerDetailScreen(
 
                 item { Spacer(modifier = Modifier.height(24.dp)) }
             }
-        }
-    }
+        } // end else (lawyer found)
 
-    // ── Booking Dialog ────────────────────────────────────────────────────────
-    if (showBookingDialog) {
-        AlertDialog(
-            onDismissRequest = { showBookingDialog = false },
-            shape = RoundedCornerShape(22.dp),
-            containerColor = Color.White,
-            icon = {
-                Icon(
-                    Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    tint = AppGoldColor,
-                    modifier = Modifier.size(32.dp)
-                )
-            },
-            title = {
-                Text(
-                    "Prendre Rendez-vous",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    color = AppDarkGreen,
-                    fontSize = 17.sp,
-                    textAlign = TextAlign.Center
-                )
-            },
-            text = {
-                Text(
-                    "Votre demande de rendez-vous avec ${lawyer.name} sera envoyée. Vous recevrez une confirmation sous 24h.",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp,
-                    color = AppDarkGreen.copy(alpha = 0.65f),
-                    textAlign = TextAlign.Center
-                )
-            },
-            dismissButton = {
-                TextButton(onClick = { showBookingDialog = false }) {
-                    Text("Annuler", fontFamily = FontFamily.Serif, color = AppDarkGreen.copy(alpha = 0.55f))
+        // ── Booking Dialog ────────────────────────────────────────────────────────
+        if (showBookingDialog) {
+            AlertDialog(
+                onDismissRequest = { showBookingDialog = false },
+                shape = RoundedCornerShape(22.dp),
+                containerColor = Color.White,
+                icon = {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = AppGoldColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                },
+                title = {
+                    Text(
+                        "Prendre Rendez-vous",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        color = AppDarkGreen,
+                        fontSize = 17.sp,
+                        textAlign = TextAlign.Center
+                    )
+                },
+                text = {
+                    Text(
+                "Votre demande de rendez-vous avec ${lawyer?.name ?: ""} sera envoyée. Vous recevrez une confirmation sous 24h.",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 13.sp,
+                        color = AppDarkGreen.copy(alpha = 0.65f),
+                        textAlign = TextAlign.Center
+                    )
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBookingDialog = false }) {
+                        Text("Annuler", fontFamily = FontFamily.Serif, color = AppDarkGreen.copy(alpha = 0.55f))
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showBookingDialog = false },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)
+                    ) {
+                        Text("Confirmer", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showBookingDialog = false },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)
-                ) {
-                    Text("Confirmer", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
-                }
-            }
-        )
+            )
+        }
     }
 }
 
@@ -303,13 +348,22 @@ private fun LawyerDetailHeader(lawyer: LawyerItem) {
                         .border(2.dp, AppGoldColor, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        initials,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp,
-                        color = AppGoldColor
-                    )
+                    if (lawyer.avatarUrl.isNotBlank()) {
+                        AsyncImage(
+                            model             = lawyer.avatarUrl,
+                            contentDescription = lawyer.name,
+                            modifier          = Modifier.fillMaxSize().clip(CircleShape),
+                            contentScale      = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            initials,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 32.sp,
+                            color = AppGoldColor
+                        )
+                    }
                 }
                 if (lawyer.isVerified) {
                     Surface(
@@ -454,11 +508,7 @@ private fun LocationCard(city: String) {
 // ─── Review Item ─────────────────────────────────────────────────────────────
 data class ReviewItem(val name: String, val rating: Int, val comment: String, val date: String)
 
-private val sampleReviews = listOf(
-    ReviewItem("Ahmed B.", 5, "Avocat très professionnel, résultat excellent. Je recommande vivement.", "Mars 2026"),
-    ReviewItem("Fatima Z.", 5, "Réactif, à l'écoute et efficace. Mon dossier a été résolu rapidement.", "Fév. 2026"),
-    ReviewItem("Mehdi R.", 4, "Bon suivi du dossier. Communication claire et régulière tout au long de la procédure.", "Jan. 2026")
-)
+private val sampleReviews = emptyList<ReviewItem>()
 
 @Composable
 private fun ReviewItem(review: ReviewItem) {

@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +21,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 private data class BillingInvoice(
     val number: String,
@@ -33,43 +34,51 @@ private data class BillingInvoice(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BillingScreen(onBack: () -> Unit = {}) {
-    val paidAmount    = 2400f
-    val pendingAmount = 800f
-    val total         = paidAmount + pendingAmount
+fun BillingScreen(
+    onBack: () -> Unit = {},
+    viewModel: BillingViewModel = viewModel()
+) {
+    val summary by viewModel.summary.collectAsStateWithLifecycle()
+    val isLoading = summary == null
 
-    val invoices = listOf(
-        BillingInvoice("FAC-2025-001", "Maitre Yassine El Amrani", "1 200 MAD", "Payee",      true),
-        BillingInvoice("FAC-2025-002", "Maitre Sara Benali",       "1 200 MAD", "Payee",      true),
-        BillingInvoice("FAC-2025-003", "Maitre Khalid Tazi",       "800 MAD",   "En attente", false)
-    )
+    val paidAmount    = summary?.paidAmount    ?: 0f
+    val pendingAmount = summary?.pendingAmount ?: 0f
+    val total         = if (paidAmount + pendingAmount > 0f) paidAmount + pendingAmount else 1f
 
-    Scaffold(
+    val invoices = summary?.invoices?.map { dto ->
+        BillingInvoice(
+            number     = dto.number,
+            lawyerName = dto.lawyerName,
+            amount     = "${dto.amount.toInt()} MAD",
+            status     = dto.status,
+            isPaid     = dto.isPaid
+        )
+    } ?: emptyList()
+
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("Facturation", fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AppDarkGreen)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            StandardTopBar(
+                title = "Facturation",
+                onBack = onBack
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                        contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = AppDarkGreen)
+                    }
+                }
+            } else {
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -90,12 +99,12 @@ fun BillingScreen(onBack: () -> Unit = {}) {
                                 modifier = Modifier.fillMaxWidth().padding(24.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Text("Resume de Facturation", fontFamily = FontFamily.Serif,
+                                Text("Résumé de Facturation", fontFamily = FontFamily.Serif,
                                     fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppGoldColor)
                                 Row(modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween) {
-                                    BillingStat("Total Facture",  "${total.toInt()} MAD",         Color.White)
-                                    BillingStat("Paye",           "${paidAmount.toInt()} MAD",    Color(0xFF34A853))
+                                    BillingStat("Total Facturé",  "${total.toInt()} MAD",         Color.White)
+                                    BillingStat("Payé",           "${paidAmount.toInt()} MAD",    Color(0xFF34A853))
                                     BillingStat("En attente",     "${pendingAmount.toInt()} MAD", AppGoldColor)
                                 }
                                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -42,11 +42,15 @@ import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.util.lerp
 import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 
 data class MatchCard(
     val id: Int,
+    /** Firestore document ID from the lawyers collection. */
+    val firestoreId: String = "",
     val name: String,
     val specialty: String,
     val city: String,
@@ -57,13 +61,6 @@ data class MatchCard(
     val matchPercent: Int = 90
 )
 
-private val sampleMatchCards = listOf(
-    MatchCard(1, "Maître Sara Benali",       "Droit de la Famille", "Rabat",      4.9f, 11, true,  "Spécialiste en divorce & garde d'enfants",  96),
-    MatchCard(2, "Maître Khalid Tazi",        "Droit des Affaires",  "Casablanca", 4.7f,  8, true,  "Expert en création de sociétés & contrats",  88),
-    MatchCard(3, "Maître Nadia Mansouri",     "Droit du Travail",    "Marrakech",  4.8f, 14, true,  "Défense des droits des salariés",            92),
-    MatchCard(4, "Maître Youssef El Fassi",   "Droit Immobilier",    "Fès",        4.6f,  6, false, "Litiges locatifs & transactions immobilières", 79),
-    MatchCard(5, "Maître Amina Chraibi",      "Droit Pénal",         "Casablanca", 4.95f,18, true,  "Pénaliste reconnue devant la Cour de cassation", 98),
-)
 
 // gradient palette per specialty
 private fun specialtyGradient(specialty: String): List<Color> = when {
@@ -80,10 +77,17 @@ private fun specialtyGradient(specialty: String): List<Color> = when {
 private const val SWIPE_THRESHOLD = 160f
 
 @Composable
-fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
+fun LegalMatchingScreen(
+    paddingValues: PaddingValues = PaddingValues(),
+    viewModel: LawyerViewModel  = viewModel()
+) {
+    val lawyers        by viewModel.lawyers.collectAsStateWithLifecycle()
     var currentIndex   by remember { mutableIntStateOf(0) }
     var matchedName    by remember { mutableStateOf<String?>(null) }
     val scope          = rememberCoroutineScope()
+
+    // Reset card position whenever a fresh list arrives from Firestore
+    LaunchedEffect(lawyers) { if (lawyers != null) currentIndex = 0 }
 
     // Animatables owned here so we fully control reset — never mutate the card list
     val offsetX        = remember { Animatable(0f) }
@@ -97,7 +101,8 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
 
     // Fly the top card off-screen then advance the index
     fun doPass() {
-        if (isAnimatingOut || currentIndex >= sampleMatchCards.size) return
+        val cards = lawyers ?: return
+        if (isAnimatingOut || currentIndex >= cards.size) return
         isAnimatingOut = true
         scope.launch {
             val j1 = launch { offsetX.animateTo(-1400f, tween(300, easing = FastOutLinearInEasing)) }
@@ -111,9 +116,12 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
     }
 
     fun doMatch() {
-        if (isAnimatingOut || currentIndex >= sampleMatchCards.size) return
-        val name = sampleMatchCards[currentIndex].name
+        val cards = lawyers ?: return
+        if (isAnimatingOut || currentIndex >= cards.size) return
+        val card = cards[currentIndex]
         isAnimatingOut = true
+        // Persist the match to Firestore (fire-and-forget)
+        viewModel.saveConsultation(card)
         scope.launch {
             val j1 = launch { offsetX.animateTo(1400f, tween(300, easing = FastOutLinearInEasing)) }
             val j2 = launch { offsetY.animateTo(offsetY.value + 40f, tween(270)) }
@@ -122,7 +130,7 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
             offsetX.snapTo(0f)
             offsetY.snapTo(0f)
             isAnimatingOut = false
-            matchedName = name
+            matchedName = card.name
         }
     }
 
@@ -132,64 +140,67 @@ fun LegalMatchingScreen(paddingValues: PaddingValues = PaddingValues()) {
             .padding(paddingValues)
     ) {
 
-        if (currentIndex >= sampleMatchCards.size) {
-            EmptyMatchState(onReload = { currentIndex = 0 })
-        } else {
-
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // Small top gap so the card doesn't hug the top bar
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // ── Card stack — takes all remaining space above the button row ──
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
-                    contentAlignment = Alignment.Center
+        when {
+            lawyers == null -> MatchCardSkeleton()
+            currentIndex >= lawyers!!.size -> {
+                EmptyMatchState(onReload = { viewModel.fetchLawyers() })
+            }
+            else -> {
+                Column(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    // 3rd card (furthest back) — blurred tinted shell
-                    sampleMatchCards.getOrNull(currentIndex + 2)?.let { card ->
-                        PeekCardLayer(
-                            card       = card,
-                            scale      = lerp(0.86f, 0.93f, swipeProgress),
-                            translateY = lerp(-36f, -20f,   swipeProgress),
-                            alpha      = lerp(0.28f, 0.48f, swipeProgress),
-                            blur       = 4.dp
+                    // Small top gap so the card doesn't hug the top bar
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // ── Card stack — takes all remaining space above the button row ──
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // 3rd card (furthest back) — blurred tinted shell
+                        lawyers!!.getOrNull(currentIndex + 2)?.let { card ->
+                            PeekCardLayer(
+                                card       = card,
+                                scale      = lerp(0.86f, 0.93f, swipeProgress),
+                                translateY = lerp(-36f, -20f,   swipeProgress),
+                                alpha      = lerp(0.28f, 0.48f, swipeProgress),
+                                blur       = 4.dp
+                            )
+                        }
+                        // 2nd card — scales up as the top card leaves
+                        lawyers!!.getOrNull(currentIndex + 1)?.let { card ->
+                            PeekCardLayer(
+                                card       = card,
+                                scale      = lerp(0.93f, 1.00f, swipeProgress),
+                                translateY = lerp(-20f,  0f,    swipeProgress),
+                                alpha      = lerp(0.60f, 1.00f, swipeProgress),
+                                blur       = 1.dp
+                            )
+                        }
+                        // Top swipeable card
+                        SwipeableMatchCard(
+                            card      = lawyers!![currentIndex],
+                            cardIndex = currentIndex,
+                            offsetX   = offsetX,
+                            offsetY   = offsetY,
+                            isLocked  = isAnimatingOut,
+                            scope     = scope,
+                            onPass    = ::doPass,
+                            onMatch   = ::doMatch
                         )
                     }
-                    // 2nd card — scales up as the top card leaves
-                    sampleMatchCards.getOrNull(currentIndex + 1)?.let { card ->
-                        PeekCardLayer(
-                            card       = card,
-                            scale      = lerp(0.93f, 1.00f, swipeProgress),
-                            translateY = lerp(-20f,  0f,    swipeProgress),
-                            alpha      = lerp(0.60f, 1.00f, swipeProgress),
-                            blur       = 1.dp
-                        )
-                    }
-                    // Top swipeable card
-                    SwipeableMatchCard(
-                        card      = sampleMatchCards[currentIndex],
-                        cardIndex = currentIndex,
-                        offsetX   = offsetX,
-                        offsetY   = offsetY,
-                        isLocked  = isAnimatingOut,
-                        scope     = scope,
-                        onPass    = ::doPass,
-                        onMatch   = ::doMatch
+
+                    // ── Buttons in their own fixed slot — can never overlap the card ──
+                    ActionButtonRow(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        onPass   = ::doPass,
+                        onInfo   = {},
+                        onMatch  = ::doMatch
                     )
                 }
-
-                // ── Buttons in their own fixed slot — can never overlap the card ──
-                ActionButtonRow(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    onPass   = ::doPass,
-                    onInfo   = {},
-                    onMatch  = ::doMatch
-                )
             }
         }
 
@@ -347,7 +358,7 @@ private fun SwipeableMatchCard(
                 )
             }
     ) {
-        PremiumCardContent(card = card)
+        CardContent(card = card)
 
         // Colour glow overlay
         if (glowColor != Color.Transparent) {
@@ -401,10 +412,10 @@ private fun SwipeableMatchCard(
     }
 }
 
-// ─── Premium Card Content ─────────────────────────────────────────────────────
+// ─── Card Content ─────────────────────────────────────────────────────
 
 @Composable
-private fun PremiumCardContent(card: MatchCard) {
+private fun CardContent(card: MatchCard) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         shape    = RoundedCornerShape(32.dp),
@@ -482,7 +493,7 @@ private fun PremiumCardContent(card: MatchCard) {
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color.Transparent, Color(0xFF0E1F16).copy(alpha = 0.85f))
+                                listOf(Color.Transparent, Color(0xFF0E1F16))
                             )
                         )
                 )
@@ -732,6 +743,79 @@ private fun ActionButtonRow(
             )
         ) {
             Icon(Icons.Default.Favorite, contentDescription = "Matcher", modifier = Modifier.size(28.dp))
+        }
+    }
+}
+
+// ─── Loading Skeleton ─────────────────────────────────────────────────────────
+
+@Composable
+private fun MatchCardSkeleton() {
+    val shimmer = rememberInfiniteTransition(label = "skeleton")
+    val alpha by shimmer.animateFloat(
+        initialValue  = 0.25f,
+        targetValue   = 0.55f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+        label         = "skeletonAlpha"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 14.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Card shell
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.82f)
+                .clip(RoundedCornerShape(32.dp))
+                .background(Color(0xFF1B3124).copy(alpha = alpha))
+        ) {
+            // Avatar circle placeholder
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .align(Alignment.Center)
+                    .offset(y = (-28).dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF2D5A40).copy(alpha = alpha))
+            )
+            // Name + tagline placeholders
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 24.dp, bottom = 100.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(180.dp)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(Color.White.copy(alpha = alpha))
+                )
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(130.dp)
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.White.copy(alpha = alpha * 0.6f))
+                )
+            }
+            // White info panel at bottom
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Color.White.copy(alpha = alpha),
+                        RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
+                    )
+            )
         }
     }
 }

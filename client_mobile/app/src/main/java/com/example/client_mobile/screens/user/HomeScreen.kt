@@ -1,5 +1,7 @@
 package com.example.client_mobile.screens.user
 
+import com.example.client_mobile.screens.shared.TopBarActions
+import com.example.client_mobile.screens.shared.NotificationRepository
 import com.example.client_mobile.screens.shared.*
 
 import androidx.compose.foundation.BorderStroke
@@ -9,8 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,11 +34,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.R
+import coil.compose.AsyncImage
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.screens.lawyer.LawyerDashboardHost
+
 
 // ─── Data Model ───────────────────────────────────────────────────────────────
 data class LegalCategory(
@@ -47,10 +53,127 @@ data class LegalCategory(
     val domaine: String   // matches LawyerItem.domaine for filtering
 )
 
-// ─── User Dashboard Host ──────────────────────────────────────────────────────
+// ─── Main Dashboard Host (Social-First, Universal Shell) ─────────────────────
+/**
+ * Universal host that wraps both Lawyers and Clients with a shared bottom nav.
+ * Tab order: [Feed] → [Dashboard] → [Messages] → [Profile]
+ *
+ * This is the startDestination after login — Feed is the heart of the app.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainDashboardHost(
+    isLawyer: Boolean = TokenManager.getUserType() == "lawyer",
+    // Lawyer callbacks
+    onNavigateToLawyerProfile:       () -> Unit = {},
+    onNavigateToNotifications:       () -> Unit = {},
+    onNavigateToChat:                (String) -> Unit = {},
+    onNavigateToRequests:            () -> Unit = {},
+    onNavigateToPayments:            () -> Unit = {},
+    onNavigateToCreator:             () -> Unit = {},
+    // Client callbacks
+    onNavigateToUserProfile:         () -> Unit = {},
+    onNavigateToAbout:               () -> Unit = {},
+    onNavigateToLawyerDetail:        (String) -> Unit = {},
+    onNavigateToCategory:            (String) -> Unit = {},
+    onNavigateToAppointments:        () -> Unit = {},
+    onNavigateToDocuments:           () -> Unit = {},
+    onNavigateToFacturation:         () -> Unit = {},
+    onNavigateToDossier:             (String) -> Unit = {}
+) {
+    val innerNav  = rememberNavController()
+    val backEntry by innerNav.currentBackStackEntryAsState()
+    val current   = backEntry?.destination?.route
+
+    val onProfile = if (isLawyer) onNavigateToLawyerProfile else onNavigateToUserProfile
+
+    AppScaffold(
+        showBackground = false,
+        topBar = {}, // Empty to allow per-screen detailed headers
+        bottomBar = {
+            MainNavBottomBar(currentRoute = current) { tab ->
+                when (tab) {
+                    is MainTab.Profile -> onProfile()
+                    else -> innerNav.navigate(tab.route) {
+                        popUpTo(MainTab.Feed.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState    = true
+                    }
+                }
+            }
+        }
+    ) { padding ->
+        NavHost(
+            navController    = innerNav,
+            startDestination = MainTab.Feed.route,
+            modifier         = Modifier.fillMaxSize()
+        ) {
+            // ── Tab 1: Social Feed (Primary) ──────────────────────────────────
+            composable(MainTab.Feed.route) {
+                HaqqiSocialFeedScreen(
+                    paddingValues = padding, // Pass padding so it can be applied securely to final item spacer
+                    isLawyer      = isLawyer,
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onCreatePost  = {
+                        // Lawyer create post → navigate to Creator Studio
+                        onNavigateToCreator()
+                    }
+                )
+            }
+
+            // ── Tab 2: Role-Specific Dashboard ────────────────────────────────
+            composable(MainTab.Dashboard.route) {
+                if (isLawyer) {
+                    LawyerDashboardHost(
+                        paddingValues             = padding,
+                        onNavigateToProfile       = onNavigateToLawyerProfile,
+                        onNavigateToNotifications = onNavigateToNotifications,
+                        onNavigateToChat          = onNavigateToChat,
+                        onNavigateToRequests      = onNavigateToRequests,
+                        onNavigateToPayments      = onNavigateToPayments,
+                        onNavigateToCreator       = onNavigateToCreator
+                    )
+                } else {
+                    UserDashboardHost(
+                        paddingValues             = padding,
+                        onNavigateToProfile       = onNavigateToUserProfile,
+                        onNavigateToAbout         = onNavigateToAbout,
+                        onNavigateToLawyerDetail  = onNavigateToLawyerDetail,
+                        onNavigateToCategory      = onNavigateToCategory,
+                        onNavigateToNotifications = onNavigateToNotifications,
+                        onNavigateToChat          = onNavigateToChat,
+                        onNavigateToAppointments  = onNavigateToAppointments,
+                        onNavigateToDocuments     = onNavigateToDocuments,
+                        onNavigateToFacturation   = onNavigateToFacturation,
+                        onNavigateToDossier       = onNavigateToDossier
+                    )
+                }
+            }
+
+            // ── Tab 3: Messages ───────────────────────────────────────────────
+            composable(MainTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer      = isLawyer,
+                    paddingValues = padding,
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+
+            // ── Tab 4: Profile (navigates out of inner nav) ───────────────────
+            composable(MainTab.Profile.route) {
+                // profile is handled by outer nav; placeholder box keeps state
+                Box(Modifier.fillMaxSize())
+            }
+        }
+    }
+}
+
+// ─── Feed-specific Top Bar (Warm Beige + Centered Logo) ───────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDashboardHost(
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
@@ -60,183 +183,60 @@ fun UserDashboardHost(
     onNavigateToAppointments: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
     onNavigateToFacturation: () -> Unit = {},
-    onNavigateToDossier: (String) -> Unit = {}
+    onNavigateToDossier: (String) -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
 ) {
-    val innerNavController = rememberNavController()
-    val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    // Live user initials + photo from REST profile
+    val profile by userViewModel.profile.collectAsStateWithLifecycle()
+    val photoUrl = profile?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() }
+        ?: UserSession.avatarUrl.takeIf { it.isNotBlank() }
+    val initials = profile?.effectiveFullName()?.let {
+        it.trim()
+            .split(" ")
+            .mapNotNull { w -> w.firstOrNull()?.uppercaseChar() }
+            .take(2)
+            .joinToString("")
+    }.takeIf { !it.isNullOrBlank() }
+
+    val dashboardViewModel: UserDashboardViewModel = viewModel()
+    val dashboardError by dashboardViewModel.errorMessage.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(dashboardError) {
+        if (!dashboardError.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(dashboardError!!)
+            dashboardViewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = {
-            val onMessagesRoute = currentRoute == UserTab.Messages.route
-            val onMatchingRoute = currentRoute == UserTab.Matching.route
-            val showTitleBar    = onMessagesRoute || onMatchingRoute
-            val titleBarText    = when {
-                onMessagesRoute -> "Messages"
-                onMatchingRoute -> "Matching"
-                else            -> ""
-            }
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    if (showTitleBar) {
-                        IconButton(onClick = {
-                            if (onMatchingRoute) {
-                                innerNavController.navigate(UserTab.Home.route) {
-                                    popUpTo(innerNavController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            } else {
-                                innerNavController.popBackStack()
-                            }
-                        }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Retour",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                },
-                title = {
-                    if (showTitleBar) {
-                        Text(
-                            titleBarText,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = AppDarkGreen
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_app),
-                            contentDescription = "Logo",
-                            modifier = Modifier.height(126.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                },
+            StandardTopBar(
+                title = "ACCUEIL",
+                onNotifications = onNavigateToNotifications,
                 actions = {
-                    val unreadCount = NotificationRepository.userNotifications.count { !it.isRead }
-                    // ── Notification bell ──────────────────────────────────
-                    IconButton(onClick = onNavigateToNotifications) {
-                        BadgedBox(
-                            badge = {
-                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
-                                    Text(
-                                        if (unreadCount > 9) "9+" else "$unreadCount",
-                                        color = Color.White,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        ) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AppDarkGreen
-                            )
-                        }
-                    }
-                    // ── Profile avatar ─────────────────────────────────────
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .clickable { onNavigateToProfile() }
-                    ) {
-                        // Gold-bordered avatar circle
-                        Surface(
-                            modifier    = Modifier.fillMaxSize(),
-                            shape       = CircleShape,
-                            color       = AppDarkGreen.copy(alpha = 0.10f),
-                            border      = androidx.compose.foundation.BorderStroke(2.dp, AppGoldColor)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Profil",
-                                    tint       = AppGoldColor,
-                                    modifier   = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                        // Online green dot
-                        Box(
-                            modifier = Modifier
-                                .size(11.dp)
-                                .align(Alignment.BottomEnd)
-                                .background(Color.White, CircleShape)   // white ring
-                                .padding(2.dp)
-                                .background(Color(0xFF34A853), CircleShape) // green dot
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                    TopBarActions(
+                        unreadCount     = NotificationRepository.userNotifications.count(),
+                        photoUrl        = photoUrl,
+                        initials        = initials,
+                        onNotifications = onNavigateToNotifications,
+                        onProfile       = onNavigateToProfile
+                    )
+                }
             )
         },
-        bottomBar = {
-            UserNavBottomBar(currentRoute = currentRoute) { tab ->
-                if (tab is UserTab.Profile) {
-                    onNavigateToProfile()
-                } else {
-                    innerNavController.navigate(tab.route) {
-                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            }
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
-            NavHost(
-                navController = innerNavController,
-                startDestination = UserTab.Home.route
-            ) {
-                composable(UserTab.Home.route) {
-                    UserHomeTabContent(
-                        paddingValues = paddingValues,
-                        onNavigateToAbout = onNavigateToAbout,
-                        onNavigateToCategory = onNavigateToCategory
-                    )
-                }
-                composable(UserTab.Cases.route) {
-                    UserCasesTabContent(
-                        paddingValues = paddingValues,
-                        onNavigateToConsulter = onNavigateToAppointments,
-                        onNavigateToMessages = {
-                            innerNavController.navigate(UserTab.Messages.route) {
-                                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        onNavigateToDocuments = onNavigateToDocuments,
-                        onNavigateToFacturation = onNavigateToFacturation,
-                        onNavigateToDossier = onNavigateToDossier
-                    )
-                }
-                composable(UserTab.Messages.route) {
-                    MessagesInboxScreen(
-                        isLawyer = false,
-                        paddingValues = paddingValues,
-                        onNavigateToChat = onNavigateToChat
-                    )
-                }
-                composable(UserTab.Matching.route) {
-                    LegalMatchingScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Reels.route) {
-                    LegalReelsScreen(paddingValues = paddingValues)
-                }
-                composable(UserTab.Live.route) {
-                    LiveSessionsScreen(paddingValues = paddingValues)
-                 }
-            }
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0,0,0,0) // let parent handle bottom insets
+    ) { localPadding ->
+        UserHomeTabContent(
+            paddingValues = PaddingValues(
+                 top = localPadding.calculateTopPadding(),
+                 bottom = paddingValues.calculateBottomPadding()
+            ),
+            onNavigateToAbout = onNavigateToAbout,
+            onNavigateToCategory = onNavigateToCategory
+        )
     }
 }
 
@@ -288,24 +288,34 @@ internal fun UserHomeTabContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(
+            top = paddingValues.calculateTopPadding(),
+            bottom = paddingValues.calculateBottomPadding() + 100.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { Spacer(modifier = Modifier.height(4.dp)) }
+        // ── Top balancing spacer ─────────────────────────────────────
+        item { Spacer(modifier = Modifier.height(12.dp)) }
 
         // ── Hero Section ─────────────────────────────────────────────
         item { HomeHeroSection(onAbout = onNavigateToAbout) }
 
         // ── Service Grid ─────────────────────────────────────────────
-        item { SectionHeader(title = "Domaines Juridiques") }
-        item { ServiceCategoryGrid(categories = categories, onCategoryClick = onNavigateToCategory) }
+        item { 
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionHeader(title = "Domaines Juridiques")
+                ServiceCategoryGrid(categories = categories, onCategoryClick = onNavigateToCategory)
+            }
+        }
 
         // ── Quick Stats ──────────────────────────────────────────────
-        item { SectionHeader(title = "En chiffres") }
-        item { HomeQuickStats() }
-
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { 
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionHeader(title = "En chiffres")
+                HomeQuickStats()
+            }
+        }
     }
 }
 
@@ -349,7 +359,7 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(195.dp),
+            .height(175.dp), // Reduced from 195dp
         shape = RoundedCornerShape(24.dp),
         color = AppDarkGreen,
         border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f)),
@@ -360,36 +370,36 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawCircle(
                     color = Color(0xFFD4AF37).copy(alpha = 0.08f),
-                    radius = 200.dp.toPx(),
+                    radius = 180.dp.toPx(), // Slightly scaled down
                     center = Offset(size.width * 0.88f, -size.height * 0.15f)
                 )
                 drawCircle(
                     color = Color(0xFFD4AF37).copy(alpha = 0.05f),
-                    radius = 140.dp.toPx(),
+                    radius = 120.dp.toPx(),
                     center = Offset(0f, size.height * 1.05f)
                 )
             }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp), // Reduced from 24.dp
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) { // Reduced from 6.dp
                     Text(
                         text = "Votre droit,\nnos experts.",
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 27.sp,
+                        fontSize = 24.sp, // Reduced from 27.sp
                         color = Color.White,
-                        lineHeight = 33.sp
+                        lineHeight = 30.sp
                     )
                     Text(
                         text = "Trouvez l'avocat qu'il vous faut en quelques secondes.",
                         fontFamily = FontFamily.Serif,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp, // Reduced from 13.sp
                         color = Color.White.copy(alpha = 0.68f),
-                        lineHeight = 19.sp
+                        lineHeight = 17.sp
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -397,13 +407,13 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
                         onClick = {},
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = AppGoldColor),
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = "Consulter",
                             fontFamily = FontFamily.Serif,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = AppDarkGreen
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -411,19 +421,19 @@ private fun HomeHeroSection(onAbout: () -> Unit) {
                             Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
                             tint = AppDarkGreen,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                     OutlinedButton(
                         onClick = onAbout,
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.60f)),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = "À Propos",
                             fontFamily = FontFamily.Serif,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = Color.White
                         )
                     }
@@ -473,7 +483,7 @@ private fun CategoryCard(
             .aspectRatio(1f)
             .clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
-        color = Color.White.copy(alpha = 0.92f),
+        color = Color.White,
         border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.10f)),
         shadowElevation = 2.dp
     ) {
@@ -536,31 +546,31 @@ private fun HomeQuickStats() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 14.dp, horizontal = 6.dp),
+                        .padding(vertical = 12.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        icon,
+                        imageVector = icon,
                         contentDescription = null,
                         tint = AppGoldColor,
                         modifier = Modifier.size(20.dp)
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        value,
-                        color = Color.White,
+                        text = value,
+                        fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        fontFamily = FontFamily.Serif,
-                        textAlign = TextAlign.Center
+                        color = Color.White
                     )
                     Text(
-                        label,
-                        color = Color.White.copy(alpha = 0.62f),
-                        fontSize = 9.sp,
+                        text = label,
                         fontFamily = FontFamily.Serif,
+                        fontSize = 9.sp,
+                        color = Color.White.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,
-                        lineHeight = 12.sp
+                        lineHeight = 11.sp
                     )
                 }
             }

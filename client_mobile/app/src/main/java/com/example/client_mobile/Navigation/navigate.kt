@@ -14,13 +14,21 @@ import androidx.navigation.navArgument
 import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.user.*
 import com.example.client_mobile.screens.lawyer.*
-
+import com.example.client_mobile.screens.shared.RegistrationScreen
+import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.services.UserService
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    // "Splash" is always the entry point. It validates any stored token against
+    // the live API before navigating — no dashboard jump without an API response.
     NavHost(
         navController = navController,
-        startDestination = "Onboarding",
+        startDestination = "Splash",
         enterTransition = {
             fadeIn(animationSpec = tween(300)) +
                 slideInHorizontally(animationSpec = tween(300)) { it / 4 }
@@ -38,7 +46,33 @@ fun AppNavigation() {
                 slideOutHorizontally(animationSpec = tween(200)) { it / 4 }
         }
     ) {
-        
+
+        // 0. Splash
+        composable("Splash") {
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate("TypeCompte") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                },
+                onNavigateToOnboarding = {
+                    navController.navigate("Onboarding") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                },
+                onNavigateToUserHome = {
+                    navController.navigate("MainHome") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                },
+                onNavigateToLawyerHome = {
+                    navController.navigate("MainHome") {
+                        popUpTo("Splash") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // 1. Initial Onboarding Swipe
         composable("Onboarding") {
             ScreenSwipeInfo(
@@ -48,12 +82,12 @@ fun AppNavigation() {
             )
         }
 
-        // 2. Manual Type Selection
+        // 2. Manual Type Selection (For Sign Up)
         composable("TypeCompte") {
             TypeCompteScreen(
                 showBackground = true,
-                onNavigateToLogin = { userType: String ->
-                    navController.navigate("Login/$userType")
+                onNavigateToRegister = { userType: String ->
+                    navController.navigate("Register/$userType")
                 }
             )
         }
@@ -66,57 +100,82 @@ fun AppNavigation() {
             val typeArg = backStackEntry.arguments?.getString("userType") ?: "user"
             LoginScreen(
                 userType = typeArg,
-                onNavigateToSignup = { selectedType: String ->
-                    if (selectedType == "lawyer") navController.navigate("CreeAvocat")
-                    else navController.navigate("CreeUser")
+                onNavigateToSignup = {
+                    navController.navigate("TypeCompte")
                 },
-                onNavigateToLawyerHome = { 
-                    navController.navigate("LawyerHome") {
-                        popUpTo("Login/{userType}") { inclusive = true }
+                onNavigateToLawyerHome = {
+                    navController.navigate("MainHome") {
+                        popUpTo(0) { inclusive = true }
                     }
                 },
-                onNavigateToUserHome = { 
-                    navController.navigate("UserHome") {
-                        popUpTo("Login/{userType}") { inclusive = true }
+                onNavigateToUserHome = {
+                    navController.navigate("MainHome") {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
         }
 
         // 4. Registration Screens
-        composable("CreeUser") {
-            CreeUserScreen(
-                onNavigateToLogin = { navController.navigate("Login/user") },
-                onNavigateToHome = { 
-                    navController.navigate("UserHome") {
-                        popUpTo("CreeUser") { inclusive = true }
+        composable(
+            route = "Register/{userType}",
+            arguments = listOf(navArgument("userType") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userType = backStackEntry.arguments?.getString("userType") ?: "user"
+            RegistrationScreen(
+                userType = userType,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserHome = {
+                    navController.navigate("MainHome") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateToLawyerHome = {
+                    navController.navigate("MainHome") {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable("CreeAvocat") {
-            CreeAvocatScreen(
-                onNavigateToLogin = { navController.navigate("Login/lawyer") },
-                onNavigateToHome = { 
-                    navController.navigate("LawyerHome") {
-                        popUpTo("CreeAvocat") { inclusive = true }
-                    }
-                }
+        // 5. Unified Main Home (Social Feed + Role Dashboard)
+        composable("MainHome") {
+            val isLawyer = TokenManager.getUserType() == "lawyer"
+            val lawyerId = TokenManager.getLawyerId()
+            val clientId = TokenManager.getClientId()
+            MainDashboardHost(
+                isLawyer                 = isLawyer,
+                onNavigateToLawyerProfile = { navController.navigate("AvocatProfile") { launchSingleTop = true } },
+                onNavigateToNotifications = { navController.navigate(if (isLawyer) "Notifications/lawyer" else "Notifications/user") },
+                onNavigateToChat          = { convId -> navController.navigate("Chat/$convId") },
+                onNavigateToRequests      = { navController.navigate("LawyerRequests") },
+                onNavigateToPayments      = { navController.navigate("LawyerPayments?lawyerId=$lawyerId") },
+                onNavigateToCreator       = { navController.navigate("LawyerCreatorStudio") { launchSingleTop = true } },
+                onNavigateToUserProfile   = { navController.navigate("UserProfile") { launchSingleTop = true } },
+                onNavigateToAbout         = { navController.navigate("About") },
+                onNavigateToLawyerDetail  = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
+                onNavigateToCategory      = { domaine -> navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}") },
+                onNavigateToAppointments  = { navController.navigate("Appointments") },
+                onNavigateToDocuments     = { navController.navigate("DocumentVault") },
+                onNavigateToFacturation   = { navController.navigate("Billing?clientId=$clientId") },
+                onNavigateToDossier       = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
 
-        // 5. Lawyer Home / Profile
-        composable("LawyerHome") {
-            LawyerDashboardHost(
-                fullName = LawyerSession.fullName,
-                speciality = LawyerSession.title,
-                profileImageUri = LawyerSession.profileImageUri,
-                onNavigateToProfile = { navController.navigate("AvocatProfile") },
-                onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
-                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
-                onNavigateToRequests = { navController.navigate("LawyerRequests") },
-                onNavigateToPayments = { navController.navigate("LawyerPayments") }
+        // Legacy aliases so existing back-stack entries keep working
+        composable("UserHome") {
+            val clientId = TokenManager.getClientId()
+            UserDashboardHost(
+                onNavigateToProfile       = { navController.navigate("UserProfile") { launchSingleTop = true } },
+                onNavigateToAbout         = { navController.navigate("About") },
+                onNavigateToLawyerDetail  = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
+                onNavigateToCategory      = { domaine -> navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}") },
+                onNavigateToNotifications = { navController.navigate("Notifications/user") },
+                onNavigateToChat          = { convId -> navController.navigate("Chat/$convId") },
+                onNavigateToAppointments  = { navController.navigate("Appointments") },
+                onNavigateToDocuments     = { navController.navigate("DocumentVault") },
+                onNavigateToFacturation   = { navController.navigate("Billing?clientId=$clientId") },
+                onNavigateToDossier       = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
 
@@ -124,45 +183,47 @@ fun AppNavigation() {
             LawyerRequestsScreen(onBack = { navController.popBackStack() })
         }
 
-        composable("LawyerPayments") {
-            LawyerPaymentsScreen(onBack = { navController.popBackStack() })
+        composable(
+            route = "LawyerPayments?lawyerId={lawyerId}",
+            arguments = listOf(navArgument("lawyerId") { type = NavType.IntType; defaultValue = -1 })
+        ) { backStackEntry ->
+            val lawyerId = backStackEntry.arguments?.getInt("lawyerId") ?: -1
+            // Use a specific Lawyer version of the payment screen or pass a flag
+            PaymentScreen(
+                onBack = { navController.popBackStack() },
+                // You can pass the ID to the ViewModel or via a factory
+                lawyerId = lawyerId
+            )
+        }
+
+        composable("LawyerCreatorStudio") {
+            LawyerCreatorManagementScreen(onBack = { navController.popBackStack() })
         }
 
         composable("AvocatProfile") {
             AvocatProfile(
-                fullName = LawyerSession.fullName,
-                title = LawyerSession.title,
-                email = LawyerSession.email,
-                phone = LawyerSession.phone,
-                address = LawyerSession.address,
-                bio = LawyerSession.bio,
-                profileImageUri = LawyerSession.profileImageUri,
                 onBack = { navController.popBackStack() },
-                onNavigateToEdit = { navController.navigate("EditLawyerProfile") }
+                onNavigateToEdit = { navController.navigate("EditLawyerProfile") },
+                onLogout = {
+                    UserService.signOut()
+                    navController.navigate("Login/lawyer") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 
         composable("EditLawyerProfile") {
             EditLawyerProfileScreen(
-                initialName = LawyerSession.fullName,
-                initialTitle = LawyerSession.title,
-                initialEmail = LawyerSession.email,
-                initialPhone = LawyerSession.phone,
-                initialAddress = LawyerSession.address,
-                initialBio = LawyerSession.bio,
-                initialSpecs = LawyerSession.specializations,
-                initialImageUri = LawyerSession.profileImageUri,
-                onBack = { navController.popBackStack() },
-                onSave = { name, title, email, phone, address, bio, specs, imageUri ->
-                    LawyerSession.updateProfile(name, title, email, phone, address, bio, specs, imageUri)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
         // 6. User Home / Profile
         composable("UserHome") {
+            val clientId = TokenManager.getClientId()
             UserDashboardHost(
-                onNavigateToProfile = { navController.navigate("UserProfile") },
+                onNavigateToProfile = { navController.navigate("UserProfile") { launchSingleTop = true } },
                 onNavigateToAbout = { navController.navigate("About") },
                 onNavigateToLawyerDetail = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
                 onNavigateToCategory = { domaine ->
@@ -172,21 +233,20 @@ fun AppNavigation() {
                 onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
                 onNavigateToAppointments = { navController.navigate("Appointments") },
                 onNavigateToDocuments = { navController.navigate("DocumentVault") },
-                onNavigateToFacturation = { navController.navigate("Billing") },
+                onNavigateToFacturation = { navController.navigate("Billing?clientId=$clientId") },
                 onNavigateToDossier = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
 
         composable("UserProfile") {
             UserProfileScreen(
-                userName = UserSession.name,
-                userEmail = UserSession.email,
-                userPhone = UserSession.phone,
-                userAddress = UserSession.address,
-                profileImageUri = UserSession.profileImageUri,
                 onBack = { navController.popBackStack() },
                 onLogOut = {
-                    navController.navigate("Login/user") { popUpTo(0) { inclusive = true } }
+                    // Use role before clearing so we route to the right login screen
+                    val role = TokenManager.getUserType()
+                    UserService.signOut()
+                    val dest = if (role == "lawyer") "Login/lawyer" else "Login/user"
+                    navController.navigate(dest) { popUpTo(0) { inclusive = true } }
                 },
                 onNavigateToEdit = { navController.navigate("EditUserProfile") },
                 onNavigateToDocuments = { navController.navigate("DocumentVault") }
@@ -195,15 +255,7 @@ fun AppNavigation() {
 
         composable("EditUserProfile") {
             EditUserProfileScreen(
-                initialName = UserSession.name,
-                initialEmail = UserSession.email,
-                initialPhone = UserSession.phone,
-                initialAddress = UserSession.address,
-                initialImageUri = UserSession.profileImageUri,
-                onBack = { navController.popBackStack() },
-                onSave = { name, email, phone, address, imageUri ->
-                    UserSession.updateProfile(name, email, phone, address, imageUri)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -221,7 +273,15 @@ fun AppNavigation() {
 
         composable("Appointments") { AppointmentsScreen(onBack = { navController.popBackStack() }) }
         composable("DocumentVault") { DocumentVaultScreen(onBack = { navController.popBackStack() }) }
-        composable("Billing") { BillingScreen(onBack = { navController.popBackStack() }) }
+        composable(
+            route = "Billing?clientId={clientId}",
+            arguments = listOf(navArgument("clientId") { type = NavType.IntType; defaultValue = -1 })
+        ) { backStackEntry ->
+            val clientId = backStackEntry.arguments?.getInt("clientId") ?: -1
+            PaymentScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable("About") { AboutScreen(onBack = { navController.popBackStack() }) }
 
         composable(
@@ -244,12 +304,12 @@ fun AppNavigation() {
             route = "LawyerDetail/{lawyerId}",
             arguments = listOf(navArgument("lawyerId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val lawyerId = backStackEntry.arguments?.getString("lawyerId") ?: "1"
-            LawyerDetailScreen(lawyerId = lawyerId, onBack = { navController.popBackStack() }, onNavigateToChat = { id ->
-                val lawyer = sampleLawyers.find { it.id == id } ?: sampleLawyers.first()
-                val conv = ConversationRepository.getOrCreate(lawyerId = id, lawyerName = lawyer.name, lawyerSpecialty = lawyer.specialty, clientName = UserSession.name)
-                navController.navigate("Chat/${conv.id}")
-            })
+            val lawyerId = backStackEntry.arguments?.getString("lawyerId") ?: ""
+            LawyerDetailScreen(
+                lawyerId = lawyerId,
+                onBack = { navController.popBackStack() },
+                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") }
+            )
         }
 
         composable(

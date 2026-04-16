@@ -17,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -25,14 +24,19 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentVaultScreen(onBack: () -> Unit = {}) {
+fun DocumentVaultScreen(
+    onBack: () -> Unit = {},
+    viewModel: DocumentViewModel = viewModel()
+) {
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-    // ── Single source of truth from shared DocumentRepository ──────────────
+    // ── Driven by DocumentRepository which is populated by DocumentViewModel ─
     val documents = DocumentRepository.documents
 
     var searchQuery        by remember { mutableStateOf("") }
@@ -45,12 +49,129 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
         else documents.filter { it.name.contains(searchQuery.trim(), ignoreCase = true) }
     }
 
+    // ── Layout ─────────────────────────────────────────────────────────────
+    BaseScreen(
+        title = "Coffre-fort Numérique",
+        onBack = onBack
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item { Spacer(Modifier.height(4.dp)) }
+
+            // ── Search bar ────────────────────────────────────────────
+            item { VaultSearchBar(query = searchQuery, onQueryChange = { searchQuery = it }) }
+
+            // ── Add button ────────────────────────────────────────────
+            item {
+                Surface(
+                    modifier      = Modifier.fillMaxWidth(),
+                    shape         = RoundedCornerShape(18.dp),
+                    color         = AppDarkGreen,
+                    border        = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.55f)),
+                    shadowElevation = 4.dp,
+                    onClick       = { showAddDialog = true }
+                ) {
+                    Row(
+                        modifier            = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalAlignment   = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(44.dp),
+                            shape    = RoundedCornerShape(14.dp),
+                            color    = AppGoldColor.copy(alpha = 0.18f),
+                            border   = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.CloudUpload,
+                                    contentDescription = null,
+                                    tint     = AppGoldColor,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Ajouter un document",
+                                fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
+                                fontSize   = 14.sp, color = Color.White
+                            )
+                            Text(
+                                "PDF, JPG, PNG jusqu'à 10 MB",
+                                fontFamily = FontFamily.Serif,
+                                fontSize   = 11.sp, color = Color.White.copy(alpha = 0.60f)
+                            )
+                        }
+                        Icon(
+                            Icons.Default.Add, contentDescription = null,
+                            tint = AppGoldColor, modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+
+            // ── List header ───────────────────────────────────────────
+            item {
+                SectionHeader(
+                    title = if (searchQuery.isBlank()) "Documents (${documents.size})"
+                            else "Résultats (${filtered.size})"
+                )
+            }
+
+            // ── Document cards ────────────────────────────────────────
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier         = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = AppDarkGreen)
+                    }
+                }
+            } else if (filtered.isEmpty()) {
+                item {
+                    Box(
+                        modifier          = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment  = Alignment.Center
+                    ) {
+                        Text(
+                            "Aucun document trouvé",
+                            fontFamily = FontFamily.Serif,
+                            color      = AppDarkGreen.copy(alpha = 0.45f),
+                            fontSize   = 14.sp
+                        )
+                    }
+                }
+            } else {
+                items(filtered, key = { it.id }) { doc ->
+                    DocumentCard(
+                        doc      = doc,
+                        onEdit   = { editTarget   = doc },
+                        onDelete = { deleteTarget = doc }
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(8.dp)) }
+        }
+    }
+
     // ── Dialogs ────────────────────────────────────────────────────────────
     if (showAddDialog) {
         AddDocumentDialog(
             onDismiss = { showAddDialog = false },
             onConfirm = { name ->
-                if (name.isNotBlank()) DocumentRepository.add(name)
+                if (name.isNotBlank()) viewModel.add(name)
                 showAddDialog = false
             }
         )
@@ -61,7 +182,7 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
             currentName = doc.name,
             onDismiss   = { editTarget = null },
             onConfirm   = { newName ->
-                if (newName.isNotBlank()) DocumentRepository.rename(doc.id, newName)
+                if (newName.isNotBlank()) viewModel.rename(doc.id, newName)
                 editTarget = null
             }
         )
@@ -72,142 +193,10 @@ fun DocumentVaultScreen(onBack: () -> Unit = {}) {
             documentName = doc.name,
             onDismiss    = { deleteTarget = null },
             onConfirm    = {
-                DocumentRepository.delete(doc.id)
+                viewModel.delete(doc.id)
                 deleteTarget = null
             }
         )
-    }
-
-    // ── Layout ─────────────────────────────────────────────────────────────
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Coffre-fort Numérique",
-                        fontFamily   = FontFamily.Serif,
-                        fontWeight   = FontWeight.Bold,
-                        fontSize     = 18.sp,
-                        color        = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item { Spacer(Modifier.height(4.dp)) }
-
-                // ── Search bar ────────────────────────────────────────────
-                item { VaultSearchBar(query = searchQuery, onQueryChange = { searchQuery = it }) }
-
-                // ── Add button ────────────────────────────────────────────
-                item {
-                    Surface(
-                        modifier      = Modifier.fillMaxWidth(),
-                        shape         = RoundedCornerShape(18.dp),
-                        color         = AppDarkGreen,
-                        border        = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.55f)),
-                        shadowElevation = 4.dp,
-                        onClick       = { showAddDialog = true }
-                    ) {
-                        Row(
-                            modifier            = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalAlignment   = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(44.dp),
-                                shape    = RoundedCornerShape(14.dp),
-                                color    = AppGoldColor.copy(alpha = 0.18f),
-                                border   = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.50f))
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Default.CloudUpload,
-                                        contentDescription = null,
-                                        tint     = AppGoldColor,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Ajouter un document",
-                                    fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold,
-                                    fontSize   = 14.sp, color = Color.White
-                                )
-                                Text(
-                                    "PDF, JPG, PNG jusqu'à 10 MB",
-                                    fontFamily = FontFamily.Serif,
-                                    fontSize   = 11.sp, color = Color.White.copy(alpha = 0.60f)
-                                )
-                            }
-                            Icon(
-                                Icons.Default.Add, contentDescription = null,
-                                tint = AppGoldColor, modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                }
-
-                // ── List header ───────────────────────────────────────────
-                item {
-                    SectionHeader(
-                        title = if (searchQuery.isBlank()) "Documents (${documents.size})"
-                                else "Résultats (${filtered.size})"
-                    )
-                }
-
-                // ── Document cards ────────────────────────────────────────
-                if (filtered.isEmpty()) {
-                    item {
-                        Box(
-                            modifier          = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment  = Alignment.Center
-                        ) {
-                            Text(
-                                "Aucun document trouvé",
-                                fontFamily = FontFamily.Serif,
-                                color      = AppDarkGreen.copy(alpha = 0.45f),
-                                fontSize   = 14.sp
-                            )
-                        }
-                    }
-                } else {
-                    items(filtered, key = { it.id }) { doc ->
-                        DocumentCard(
-                            doc      = doc,
-                            onEdit   = { editTarget   = doc },
-                            onDelete = { deleteTarget = doc }
-                        )
-                    }
-                }
-
-                item { Spacer(Modifier.height(8.dp)) }
-            }
-        }
     }
 }
 
