@@ -72,14 +72,13 @@ private fun FeedTopBar(onNotifications: () -> Unit = {}) {
     StandardTopBar(
         onBack = null,
         actions = {
-            IconButton(onClick = onNotifications) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            TopBarActions(
+                unreadCount = 0,
+                photoUrl = null,
+                initials = null,
+                onNotifications = onNotifications,
+                onProfile = {}
+            )
         }
     )
 }
@@ -102,7 +101,7 @@ fun HaqqiSocialFeedScreen(
     Scaffold(
         topBar = { 
             FeedTopBar(onNotifications = {
-                // Notifications are handled by the host or navigation
+                // Notifications can be triggered here
             }) 
         },
         containerColor = Color.Transparent,

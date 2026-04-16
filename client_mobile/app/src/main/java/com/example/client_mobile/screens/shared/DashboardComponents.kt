@@ -338,7 +338,7 @@ fun StandardTopBar(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppTopBarGradient)
+                    .background(AppDarkGreen.copy(alpha = 0.92f))
             ) {
                 // Subtle decorative element
                 Box(
@@ -406,9 +406,9 @@ fun StandardTopBar(
     StandardTopBar(
         title = {
             Image(
-                painter = painterResource(id = R.drawable.simple_app),
+                painter = painterResource(id = R.drawable.logo_app),
                 contentDescription = "GivenX Logo",
-                modifier = Modifier.height(70.dp),
+                modifier = Modifier.height(75.dp).padding(top = 10.dp),
                 contentScale = ContentScale.Fit
             )
         },
@@ -438,7 +438,7 @@ fun RowScope.TopBarActions(
                     Text(
                         text       = if (unreadCount > 9) "9+" else "$unreadCount",
                         color      = Color.White,
-                        fontSize   = 9.sp,
+                        fontSize   = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -448,7 +448,7 @@ fun RowScope.TopBarActions(
                 imageVector        = Icons.Default.Notifications,
                 contentDescription = "Notifications",
                 tint               = Color.White,
-                modifier           = Modifier.size(24.dp)
+                modifier           = Modifier.size(26.dp)
             )
         }
     }
@@ -467,9 +467,9 @@ fun StandardTopBar(
         title = {
             if (showLogo) {
                 Image(
-                    painter = painterResource(id = R.drawable.simple_app),
+                    painter = painterResource(id = R.drawable.logo_app),
                     contentDescription = "GivenX Logo",
-                    modifier = Modifier.height(70.dp),
+                    modifier = Modifier.height(75.dp).padding(top = 10.dp),
                     contentScale = ContentScale.Fit
                 )
             } else {
