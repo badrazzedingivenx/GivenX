@@ -83,7 +83,7 @@ fun AppScaffold(
     showBackground: Boolean = true,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         if (showBackground) {
             // Layer 1: Background Image
             Image(
@@ -107,7 +107,7 @@ fun AppScaffold(
             bottomBar = bottomBar,
             floatingActionButton = floatingActionButton,
             snackbarHost = snackbarHost,
-            containerColor = Color.Transparent,
+            containerColor = if (showBackground) Color.Transparent else MaterialTheme.colorScheme.background,
             content = content
         )
     }
