@@ -6,9 +6,41 @@ const middlewares = jsonServer.defaults();
 server.use(jsonServer.bodyParser);
 server.use(middlewares);
 
-// Logger
+// Logger l-m-tewwer: kiy-affichi l-JSON li rje3 m3a l-status
 server.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  // Kan-akhdo l-copy dial l-fonction original bach ma-n-khesrouhach
+  const oldSend = res.send;
+
+  // Kan-bedlo res.send bach n-cheffo l-data mlli t-koun kharja
+  res.send = function (data) {
+    console.log("\n" + "┈".repeat(40)); // Line bach n-farqo bin les logs
+    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.originalUrl}`);
+    
+    // 1. Check dial l-Status
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      console.log(`Status: ✅ ${res.statusCode} OK`);
+    } else {
+      console.log(`Status: ❌ ${res.statusCode} Error`);
+    }
+
+    // 2. Affichagi dial l-JSON (l-data li jab l-API)
+    if (data) {
+      try {
+        const body = JSON.parse(data);
+        console.log("Response Body:");
+        console.log(JSON.stringify(body, null, 2)); // null, 2 kat-khallih y-ban m-sttef (Pretty Print)
+      } catch (e) {
+        // Ila makanch JSON (mathalan string)
+        console.log("Response Body:", data);
+      }
+    }
+
+    console.log("┈".repeat(40) + "\n");
+    
+    // Darori n-rej3o l-fonction l-aslha bach res.send t-kemmel khdmtha l-app dialek
+    return oldSend.apply(res, arguments);
+  };
+
   next();
 });
 
@@ -90,58 +122,6 @@ server.get('/api/avocat/consultations/recent', (req, res) => {
 server.get('/api/dossiers/me', (req, res) => {
     const dossiers = router.db.get('dossiers').value();
     res.json(wrapResponse(dossiers));
-});
-
-// 6. Lawyers List — joins lawyers + profiles to return full LawyerDto shape
-server.get('/api/lawyers', (req, res) => {
-    const { domaine, q } = req.query;
-
-    const lawyers  = router.db.get('lawyers').value();
-    const profiles = router.db.get('profiles').value();
-
-    let result = lawyers.map(lawyer => {
-        const profile = profiles.find(p => p.id === lawyer.profileId) || {};
-        return {
-            id:               String(lawyer.id),
-            name:             lawyer.name          || profile.full_name  || '',
-            full_name:        lawyer.name          || profile.full_name  || '',
-            specialty:        lawyer.specialty     || lawyer.speciality  || '',
-            speciality:       lawyer.specialty     || lawyer.speciality  || '',
-            domaine:          lawyer.domaine       || lawyer.specialty   || lawyer.speciality || '',
-            location:         lawyer.location      || lawyer.city        || profile.address   || '',
-            city:             lawyer.city          || lawyer.location    || '',
-            avatar_url:       lawyer.avatar_url    || profile.avatar_url || '',
-            avatarUrl:        lawyer.avatar_url    || profile.avatar_url || '',
-            rating:           lawyer.rating        || 0,
-            reviewCount:      lawyer.reviewCount   || lawyer.review_count || 0,
-            review_count:     lawyer.reviewCount   || lawyer.review_count || 0,
-            experience:       lawyer.experience    || lawyer.years_experience || 0,
-            years_experience: lawyer.years_experience || lawyer.experience || 0,
-            isVerified:       lawyer.isVerified    !== undefined ? lawyer.isVerified : (lawyer.is_verified || false),
-            is_verified:      lawyer.is_verified   !== undefined ? lawyer.is_verified : (lawyer.isVerified || false),
-            bio:              lawyer.bio           || profile.bio        || '',
-            bar_number:       lawyer.bar_number    || '',
-            status:           lawyer.status        || '',
-        };
-    });
-
-    // Filter by domaine
-    if (domaine) {
-        result = result.filter(l =>
-            l.domaine.toLowerCase().includes(domaine.toLowerCase()) ||
-            l.specialty.toLowerCase().includes(domaine.toLowerCase())
-        );
-    }
-    // Filter by search query
-    if (q) {
-        const lq = q.toLowerCase();
-        result = result.filter(l =>
-            l.name.toLowerCase().includes(lq) ||
-            l.city.toLowerCase().includes(lq)
-        );
-    }
-
-    res.json(wrapResponse(result));
 });
 
 // 6. Generic wrapper for standard json-server routes
