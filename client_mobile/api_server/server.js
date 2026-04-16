@@ -92,6 +92,58 @@ server.get('/api/dossiers/me', (req, res) => {
     res.json(wrapResponse(dossiers));
 });
 
+// 6. Lawyers List — joins lawyers + profiles to return full LawyerDto shape
+server.get('/api/lawyers', (req, res) => {
+    const { domaine, q } = req.query;
+
+    const lawyers  = router.db.get('lawyers').value();
+    const profiles = router.db.get('profiles').value();
+
+    let result = lawyers.map(lawyer => {
+        const profile = profiles.find(p => p.id === lawyer.profileId) || {};
+        return {
+            id:               String(lawyer.id),
+            name:             lawyer.name          || profile.full_name  || '',
+            full_name:        lawyer.name          || profile.full_name  || '',
+            specialty:        lawyer.specialty     || lawyer.speciality  || '',
+            speciality:       lawyer.specialty     || lawyer.speciality  || '',
+            domaine:          lawyer.domaine       || lawyer.specialty   || lawyer.speciality || '',
+            location:         lawyer.location      || lawyer.city        || profile.address   || '',
+            city:             lawyer.city          || lawyer.location    || '',
+            avatar_url:       lawyer.avatar_url    || profile.avatar_url || '',
+            avatarUrl:        lawyer.avatar_url    || profile.avatar_url || '',
+            rating:           lawyer.rating        || 0,
+            reviewCount:      lawyer.reviewCount   || lawyer.review_count || 0,
+            review_count:     lawyer.reviewCount   || lawyer.review_count || 0,
+            experience:       lawyer.experience    || lawyer.years_experience || 0,
+            years_experience: lawyer.years_experience || lawyer.experience || 0,
+            isVerified:       lawyer.isVerified    !== undefined ? lawyer.isVerified : (lawyer.is_verified || false),
+            is_verified:      lawyer.is_verified   !== undefined ? lawyer.is_verified : (lawyer.isVerified || false),
+            bio:              lawyer.bio           || profile.bio        || '',
+            bar_number:       lawyer.bar_number    || '',
+            status:           lawyer.status        || '',
+        };
+    });
+
+    // Filter by domaine
+    if (domaine) {
+        result = result.filter(l =>
+            l.domaine.toLowerCase().includes(domaine.toLowerCase()) ||
+            l.specialty.toLowerCase().includes(domaine.toLowerCase())
+        );
+    }
+    // Filter by search query
+    if (q) {
+        const lq = q.toLowerCase();
+        result = result.filter(l =>
+            l.name.toLowerCase().includes(lq) ||
+            l.city.toLowerCase().includes(lq)
+        );
+    }
+
+    res.json(wrapResponse(result));
+});
+
 // 6. Generic wrapper for standard json-server routes
 // This catches GET requests to /api/users, /api/profiles, /api/lawyers etc.
 router.render = (req, res) => {
