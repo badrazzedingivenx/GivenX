@@ -74,51 +74,73 @@ fun MessagesInboxScreen(
         }
     }
 
-    // ── No-connection full-screen state ──────────────────────────────────────
-    if (isError && conversations.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            NoConnectionScreen(
-                onRetry  = { conversationViewModel.refresh() },
-                modifier = Modifier.fillMaxSize()
-            )
+    Scaffold(
+        topBar = {
+            StandardTopBar(title = "Messages")
+        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0,0,0,0)
+    ) { localPadding ->
+        // ── No-connection full-screen state ──────────────────────────────────────
+        if (isError && conversations.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = localPadding.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding()
+                    )
+            ) {
+                NoConnectionScreen(
+                    onRetry  = { conversationViewModel.refresh() },
+                    modifier = Modifier.fillMaxSize()
+                )
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier  = Modifier.align(Alignment.BottomCenter)
+                )
+            }
+            return@Scaffold
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(InboxBackground)
+        ) {
+            // ── Loading skeleton ──────────────────────────────────────────────────
+            if (isLoading && conversations.isEmpty()) {
+                Box(modifier = Modifier.padding(top = localPadding.calculateTopPadding())) {
+                    InboxSkeleton()
+                }
+            }
+
+            // ── Pull-to-refresh + list ────────────────────────────────────────────
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh    = { conversationViewModel.refresh() },
+                modifier     = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = localPadding.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding()
+                    )
+            ) {
+                MessagesInboxContent(
+                    conversations    = conversations,
+                    isLawyer         = isLawyer,
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier  = Modifier.align(Alignment.BottomCenter)
             )
         }
-        return
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(InboxBackground)
-            .padding(paddingValues)
-    ) {
-        // ── Loading skeleton ──────────────────────────────────────────────────
-        if (isLoading && conversations.isEmpty()) {
-            InboxSkeleton()
-        }
-
-        // ── Pull-to-refresh + list ────────────────────────────────────────────
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh    = { conversationViewModel.refresh() },
-            modifier     = Modifier.fillMaxSize()
-        ) {
-            MessagesInboxContent(
-                conversations    = conversations,
-                isLawyer         = isLawyer,
-                onNavigateToChat = onNavigateToChat
-            )
-        }
-
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier  = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
+
 
 // ─── Skeleton Loading ─────────────────────────────────────────────────────────
 @Composable

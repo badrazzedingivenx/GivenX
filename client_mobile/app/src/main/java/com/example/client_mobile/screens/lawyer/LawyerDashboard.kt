@@ -61,6 +61,7 @@ data class TaskItem(val label: String, val dueDate: String, val isDone: Boolean)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LawyerDashboardHost(
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     fullName: String = "",
     speciality: String = "",
     profileImageUri: Uri? = null,
@@ -73,18 +74,14 @@ fun LawyerDashboardHost(
     onNavigateToCreator: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
-    val innerNavController = rememberNavController()
-    val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
     // Collect API data — profile overrides the passed-in params when available
-    val lawyerProfile by dashboardViewModel.profile.collectAsStateWithLifecycle()
+    val lawyerProfile            by dashboardViewModel.profile.collectAsStateWithLifecycle()
     val lawyerStats              by dashboardViewModel.stats.collectAsStateWithLifecycle()
     val revenueMonthly           by dashboardViewModel.revenueMonthly.collectAsStateWithLifecycle()
     val recentConsultations      by dashboardViewModel.recentConsultations.collectAsStateWithLifecycle()
     val consultationsError       by dashboardViewModel.consultationsError.collectAsStateWithLifecycle()
 
-    val displayName      = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }   ?: fullName
+    val displayName       = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }   ?: fullName
     val displaySpeciality = lawyerProfile?.speciality?.takeIf { it.isNotBlank() } ?: speciality
 
     // ── Create bottom sheet state ─────────────────────────────────────────────
@@ -124,98 +121,43 @@ fun LawyerDashboardHost(
         return
     }
 
-    AppScaffold(
+    Scaffold(
         topBar = {
-            val onMessagesRoute = currentRoute == LawyerTab.Messages.route
-            val onClientsRoute  = currentRoute == LawyerTab.Clients.route
-            val titleText = when {
-                onMessagesRoute -> "Messages"
-                onClientsRoute  -> "Gestion des Clients"
-                else            -> null
-            }
-            val showLogo = titleText == null   // logo only on Home tab
-
             StandardTopBar(
-                title    = titleText ?: "",
-                showLogo = showLogo,
-                onBack = when {
-                    onMessagesRoute -> { { innerNavController.popBackStack() } }
-                    onClientsRoute  -> { {
-                        innerNavController.navigate(LawyerTab.Home.route) {
-                            popUpTo(LawyerTab.Home.route) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    } }
-                    else -> null
-                },
+                title = "MON TABLEAU",
                 actions = {
                     TopBarActions(
-                        unreadCount     = NotificationRepository.lawyerNotifications.count { !it.isRead },
-                        photoUrl        = profileImageUri?.toString(),
-                        initials        = displayName.trim().split(" ")
-                                            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-                                            .take(2).joinToString("").takeIf { it.isNotBlank() },
+                        unreadCount = lawyerStats?.newRequests ?: 0,
+                        photoUrl = null,
+                        initials = displayName.firstOrNull()?.toString(),
                         onNotifications = onNavigateToNotifications,
-                        onProfile       = onNavigateToProfile
+                        onProfile = onNavigateToProfile
                     )
                 }
             )
         },
-        floatingActionButton = {
-            CreateContentFab(onClick = { showCreateSheet = true })
-        },
-        bottomBar = {
-            LawyerNavBottomBar(currentRoute = currentRoute) { tab ->
-                when (tab) {
-                    is LawyerTab.Profile -> onNavigateToProfile()
-                    is LawyerTab.Creator -> onNavigateToCreator()
-                    else -> innerNavController.navigate(tab.route) {
-                        popUpTo(LawyerTab.Home.route) { 
-                            saveState = true 
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            }
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        showBackground = true
-    ) { paddingValues ->
-        NavHost(
-            navController = innerNavController,
-            startDestination = LawyerTab.Home.route,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable(LawyerTab.Home.route) {
-                AvocatDashboardScreen(
-                    paddingValues           = PaddingValues(0.dp),
-                    profile                 = lawyerProfile,
-                    stats                   = lawyerStats,
-                    revenueMonthly          = revenueMonthly,
-                    recentConsultations     = recentConsultations,
-                    consultationsError      = consultationsError,
-                    onNavigateToRequests    = onNavigateToRequests,
-                    onNavigateToPayments    = onNavigateToPayments,
-                    onNavigateToCreator     = onNavigateToCreator,
-                    onRetryConsultations    = { dashboardViewModel.retryConsultations() }
-                )
-            }
-            composable(LawyerTab.Messages.route) {
-                MessagesInboxScreen(
-                    isLawyer = true,
-                    paddingValues = PaddingValues(0.dp),
-                    onNavigateToChat = onNavigateToChat
-                )
-            }
-            composable(LawyerTab.Clients.route) {
-                LawyerClientsTabContent(paddingValues = PaddingValues(0.dp))
-            }
-
-        }
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0,0,0,0)
+    ) { localPadding ->
+        AvocatDashboardScreen(
+            paddingValues           = PaddingValues(
+                top = localPadding.calculateTopPadding(),
+                bottom = paddingValues.calculateBottomPadding()
+            ),
+            profile                 = lawyerProfile,
+            stats                   = lawyerStats,
+            revenueMonthly          = revenueMonthly,
+            recentConsultations     = recentConsultations,
+            consultationsError      = consultationsError,
+            onNavigateToRequests    = onNavigateToRequests,
+            onNavigateToPayments    = onNavigateToPayments,
+            onNavigateToCreator     = onNavigateToCreator,
+            onRetryConsultations    = { dashboardViewModel.retryConsultations() }
+        )
     }
 
-    // ── Create Content Bottom Sheet ───────────────────────────────────────────
+    // ── Create Content Bottom Sheet (can be triggered from external FAB) ──────
     if (showCreateSheet) {
         ModalBottomSheet(
             onDismissRequest = { showCreateSheet = false },

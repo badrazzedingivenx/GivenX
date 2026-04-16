@@ -1,6 +1,7 @@
 package com.example.client_mobile.screens.user
 
 import com.example.client_mobile.screens.shared.*
+import com.example.client_mobile.screens.shared.TopBarActions
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -40,6 +41,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.screens.lawyer.LawyerDashboardHost
+
 
 // ─── Data Model ───────────────────────────────────────────────────────────────
 data class LegalCategory(
@@ -48,10 +52,125 @@ data class LegalCategory(
     val domaine: String   // matches LawyerItem.domaine for filtering
 )
 
-// ─── User Dashboard Host ──────────────────────────────────────────────────────
+// ─── Main Dashboard Host (Social-First, Universal Shell) ─────────────────────
+/**
+ * Universal host that wraps both Lawyers and Clients with a shared bottom nav.
+ * Tab order: [Feed] → [Dashboard] → [Messages] → [Profile]
+ *
+ * This is the startDestination after login — Feed is the heart of the app.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainDashboardHost(
+    isLawyer: Boolean = TokenManager.getUserType() == "lawyer",
+    // Lawyer callbacks
+    onNavigateToLawyerProfile:       () -> Unit = {},
+    onNavigateToNotifications:       () -> Unit = {},
+    onNavigateToChat:                (String) -> Unit = {},
+    onNavigateToRequests:            () -> Unit = {},
+    onNavigateToPayments:            () -> Unit = {},
+    onNavigateToCreator:             () -> Unit = {},
+    // Client callbacks
+    onNavigateToUserProfile:         () -> Unit = {},
+    onNavigateToAbout:               () -> Unit = {},
+    onNavigateToLawyerDetail:        (String) -> Unit = {},
+    onNavigateToCategory:            (String) -> Unit = {},
+    onNavigateToAppointments:        () -> Unit = {},
+    onNavigateToDocuments:           () -> Unit = {},
+    onNavigateToFacturation:         () -> Unit = {},
+    onNavigateToDossier:             (String) -> Unit = {}
+) {
+    val innerNav  = rememberNavController()
+    val backEntry by innerNav.currentBackStackEntryAsState()
+    val current   = backEntry?.destination?.route
+
+    val onProfile = if (isLawyer) onNavigateToLawyerProfile else onNavigateToUserProfile
+
+    AppScaffold(
+        showBackground = false,
+        topBar = {}, // Empty to allow per-screen detailed headers
+        bottomBar = {
+            MainNavBottomBar(currentRoute = current) { tab ->
+                when (tab) {
+                    is MainTab.Profile -> onProfile()
+                    else -> innerNav.navigate(tab.route) {
+                        popUpTo(MainTab.Feed.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState    = true
+                    }
+                }
+            }
+        }
+    ) { padding ->
+        NavHost(
+            navController    = innerNav,
+            startDestination = MainTab.Feed.route,
+            modifier         = Modifier.fillMaxSize()
+        ) {
+            // ── Tab 1: Social Feed (Primary) ──────────────────────────────────
+            composable(MainTab.Feed.route) {
+                HaqqiSocialFeedScreen(
+                    paddingValues = padding, // Pass padding so it can be applied securely to final item spacer
+                    isLawyer      = isLawyer,
+                    onCreatePost  = {
+                        // Lawyer create post → navigate to Creator Studio
+                        onNavigateToCreator()
+                    }
+                )
+            }
+
+            // ── Tab 2: Role-Specific Dashboard ────────────────────────────────
+            composable(MainTab.Dashboard.route) {
+                if (isLawyer) {
+                    LawyerDashboardHost(
+                        paddingValues             = padding,
+                        onNavigateToProfile       = onNavigateToLawyerProfile,
+                        onNavigateToNotifications = onNavigateToNotifications,
+                        onNavigateToChat          = onNavigateToChat,
+                        onNavigateToRequests      = onNavigateToRequests,
+                        onNavigateToPayments      = onNavigateToPayments,
+                        onNavigateToCreator       = onNavigateToCreator
+                    )
+                } else {
+                    UserDashboardHost(
+                        paddingValues             = padding,
+                        onNavigateToProfile       = onNavigateToUserProfile,
+                        onNavigateToAbout         = onNavigateToAbout,
+                        onNavigateToLawyerDetail  = onNavigateToLawyerDetail,
+                        onNavigateToCategory      = onNavigateToCategory,
+                        onNavigateToNotifications = onNavigateToNotifications,
+                        onNavigateToChat          = onNavigateToChat,
+                        onNavigateToAppointments  = onNavigateToAppointments,
+                        onNavigateToDocuments     = onNavigateToDocuments,
+                        onNavigateToFacturation   = onNavigateToFacturation,
+                        onNavigateToDossier       = onNavigateToDossier
+                    )
+                }
+            }
+
+            // ── Tab 3: Messages ───────────────────────────────────────────────
+            composable(MainTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer      = isLawyer,
+                    paddingValues = padding,
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+
+            // ── Tab 4: Profile (navigates out of inner nav) ───────────────────
+            composable(MainTab.Profile.route) {
+                // profile is handled by outer nav; placeholder box keeps state
+                Box(Modifier.fillMaxSize())
+            }
+        }
+    }
+}
+
+// ─── Feed-specific Top Bar (Warm Beige + Centered Logo) ───────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDashboardHost(
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
@@ -64,10 +183,6 @@ fun UserDashboardHost(
     onNavigateToDossier: (String) -> Unit = {},
     userViewModel: UserViewModel = viewModel()
 ) {
-    val innerNavController = rememberNavController()
-    val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
     // Live user initials + photo from REST profile
     val profile by userViewModel.profile.collectAsStateWithLifecycle()
     val photoUrl = profile?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() }
@@ -91,40 +206,15 @@ fun UserDashboardHost(
         }
     }
 
-    AppScaffold(
+    Scaffold(
         topBar = {
-            val onNetworkingRoute = currentRoute == UserTab.Networking.route
-            val onMessagesRoute   = currentRoute == UserTab.Messages.route
-            
-            val showBackButton = onNetworkingRoute || onMessagesRoute
-            val titleText = when {
-                onNetworkingRoute -> "Réseaux"
-                onMessagesRoute   -> "Messages"
-                else              -> null
-            }
-
-            val showLogo = titleText == null
-
             StandardTopBar(
-                title = titleText ?: "",
-                showLogo = showLogo,
-                onBack = if (showBackButton) {
-                    {
-                        if (onNetworkingRoute || onMessagesRoute) {
-                            innerNavController.navigate(UserTab.Home.route) {
-                                popUpTo(UserTab.Home.route) { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        } else {
-                            innerNavController.popBackStack()
-                        }
-                    }
-                } else null,
+                title = "ACCUEIL",
+                showLogo = true,
                 actions = {
                     TopBarActions(
-                        unreadCount     = NotificationRepository.userNotifications.count { !it.isRead },
-                        photoUrl        = profile?.photoUrl?.takeIf { it.isNotBlank() }
-                                         ?: UserSession.avatarUrl.takeIf { it.isNotBlank() },
+                        unreadCount     = NotificationRepository.userNotifications.count(),
+                        photoUrl        = photoUrl,
                         initials        = initials,
                         onNotifications = onNavigateToNotifications,
                         onProfile       = onNavigateToProfile
@@ -132,47 +222,18 @@ fun UserDashboardHost(
                 }
             )
         },
-        bottomBar = {
-            UserNavBottomBar(currentRoute = currentRoute) { tab ->
-                if (tab is UserTab.Profile) {
-                    onNavigateToProfile()
-                } else {
-                    innerNavController.navigate(tab.route) {
-                        // Pop back to HomeTab without destroying its saved state
-                        popUpTo(UserTab.Home.route) { 
-                            saveState = true 
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        NavHost(
-            navController = innerNavController,
-            startDestination = UserTab.Home.route,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable(UserTab.Home.route) {
-                UserHomeTabContent(
-                    paddingValues = PaddingValues(0.dp),
-                    onNavigateToAbout = onNavigateToAbout,
-                    onNavigateToCategory = onNavigateToCategory
-                )
-            }
-            composable(UserTab.Messages.route) {
-                MessagesInboxScreen(
-                    isLawyer = false,
-                    paddingValues = PaddingValues(0.dp),
-                    onNavigateToChat = onNavigateToChat
-                )
-            }
-            composable(UserTab.Profile.route) {
-                Box(Modifier.fillMaxSize())
-            }
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0,0,0,0) // let parent handle bottom insets
+    ) { localPadding ->
+        UserHomeTabContent(
+            paddingValues = PaddingValues(
+                 top = localPadding.calculateTopPadding(),
+                 bottom = paddingValues.calculateBottomPadding()
+            ),
+            onNavigateToAbout = onNavigateToAbout,
+            onNavigateToCategory = onNavigateToCategory
+        )
     }
 }
 
@@ -224,8 +285,11 @@ internal fun UserHomeTabContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
             .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(
+            top = paddingValues.calculateTopPadding() + 12.dp,
+            bottom = paddingValues.calculateBottomPadding() + 32.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { Spacer(modifier = Modifier.height(4.dp)) }

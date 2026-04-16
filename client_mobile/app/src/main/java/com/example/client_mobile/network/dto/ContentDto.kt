@@ -103,3 +103,19 @@ data class LiveDto(
     /** "LIVE" | "Scheduled" | "" */
     @SerializedName("status")       val status:       String = ""
 )
+
+// ─── Legal Feed Post ─────────────────────────────────────────────────────────
+// Matches: GET /api/legal-feed
+// [{"lawyer_id":"1","lawyer_name":"John Doe","avatar_url":"...","post_image_url":"...","legal_text":"...","date":"..." }]
+data class LegalPostDto(
+    @SerializedName("lawyer_id")      val lawyerId:     String  = "",
+    @SerializedName("lawyer_name")    val lawyerName:   String  = "",
+    @SerializedName("avatar_url")     val avatarUrl:    String  = "",
+    @SerializedName("post_image_url") val postImageUrl: String  = "",
+    @SerializedName("legal_text")     val legalText:    String  = "",
+    @SerializedName("date")           val date:         String  = "",
+    @SerializedName("likes_count")    val likesCount:   Int     = 0,
+    @SerializedName("is_liked")       val isLiked:      Boolean = false,
+    @SerializedName("is_verified")    val isVerified:   Boolean = true,
+    @SerializedName("comments_count") val commentsCount: Int    = 0
+)

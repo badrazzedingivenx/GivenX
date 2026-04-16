@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.DynamicFeed
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
@@ -348,12 +351,13 @@ fun StandardTopBar(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .statusBarsPadding()
                         .padding(start = 16.dp, top = 20.dp, end = 16.dp)
                 ) {
                     // Navigation Icon (Left)
                     if (onBack != null) {
                         Surface(
-                            modifier = Modifier.align(Alignment.CenterStart).padding(top = 20.dp),
+                            modifier = Modifier.align(Alignment.CenterStart),
                             shape = CircleShape,
                             color = Color.White.copy(alpha = 0.1f)
                         ) {
@@ -376,14 +380,12 @@ fun StandardTopBar(
                         modifier = Modifier.align(Alignment.Center),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(modifier = Modifier.padding(top = 20.dp)) {
-                            title()
-                        }
+                        title()
                     }
 
                     // Actions (Right)
                     Row(
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(top = 20.dp),
+                        modifier = Modifier.align(Alignment.CenterEnd),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -605,6 +607,63 @@ sealed class UserTab(val route: String, val icon: ImageVector, val label: String
     object Networking : UserTab("user_networking", Icons.Default.PeopleAlt, "Réseau")
     object Messages : UserTab("user_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
     object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
+}
+
+// ─── Universal Main Tab (Social-First Architecture) ────────────────────────────
+/**
+ * Shared tab definition used by BOTH Lawyers and Clients.
+ * Tab 1 = Feed (HaqqiSocialFeedScreen)
+ * Tab 2 = Dashboard (role-specific)
+ * Tab 3 = Messages
+ * Tab 4 = Profile
+ */
+sealed class MainTab(val route: String, val icon: ImageVector, val label: String) {
+    object Feed      : MainTab("main_feed",      Icons.Default.DynamicFeed,               "Fil")
+    object Dashboard : MainTab("main_dashboard", Icons.Default.Dashboard,                 "Tableau")
+    object Messages  : MainTab("main_messages",  Icons.AutoMirrored.Filled.Chat,          "Messages")
+    object Profile   : MainTab("main_profile",   Icons.Default.Person,                    "Profil")
+}
+
+// ─── Universal Bottom Nav (Lawyer + Client) ────────────────────────────────────
+@Composable
+fun MainNavBottomBar(
+    currentRoute: String?,
+    onTabSelected: (MainTab) -> Unit
+) {
+    val tabs = listOf(MainTab.Feed, MainTab.Dashboard, MainTab.Messages, MainTab.Profile)
+
+    // Using Box instead of Surface to easily do transparency+blur (or semi-transparent) without solid shadow issues
+    Box(
+        modifier = Modifier
+            .navigationBarsPadding()
+            .padding(start = 24.dp, end = 24.dp, bottom = 32.dp)
+            .height(72.dp)
+            .background(
+                color = AppDarkGreen.copy(alpha = 0.85f),
+                shape = RoundedCornerShape(36.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(36.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tabs.forEach { tab ->
+                BottomNavItem(
+                    icon     = tab.icon,
+                    label    = tab.label,
+                    selected = currentRoute == tab.route,
+                    onClick  = { onTabSelected(tab) }
+                )
+            }
+        }
+    }
 }
 
 @Composable

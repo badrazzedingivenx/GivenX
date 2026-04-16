@@ -47,7 +47,7 @@ fun AppNavigation() {
         }
     ) {
 
-        // 0. Splash — validates stored token via API, routes to Login or Dashboard
+        // 0. Splash
         composable("Splash") {
             SplashScreen(
                 onNavigateToLogin = {
@@ -61,12 +61,12 @@ fun AppNavigation() {
                     }
                 },
                 onNavigateToUserHome = {
-                    navController.navigate("UserHome") {
+                    navController.navigate("MainHome") {
                         popUpTo("Splash") { inclusive = true }
                     }
                 },
                 onNavigateToLawyerHome = {
-                    navController.navigate("LawyerHome") {
+                    navController.navigate("MainHome") {
                         popUpTo("Splash") { inclusive = true }
                     }
                 }
@@ -103,13 +103,13 @@ fun AppNavigation() {
                 onNavigateToSignup = {
                     navController.navigate("TypeCompte")
                 },
-                onNavigateToLawyerHome = { 
-                    navController.navigate("LawyerHome") {
+                onNavigateToLawyerHome = {
+                    navController.navigate("MainHome") {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onNavigateToUserHome = { 
-                    navController.navigate("UserHome") {
+                onNavigateToUserHome = {
+                    navController.navigate("MainHome") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
@@ -126,28 +126,56 @@ fun AppNavigation() {
                 userType = userType,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUserHome = {
-                    navController.navigate("UserHome") {
+                    navController.navigate("MainHome") {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onNavigateToLawyerHome = {
-                    navController.navigate("LawyerHome") {
+                    navController.navigate("MainHome") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
             )
         }
 
-        // 5. Lawyer Home / Profile
-        composable("LawyerHome") {
+        // 5. Unified Main Home (Social Feed + Role Dashboard)
+        composable("MainHome") {
+            val isLawyer = TokenManager.getUserType() == "lawyer"
             val lawyerId = TokenManager.getLawyerId()
-            LawyerDashboardHost(
-                onNavigateToProfile = { navController.navigate("AvocatProfile") { launchSingleTop = true } },
-                onNavigateToNotifications = { navController.navigate("Notifications/lawyer") },
-                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
-                onNavigateToRequests = { navController.navigate("LawyerRequests") },
-                onNavigateToPayments = { navController.navigate("LawyerPayments?lawyerId=$lawyerId") },
-                onNavigateToCreator  = { navController.navigate("LawyerCreatorStudio") { launchSingleTop = true } }
+            val clientId = TokenManager.getClientId()
+            MainDashboardHost(
+                isLawyer                 = isLawyer,
+                onNavigateToLawyerProfile = { navController.navigate("AvocatProfile") { launchSingleTop = true } },
+                onNavigateToNotifications = { navController.navigate(if (isLawyer) "Notifications/lawyer" else "Notifications/user") },
+                onNavigateToChat          = { convId -> navController.navigate("Chat/$convId") },
+                onNavigateToRequests      = { navController.navigate("LawyerRequests") },
+                onNavigateToPayments      = { navController.navigate("LawyerPayments?lawyerId=$lawyerId") },
+                onNavigateToCreator       = { navController.navigate("LawyerCreatorStudio") { launchSingleTop = true } },
+                onNavigateToUserProfile   = { navController.navigate("UserProfile") { launchSingleTop = true } },
+                onNavigateToAbout         = { navController.navigate("About") },
+                onNavigateToLawyerDetail  = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
+                onNavigateToCategory      = { domaine -> navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}") },
+                onNavigateToAppointments  = { navController.navigate("Appointments") },
+                onNavigateToDocuments     = { navController.navigate("DocumentVault") },
+                onNavigateToFacturation   = { navController.navigate("Billing?clientId=$clientId") },
+                onNavigateToDossier       = { caseId -> navController.navigate("DossierDetail/$caseId") }
+            )
+        }
+
+        // Legacy aliases so existing back-stack entries keep working
+        composable("UserHome") {
+            val clientId = TokenManager.getClientId()
+            UserDashboardHost(
+                onNavigateToProfile       = { navController.navigate("UserProfile") { launchSingleTop = true } },
+                onNavigateToAbout         = { navController.navigate("About") },
+                onNavigateToLawyerDetail  = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
+                onNavigateToCategory      = { domaine -> navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}") },
+                onNavigateToNotifications = { navController.navigate("Notifications/user") },
+                onNavigateToChat          = { convId -> navController.navigate("Chat/$convId") },
+                onNavigateToAppointments  = { navController.navigate("Appointments") },
+                onNavigateToDocuments     = { navController.navigate("DocumentVault") },
+                onNavigateToFacturation   = { navController.navigate("Billing?clientId=$clientId") },
+                onNavigateToDossier       = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
 

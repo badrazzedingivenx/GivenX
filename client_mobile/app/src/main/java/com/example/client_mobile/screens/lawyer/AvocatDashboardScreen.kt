@@ -83,8 +83,13 @@ fun AvocatDashboardScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            .statusBarsPadding() // Ensures it respects system top inset
+            .padding(top = paddingValues.calculateTopPadding()) // Dashboard starts visibly below Top Bar
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(
+            top = 12.dp,
+            bottom = paddingValues.calculateBottomPadding() + 32.dp // Ensure we can scroll past Bottom Navigation Bar
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { DashHeader(profile = profile, isLoading = isLoading) }

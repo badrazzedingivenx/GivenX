@@ -13,6 +13,7 @@ import com.example.client_mobile.network.dto.LawyerDto
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.LiveDto
+import com.example.client_mobile.network.dto.LegalPostDto
 import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
@@ -222,10 +223,14 @@ interface HaqApiService {
     suspend fun getReels(): Response<ApiResponse<List<ReelDto>>>
 
     // ── Stories ────────────────────────────────────────────────────
-
     /** GET /stories — [ { "id": "story_001", "lawyerName": "...", "imageUrl": "..." } ] */
     @GET("stories")
     suspend fun getStories(): Response<ApiResponse<List<StoryDto>>>
+
+    // ── Legal Feed ─────────────────────────────────────────────────
+    /** GET /legal-feed — returns the social legal feed posts. */
+    @GET("legal-feed")
+    suspend fun getLegalFeed(): Response<ApiResponse<List<LegalPostDto>>>
 
     // ── Lives ──────────────────────────────────────────────────────
 
