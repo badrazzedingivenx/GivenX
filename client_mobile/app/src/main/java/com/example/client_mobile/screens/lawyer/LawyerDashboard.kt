@@ -730,8 +730,8 @@ private fun LawyerHomeTabContent(
         // ── Creator Mode Quick Access ────────────────────────────────────────
         SectionHeader(
             title = "Studio Créateur",
-            actionText = "Gérer",
-            onActionClick = { onNavigateToCreator() }
+            actionLabel = "Gérer",
+            onAction = { onNavigateToCreator() }
         )
         DashCard {
             Row(
@@ -758,7 +758,7 @@ private fun LawyerHomeTabContent(
         }
 
         // ── Nouvelles Demandes quick view ─────────────────────────────────────
-        SectionHeader(title = "Dernières Demandes", actionText = "Voir tout", onActionClick = onNavigateToRequests)
+        SectionHeader(title = "Dernières Demandes", actionLabel = "Voir tout", onAction = onNavigateToRequests)
         DashCard {
             if (stats?.newRequests == 0) {
                 Text("Aucune nouvelle demande.", fontSize = 13.sp, color = Color.Gray, fontFamily = FontFamily.Serif)

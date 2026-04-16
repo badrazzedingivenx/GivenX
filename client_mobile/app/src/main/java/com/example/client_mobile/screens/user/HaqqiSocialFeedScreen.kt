@@ -86,7 +86,16 @@ fun HaqqiSocialFeedScreen(
         topBar = { 
             StandardTopBar(
                 onBack = null,
-                onNotifications = onNavigateToNotifications
+                actions = {
+                    IconButton(onClick = onNavigateToNotifications) {
+                        Icon(
+                            imageVector = Icons.Filled.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             )
         },
         containerColor = Color.Transparent,

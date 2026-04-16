@@ -94,10 +94,12 @@ fun MainDashboardHost(
             MainNavBottomBar(currentRoute = current) { tab ->
                 when (tab) {
                     is MainTab.Profile -> onProfile()
-                    else -> innerNav.navigate(tab.route) {
-                        popUpTo(MainTab.Feed.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState    = true
+                    else -> {
+                        innerNav.navigate(tab.route) {
+                            popUpTo(MainTab.Feed.route) { inclusive = false }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 }
             }
@@ -209,25 +211,19 @@ fun UserDashboardHost(
         }
     }
 
-    Scaffold(
-        topBar = {
-            StandardTopBar(
-                title = "ACCUEIL",
-                onNotifications = onNavigateToNotifications,
-                actions = {
-                    TopBarActions(
-                        unreadCount     = NotificationRepository.userNotifications.count(),
-                        photoUrl        = photoUrl,
-                        initials        = initials,
-                        onNotifications = onNavigateToNotifications,
-                        onProfile       = onNavigateToProfile
-                    )
-                }
-            )
-        },
+    BaseScreen(
+        title = "ACCUEIL",
+        onNotifications = onNavigateToNotifications,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets(0,0,0,0) // let parent handle bottom insets
+        actions = {
+            TopBarActions(
+                unreadCount     = NotificationRepository.userNotifications.count(),
+                photoUrl        = photoUrl,
+                initials        = initials,
+                onNotifications = onNavigateToNotifications,
+                onProfile       = onNavigateToProfile
+            )
+        }
     ) { localPadding ->
         UserHomeTabContent(
             paddingValues = PaddingValues(

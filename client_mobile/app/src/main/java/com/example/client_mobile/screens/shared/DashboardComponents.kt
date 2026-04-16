@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
@@ -119,18 +120,32 @@ fun AppScaffold(
 @Composable
 fun BaseScreen(
     title: String? = null,
+    titleContent: (@Composable () -> Unit)? = null,
     onBack: (() -> Unit)? = null,
+    onNotifications: (() -> Unit)? = null,
     showBottomBar: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
+    actions: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
     AppScaffold(
         topBar = {
-            if (title != null) {
-                StandardTopBar(title = title, onBack = onBack)
+            when {
+                titleContent != null -> StandardTopBar(
+                    title = titleContent,
+                    onBack = onBack,
+                    actions = actions ?: {}
+                )
+                title != null -> StandardTopBar(
+                    title = title,
+                    onBack = onBack,
+                    actions = actions ?: {}
+                )
             }
         },
         floatingActionButton = floatingActionButton,
+        snackbarHost = snackbarHost,
         content = content
     )
 }
@@ -443,7 +458,7 @@ fun RowScope.TopBarActions(
             }
         ) {
             Icon(
-                imageVector        = Icons.Default.Notifications,
+                imageVector        = Icons.Filled.Notifications,
                 contentDescription = "Notifications",
                 tint               = Color.White,
                 modifier           = Modifier.size(24.dp)
@@ -605,6 +620,51 @@ sealed class UserTab(val route: String, val icon: ImageVector, val label: String
     object Networking : UserTab("user_networking", Icons.Default.PeopleAlt, "Réseau")
     object Messages : UserTab("user_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
     object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
+}
+
+sealed class MainTab(val route: String, val icon: ImageVector, val label: String) {
+    object Feed : MainTab("feed", Icons.Default.Home, "Fil")
+    object Dashboard : MainTab("dashboard", Icons.Default.Layers, "Tableau")
+    object Messages : MainTab("messages", Icons.AutoMirrored.Filled.Chat, "Messages")
+    object Profile : MainTab("profile", Icons.Default.Person, "Profil")
+}
+
+@Composable
+fun MainNavBottomBar(
+    currentRoute: String?,
+    onTabSelected: (MainTab) -> Unit
+) {
+    val tabs = listOf(
+        MainTab.Feed,
+        MainTab.Dashboard,
+        MainTab.Messages,
+        MainTab.Profile
+    )
+    
+    Surface(
+        modifier = Modifier
+            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
+            .height(72.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = AppDarkGreen,
+        shadowElevation = 12.dp,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tabs.forEach { tab ->
+                BottomNavItem(
+                    icon = tab.icon,
+                    label = tab.label,
+                    selected = currentRoute == tab.route,
+                    onClick = { onTabSelected(tab) }
+                )
+            }
+        }
+    }
 }
 
 @Composable
