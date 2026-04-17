@@ -519,37 +519,121 @@
   ],
   "stories": [
     {
-      "id": "story_001",
-      "lawyerName": "Me. Jean Dupont",
-      "lawyerAvatar": "https://randomuser.me/api/portraits/men/1.jpg",
+      "id": "s1",
+      "lawyerName": "Me. Yassine Alaoui",
+      "lawyerAvatar": "https://randomuser.me/api/portraits/men/32.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500",
-      "expiresAt": "2024-06-05T10:00:00Z",
-      "isLive": false,
-      "hasUnseenStory": true,
-      "views": 120,
-      "timeLeft": "5h"
-    },
-    {
-      "id": "story_002",
-      "lawyerName": "Me. Marie Legrand",
-      "lawyerAvatar": "https://randomuser.me/api/portraits/women/2.jpg",
-      "imageUrl": "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=500",
-      "expiresAt": "2024-06-05T12:00:00Z",
+      "expiresAt": "2026-04-18T10:00:00Z",
       "isLive": true,
       "hasUnseenStory": true,
-      "views": 85,
+      "views": 120,
       "timeLeft": "Live"
     },
     {
-      "id": "story_003",
-      "lawyerName": "Me. Yassine Alaoui",
-      "lawyerAvatar": "https://randomuser.me/api/portraits/men/3.jpg",
+      "id": "s2",
+      "lawyerName": "Me. Fatima Zahra Benali",
+      "lawyerAvatar": "https://randomuser.me/api/portraits/women/44.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=500",
+      "expiresAt": "2026-04-18T12:00:00Z",
+      "isLive": false,
+      "hasUnseenStory": true,
+      "views": 85,
+      "timeLeft": "5h"
+    },
+    {
+      "id": "s3",
+      "lawyerName": "Me. Karim Tazi",
+      "lawyerAvatar": "https://randomuser.me/api/portraits/men/86.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1454165833767-131f72a6a9d8?w=500",
-      "expiresAt": "2024-06-05T13:00:00Z",
+      "expiresAt": "2026-04-18T13:00:00Z",
       "isLive": false,
       "hasUnseenStory": false,
       "views": 44,
       "timeLeft": "2h"
+    },
+    {
+      "id": "s4",
+      "lawyerName": "Me. Sara El Mansouri",
+      "lawyerAvatar": "https://randomuser.me/api/portraits/women/62.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=500",
+      "expiresAt": "2026-04-18T14:00:00Z",
+      "isLive": false,
+      "hasUnseenStory": false,
+      "views": 32,
+      "timeLeft": "1h"
+    },
+    {
+      "id": "s5",
+      "lawyerName": "Me. Hassan Idrissi",
+      "lawyerAvatar": "https://randomuser.me/api/portraits/men/22.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=500",
+      "expiresAt": "2026-04-18T15:00:00Z",
+      "isLive": false,
+      "hasUnseenStory": false,
+      "views": 15,
+      "timeLeft": "30m"
+    }
+  ],
+  "legal-feed": [
+    {
+      "lawyer_id": "1",
+      "lawyer_name": "Me. Yassine Alaoui",
+      "avatar_url": "https://randomuser.me/api/portraits/men/32.jpg",
+      "post_image_url": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800",
+      "legal_text": "⚖️ Rappel important : Selon l'article 475 du Code de la Famille marocain, toute convention matrimoniale doit être établie par acte notarié avant la célébration du mariage. N'attendez pas qu'il soit trop tard — consultez un avocat spécialisé en droit familial pour protéger vos droits.\n\n#DroitDeLaFamille #Haqqi #ConseilJuridique",
+      "date": "2026-04-16T08:00:00Z",
+      "likes_count": 142,
+      "is_liked": false,
+      "is_verified": true,
+      "comments_count": 23
+    },
+    {
+      "lawyer_id": "2",
+      "lawyer_name": "Me. Fatima Zahra Benali",
+      "avatar_url": "https://randomuser.me/api/portraits/women/44.jpg",
+      "post_image_url": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
+      "legal_text": "🏢 Droit des affaires : La création d'une SARL au Maroc nécessite un capital minimum de 10 000 DH depuis la réforme. Cependant, plusieurs aspects statutaires sont souvent négligés par les entrepreneurs. Notre cabinet accompagne les startups de A à Z.\n\n#StartupMaroc #DroitDesAffaires #SARL",
+      "date": "2026-04-15T14:30:00Z",
+      "likes_count": 89,
+      "is_liked": false,
+      "is_verified": true,
+      "comments_count": 11
+    },
+    {
+      "lawyer_id": "3",
+      "lawyer_name": "Me. Karim Tazi",
+      "avatar_url": "https://randomuser.me/api/portraits/men/86.jpg",
+      "post_image_url": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800",
+      "legal_text": "📋 Saviez-vous que le délai de prescription pour les infractions pénales varie selon leur gravité ? \n• Crimes : 15 ans\n• Délits : 5 ans  \n• Contraventions : 1 an\n\nCes délais courent à partir du jour où l'infraction a été commise. Partagez pour informer !\n\n#DroitPénal #Justice #Haqqi",
+      "date": "2026-04-15T09:00:00Z",
+      "likes_count": 207,
+      "is_liked": false,
+      "is_verified": true,
+      "comments_count": 45
+    },
+    {
+      "lawyer_id": "4",
+      "lawyer_name": "Me. Sara El Mansouri",
+      "avatar_url": "https://randomuser.me/api/portraits/women/62.jpg",
+      "post_image_url": "https://images.unsplash.com/photo-1521791055366-0d553872952f?w=800",
+      "legal_text": "🏠 Droit immobilier : Avant de signer un compromis de vente, vérifiez TOUJOURS :\n✅ Le titre foncier (réquisition d'immatriculation)\n✅ L'absence de servitudes cachées\n✅ Le certificat de conformité\n✅ Les charges de copropriété en souffrance\n\nContactez-nous pour un audit complet de votre projet immobilier.\n\n#DroitImmobilier #Casablanca",
+      "date": "2026-04-14T16:00:00Z",
+      "likes_count": 334,
+      "is_liked": false,
+      "is_verified": true,
+      "comments_count": 67
+    },
+    {
+      "lawyer_id": "5",
+      "lawyer_name": "Me. Hassan Idrissi",
+      "avatar_url": "https://randomuser.me/api/portraits/men/22.jpg",
+      "post_image_url": "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=800",
+      "legal_text": "💼 Code du travail : Tout licenciement abusif ouvre droit à des dommages-intérêts. Selon l'article 41 du Code du Travail marocain, l'employeur doit respecter la procédure disciplinaire sous peine de nullité. Vos droits valent d'être défendus.\n\n#DroitDuTravail #LicenciementAbusif #Haqqi",
+      "date": "2026-04-13T11:00:00Z",
+      "likes_count": 156,
+      "is_liked": false,
+      "is_verified": true,
+      "comments_count": 28
     }
   ],
   "reels": [

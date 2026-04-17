@@ -1,6 +1,7 @@
 package com.example.client_mobile.network
 
 import com.example.client_mobile.network.dto.LawyerSearchResultDto
+import com.example.client_mobile.network.dto.LegalPostDto
 import com.example.client_mobile.network.dto.LikeResponseDto
 import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.ReelDto
@@ -21,6 +22,13 @@ object MainRepository {
     suspend fun getReels(): List<ReelDto> {
         return try {
             val response = RetrofitClient.haqApi.getReels()
+            if (response.isSuccessful) response.body()?.data ?: emptyList() else emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    suspend fun getLegalFeed(): List<LegalPostDto> {
+        return try {
+            val response = RetrofitClient.haqApi.getLegalFeed()
             if (response.isSuccessful) response.body()?.data ?: emptyList() else emptyList()
         } catch (_: Exception) { emptyList() }
     }

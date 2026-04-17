@@ -639,7 +639,7 @@ fun StoriesRow(
     modifier: Modifier = Modifier,
     onStoryClick: (Int) -> Unit = {}
 ) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(vertical = 12.dp)) {
         androidx.compose.foundation.lazy.LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -729,8 +729,8 @@ private fun StoryRingItem(story: StoryDto, onClick: () -> Unit) {
             if (story.isLive) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .offset(x = (-4).dp, y = (-4).dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 4.dp, y = (-4).dp)
                         .background(Color(0xFFFF0000), RoundedCornerShape(4.dp))
                         .padding(horizontal = 4.dp, vertical = 2.dp)
                 ) {
@@ -760,6 +760,8 @@ private fun StoryRingItem(story: StoryDto, onClick: () -> Unit) {
                     append(lastName)
                 }
             },
+            modifier  = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
             fontSize  = 12.sp,
             fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
             color     = AppDarkGreen,
