@@ -120,19 +120,6 @@ fun LawyerCreatorManagementScreen(
                     modifier           = Modifier.size(22.dp)
                 )
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    pickerType = MediaPostType.Story
-                    showMediaPicker = true
-                },
-                containerColor = AppGoldColor,
-                contentColor   = AppDarkGreen,
-                shape          = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Ajouter")
-            }
         }
     ) { padding ->
         if (isLoading) {
@@ -148,7 +135,7 @@ fun LawyerCreatorManagementScreen(
             modifier     = Modifier.fillMaxSize().padding(padding)
         ) {
             LazyColumn(
-                contentPadding     = PaddingValues(bottom = 32.dp),
+                contentPadding     = PaddingValues(bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
                 modifier           = Modifier.fillMaxSize()
             ) {
@@ -157,7 +144,7 @@ fun LawyerCreatorManagementScreen(
                     StudioSectionHeader(title = "Stories", icon = Icons.Default.AutoStories)
                     Spacer(Modifier.height(12.dp))
                     if (allStories.isEmpty()) {
-                        EmptyInlineNote("Aucune story active. Publiez-en une via le bouton +.")
+                        EmptyInlineNote("Aucune story active. Publiez-en une via le bouton Reels.")
                     } else {
                         LazyRow(
                             contentPadding     = PaddingValues(horizontal = 20.dp),
@@ -226,7 +213,7 @@ fun LawyerCreatorManagementScreen(
                             Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            EmptyInlineNote("Aucun reel publié. Appuyez sur + pour en créer un.")
+                            EmptyInlineNote("Aucun reel publié. Utilisez le bouton Reels pour en créer un.")
                         }
                     }
                 } else {

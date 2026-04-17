@@ -196,10 +196,6 @@ fun AppNavigation() {
             )
         }
 
-        composable("LawyerCreatorStudio") {
-            LawyerCreatorManagementScreen(onBack = { navController.popBackStack() })
-        }
-
         composable("AvocatProfile") {
             AvocatProfile(
                 onBack = { navController.popBackStack() },

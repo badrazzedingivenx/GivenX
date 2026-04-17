@@ -43,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.screens.lawyer.LawyerCreatorManagementScreen
 import com.example.client_mobile.screens.lawyer.LawyerDashboardHost
 
 
@@ -85,6 +86,11 @@ fun MainDashboardHost(
     val backEntry by innerNav.currentBackStackEntryAsState()
     val current   = backEntry?.destination?.route
 
+    // Global notification VM — created here so init{} fires immediately after login
+    // and the unread count persists across all tab switches.
+    val notificationViewModel: NotificationViewModel = viewModel()
+    val unreadCount by notificationViewModel.unreadCount.collectAsStateWithLifecycle()
+
     val onProfile = if (isLawyer) onNavigateToLawyerProfile else onNavigateToUserProfile
 
     AppScaffold(
@@ -111,6 +117,17 @@ fun MainDashboardHost(
                         launchSingleTop = true
                         restoreState = true
                     }
+                },
+                isLawyer = isLawyer,
+                onRecordReel = {
+                    innerNav.navigate("LawyerCreatorStudio") {
+                        launchSingleTop = true
+                    }
+                },
+                onCreatorStudio = {
+                    innerNav.navigate("LawyerCreatorStudio") {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -126,7 +143,11 @@ fun MainDashboardHost(
                     paddingValues = padding,
                     isLawyer      = isLawyer,
                     onNavigateToNotifications = onNavigateToNotifications,
-                    onCreatePost  = { onNavigateToCreator() }
+                    onCreatePost  = {
+                        innerNav.navigate("LawyerCreatorStudio") {
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
 
@@ -155,7 +176,11 @@ fun MainDashboardHost(
                         onNavigateToChat          = onNavigateToChat,
                         onNavigateToRequests      = onNavigateToRequests,
                         onNavigateToPayments      = onNavigateToPayments,
-                        onNavigateToCreator       = onNavigateToCreator
+                        onNavigateToCreator       = {
+                            innerNav.navigate("LawyerCreatorStudio") {
+                                launchSingleTop = true
+                            }
+                        }
                     )
                 } else {
                     UserDashboardHost(
@@ -178,7 +203,12 @@ fun MainDashboardHost(
             composable(MainTab.Profile.route) {
                 Box(Modifier.fillMaxSize())
             }
-        }
+            // ── Creator Studio (inside shell so bottom bar stays visible) ────
+            composable("LawyerCreatorStudio") {
+                LawyerCreatorManagementScreen(
+                    onBack = { innerNav.popBackStack() }
+                )
+            }        }
     }
 }
 

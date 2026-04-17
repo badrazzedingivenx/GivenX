@@ -7,10 +7,17 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -29,11 +36,14 @@ import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -85,6 +95,7 @@ val StatusGray      = Color(0xFF4B5563)   // Gray-600
 val StatusGrayBg    = Color(0xFFF3F4F6)   // Gray-100
 val AppGoldBg       = Color(0xFFC5A059).copy(alpha = 0.12f)
 val AppSubtitleGray = Color(0xFF4A4A4A)
+val AppCreamBg      = Color(0xFFF7F1EA)
 
 // ─── Base Screen Template ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,34 +109,15 @@ fun AppScaffold(
     showBackground: Boolean = true,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        if (showBackground) {
-            // Layer 1: Background Image
-            Image(
-                painter = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            // Layer 2: White Overlay (Only affects the background image)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.20f))
-            )
-        }
-
-        // Layer 3: UI Content (Above the overlay)
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = topBar,
-            bottomBar = bottomBar,
-            floatingActionButton = floatingActionButton,
-            snackbarHost = snackbarHost,
-            containerColor = if (showBackground) Color.Transparent else MaterialTheme.colorScheme.background,
-            content = content
-        )
-    }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = topBar,
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        snackbarHost = snackbarHost,
+        containerColor = AppCreamBg,
+        content = content
+    )
 }
 
 /**
@@ -347,8 +339,9 @@ fun StandardTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    val containerHeight = 120.dp
-    
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val containerHeight = 44.dp + statusBarTop
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -358,8 +351,8 @@ fun StandardTopBar(
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color.Transparent,
-            shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
-            shadowElevation = 10.dp
+            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+            shadowElevation = 8.dp
         ) {
             Box(
                 modifier = Modifier
@@ -369,20 +362,20 @@ fun StandardTopBar(
                 // Subtle decorative element
                 Box(
                     modifier = Modifier
-                        .size(150.dp)
-                        .offset(x = (-50).dp, y = (-50).dp)
+                        .size(100.dp)
+                        .offset(x = (-40).dp, y = (-40).dp)
                         .background(Color.White.copy(alpha = 0.03f), CircleShape)
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 16.dp, top = 20.dp, end = 16.dp)
+                        .padding(start = 16.dp, top = statusBarTop, end = 16.dp)
                 ) {
                     // Navigation Icon (Left)
                     if (onBack != null) {
                         Surface(
-                            modifier = Modifier.align(Alignment.CenterStart).padding(top = 20.dp),
+                            modifier = Modifier.align(Alignment.CenterStart),
                             shape = CircleShape,
                             color = Color.White.copy(alpha = 0.1f)
                         ) {
@@ -394,7 +387,7 @@ fun StandardTopBar(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -402,19 +395,19 @@ fun StandardTopBar(
 
                     // Center Content (Logo/Title)
                     Box(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxHeight(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(modifier = Modifier.padding(top = 20.dp)) {
-                            title()
-                        }
+                        title()
                     }
 
                     // Actions (Right)
                     Row(
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(top = 20.dp),
+                        modifier = Modifier.align(Alignment.CenterEnd),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         actions()
                     }
@@ -435,7 +428,9 @@ fun StandardTopBar(
             Image(
                 painter = painterResource(id = R.drawable.simple_app),
                 contentDescription = "GivenX Logo",
-                modifier = Modifier.height(70.dp),
+                modifier = Modifier
+                    .fillMaxHeight(0.85f)
+                    .wrapContentWidth(),
                 contentScale = ContentScale.Fit
             )
         },
@@ -463,7 +458,7 @@ fun RowScope.TopBarActions(
             badge = {
                 if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
                     Text(
-                        text       = if (unreadCount > 9) "9+" else "$unreadCount",
+                        text       = if (unreadCount > 99) "99+" else "$unreadCount",
                         color      = Color.White,
                         fontSize   = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -496,7 +491,9 @@ fun StandardTopBar(
                 Image(
                     painter = painterResource(id = R.drawable.simple_app),
                     contentDescription = "GivenX Logo",
-                    modifier = Modifier.height(70.dp),
+                    modifier = Modifier
+                        .fillMaxHeight(0.85f)
+                        .wrapContentWidth(),
                     contentScale = ContentScale.Fit
                 )
             } else {
@@ -845,12 +842,18 @@ private fun createBarNotchShape(fabRadiusPx: Float, notchMarginPx: Float): Shape
 /**
  * Premium bottom bar with a gold center FAB (Reels) and smooth notch cutout.
  * Layout: [Accueil] [Messages] ── ●Reels● ── [Dossiers] [Profil]
+ *
+ * Lawyer mode: long-press the center FAB to reveal Camera + Creator Studio mini-FABs.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HaqqiPremiumBottomBar(
     currentRoute: String?,
     onTabSelected: (MainTab) -> Unit,
-    onReelsClick: () -> Unit
+    onReelsClick: () -> Unit,
+    isLawyer: Boolean = false,
+    onRecordReel: () -> Unit = {},
+    onCreatorStudio: () -> Unit = {}
 ) {
     val density = LocalDensity.current
     val fabDiameter = 58.dp
@@ -863,6 +866,8 @@ fun HaqqiPremiumBottomBar(
     val barShape = remember(fabRadiusPx, notchMarginPx) {
         createBarNotchShape(fabRadiusPx, notchMarginPx)
     }
+
+    var expanded by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -923,17 +928,86 @@ fun HaqqiPremiumBottomBar(
             }
         }
 
+        // ── Expandable mini-FABs (Lawyer only) ─────────────────────────────
+        if (isLawyer) {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = (-52).dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Camera mini-FAB
+                    Surface(
+                        modifier = Modifier.size(42.dp),
+                        shape = CircleShape,
+                        color = AppDarkGreen,
+                        border = BorderStroke(1.5.dp, FabGold),
+                        shadowElevation = 6.dp,
+                        onClick = {
+                            expanded = false
+                            onRecordReel()
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Videocam,
+                                contentDescription = "Record Reel",
+                                tint = FabGold,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    // Creator Studio mini-FAB
+                    Surface(
+                        modifier = Modifier.size(42.dp),
+                        shape = CircleShape,
+                        color = AppDarkGreen,
+                        border = BorderStroke(1.5.dp, FabGold),
+                        shadowElevation = 6.dp,
+                        onClick = {
+                            expanded = false
+                            onCreatorStudio()
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "Creator Studio",
+                                tint = FabGold,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // ── Gold center FAB (Reels) ─────────────────────────────────────────
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.align(Alignment.TopCenter)
         ) {
             Surface(
-                modifier = Modifier.size(fabDiameter),
+                modifier = Modifier
+                    .size(fabDiameter)
+                    .combinedClickable(
+                        onClick = {
+                            expanded = false
+                            onReelsClick()
+                        },
+                        onLongClick = if (isLawyer) {
+                            { expanded = !expanded }
+                        } else null
+                    ),
                 shape = CircleShape,
                 color = FabGold,
-                shadowElevation = 8.dp,
-                onClick = onReelsClick
+                shadowElevation = 8.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(

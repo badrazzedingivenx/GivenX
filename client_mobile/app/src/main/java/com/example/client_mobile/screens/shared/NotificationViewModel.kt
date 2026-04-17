@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.dto.NotificationDto
 import com.example.client_mobile.network.TokenManager
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -12,12 +15,30 @@ import kotlinx.coroutines.launch
  * [NotificationRepository] — the observable list consumed by
  * both [NotificationScreen] (list of cards) and the notification badge in TopBarActions.
  *
+ * Exposes [unreadCount] as a [StateFlow] for global badge consumption.
  * Automatically handles routing to userNotifications or lawyerNotifications
  * based on the logged-in [TokenManager.getUserType].
  */
 class NotificationViewModel : ViewModel() {
 
-    init { fetch() }
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
+
+    init {
+        fetchUnreadCount()
+        fetch()
+    }
+
+    fun fetchUnreadCount() {
+        viewModelScope.launch {
+            try {
+                val resp = RetrofitClient.haqApi.getUnreadCount()
+                if (resp.isSuccessful && resp.body()?.success == true) {
+                    _unreadCount.value = resp.body()?.data?.unreadCount ?: 0
+                }
+            } catch (_: Exception) { /* keep current value */ }
+        }
+    }
 
     fun fetch() {
         viewModelScope.launch {
@@ -35,6 +56,7 @@ class NotificationViewModel : ViewModel() {
                         NotificationRepository.userNotifications.clear()
                         NotificationRepository.userNotifications.addAll(items)
                     }
+                    syncUnreadCount()
                 }
             } catch (_: Exception) {
                 // Keep existing state on network failure
@@ -45,16 +67,27 @@ class NotificationViewModel : ViewModel() {
     fun markRead(id: String, isLawyer: Boolean = false) {
         if (isLawyer) NotificationRepository.markReadLawyer(id)
         else NotificationRepository.markReadUser(id)
+        syncUnreadCount()
     }
 
     fun remove(id: String, isLawyer: Boolean = false) {
         if (isLawyer) NotificationRepository.removeLawyer(id)
         else NotificationRepository.removeUser(id)
+        syncUnreadCount()
     }
 
     fun markAllRead(isLawyer: Boolean = false) {
         if (isLawyer) NotificationRepository.markAllReadLawyer()
         else NotificationRepository.markAllReadUser()
+        syncUnreadCount()
+    }
+
+    private fun syncUnreadCount() {
+        val isLawyer = TokenManager.getUserType() == "lawyer"
+        _unreadCount.value = if (isLawyer)
+            NotificationRepository.lawyerNotifications.count { !it.isRead }
+        else
+            NotificationRepository.userNotifications.count { !it.isRead }
     }
 
     // ── Mapping ───────────────────────────────────────────────────────────────

@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
-private val InboxBackground      = Color(0xFFF5F7F6)   // Very light warm-green tinted gray
+private val InboxBackground      = Color(0xFFF7F1EA)   // Uniform cream
 private val CardWhite            = Color(0xFFFFFFFF)
 private val NameColor            = Color(0xFF0F291E)    // AppDarkGreen alias – strong hierarchy
 private val SnippetColor         = Color(0xFF7A8C84)    // Medium gray-green
@@ -76,23 +76,41 @@ fun MessagesInboxScreen(
         }
     }
 
+    val notifUnreadCount = if (isLawyer)
+        NotificationRepository.lawyerNotifications.count { !it.isRead }
+    else
+        NotificationRepository.userNotifications.count { !it.isRead }
+
     Scaffold(
         topBar = {
             StandardTopBar(
                 title = "MESSAGES",
                 actions = {
                     IconButton(onClick = onNavigateToNotifications) {
-                        Icon(
-                            imageVector = Icons.Filled.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        BadgedBox(
+                            badge = {
+                                if (notifUnreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                                    Text(
+                                        text       = if (notifUnreadCount > 99) "99+" else "$notifUnreadCount",
+                                        color      = Color.White,
+                                        fontSize   = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Notifications,
+                                contentDescription = "Notifications",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             )
         },
-        containerColor = Color.Transparent,
+        containerColor = InboxBackground,
         contentWindowInsets = WindowInsets(0,0,0,0)
     ) { localPadding ->
         // ── No-connection full-screen state ──────────────────────────────────────
@@ -120,7 +138,6 @@ fun MessagesInboxScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(InboxBackground)
         ) {
             // ── Loading skeleton ──────────────────────────────────────────────────
             if (isLoading && conversations.isEmpty()) {

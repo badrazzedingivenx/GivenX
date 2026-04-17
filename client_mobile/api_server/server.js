@@ -124,6 +124,17 @@ server.get('/api/dossiers/me', (req, res) => {
     res.json(wrapResponse(dossiers));
 });
 
+// 6. Notifications Unread Count
+server.get('/api/notifications/unread-count', (req, res) => {
+    const authHeader = req.headers.authorization;
+    let userId = 6;
+    if (authHeader && authHeader.includes('mock-jwt-token-for-')) {
+        userId = parseInt(authHeader.split('mock-jwt-token-for-')[1]);
+    }
+    const notifications = router.db.get('notifications').filter({ userId, isRead: false }).value();
+    res.json({ success: true, data: { unreadCount: notifications.length }, message: "OK" });
+});
+
 // 6. Generic wrapper for standard json-server routes
 // This catches GET requests to /api/users, /api/profiles, /api/lawyers etc.
 router.render = (req, res) => {

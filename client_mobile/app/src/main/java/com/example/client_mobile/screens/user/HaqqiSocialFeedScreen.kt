@@ -55,7 +55,7 @@ import com.example.client_mobile.network.TokenManager
 // ─── Gradient ring colours ────────────────────────────────────────────────────
 private val RingGold      = Color(0xFFC5A059)
 private val RingGreen     = Color(0xFF1B4332)
-private val FeedBackground = Color(0xFFF9F5F0)  // Warm Beige
+private val FeedBackground = Color(0xFFF7F1EA)  // Uniform cream
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -94,29 +94,46 @@ fun HaqqiSocialFeedScreen(
         )
     }
 
+    val unreadCount = if (isLawyer)
+        NotificationRepository.lawyerNotifications.count { !it.isRead }
+    else
+        NotificationRepository.userNotifications.count { !it.isRead }
+
     Scaffold(
         topBar = { 
             StandardTopBar(
                 onBack = null,
                 actions = {
                     IconButton(onClick = onNavigateToNotifications) {
-                        Icon(
-                            imageVector = Icons.Filled.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        BadgedBox(
+                            badge = {
+                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                                    Text(
+                                        text       = if (unreadCount > 99) "99+" else "$unreadCount",
+                                        color      = Color.White,
+                                        fontSize   = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Notifications,
+                                contentDescription = "Notifications",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             )
         },
-        containerColor = Color.Transparent,
+        containerColor = FeedBackground,
         contentWindowInsets = WindowInsets(0,0,0,0)
     ) { localPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(FeedBackground)
         ) {
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
@@ -129,13 +146,15 @@ fun HaqqiSocialFeedScreen(
                         top = localPadding.calculateTopPadding(),
                         bottom = paddingValues.calculateBottomPadding() + 24.dp // Ensure we can scroll past the bottom bar
                     ),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // ── Stories row ───────────────────────────────────────────────
+                // ── Stories row ─────────────────────────────────────────────────
                 item(key = "stories") {
                     StoriesRow(
                         stories       = stories,
-                        modifier      = Modifier.background(Color.White),
+                        modifier      = Modifier
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(Color.White),
                         onStoryClick  = { index ->
                             selectedStoryIndex = index
                             showStoryViewer = true
@@ -145,10 +164,7 @@ fun HaqqiSocialFeedScreen(
 
                 // ── Divider ───────────────────────────────────────────────────
                 item(key = "divider") {
-                    HorizontalDivider(
-                        color     = AppDarkGreen.copy(alpha = 0.06f),
-                        thickness = 1.dp
-                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
 
                 // ── Feed posts ────────────────────────────────────────────────
@@ -189,32 +205,11 @@ fun HaqqiSocialFeedScreen(
                                 likeCount = count,
                                 onLike   = { viewModel.toggleLike(postKey, count) }
                             )
-                            HorizontalDivider(color = AppDarkGreen.copy(alpha = 0.05f))
                         }
                     }
                 }
 
                 item(key = "bottom_spacer") { Spacer(modifier = Modifier.height(24.dp)) }
-            }
-        }
-
-        // ── Lawyer-only FAB ───────────────────────────────────────────────────
-        if (isLawyer) {
-            FloatingActionButton(
-                onClick           = onCreatePost,
-                modifier          = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 20.dp),
-                containerColor    = AppDarkGreen,
-                contentColor      = AppGoldColor,
-                shape             = CircleShape,
-                elevation         = FloatingActionButtonDefaults.elevation(8.dp)
-            ) {
-                Icon(
-                    imageVector        = Icons.Default.Add,
-                    contentDescription = "Créer un post",
-                    modifier           = Modifier.size(28.dp)
-                )
             }
         }
         }
@@ -242,9 +237,13 @@ fun LegalPostCard(
     )
 
     Surface(
-        modifier       = Modifier.fillMaxWidth(),
+        modifier       = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .clip(RoundedCornerShape(24.dp)),
         color          = Color.White,
-        tonalElevation = 0.dp
+        shadowElevation = 2.dp,
+        shape          = RoundedCornerShape(24.dp)
     ) {
         Column {
             // ── Header row ────────────────────────────────────────────────────

@@ -137,7 +137,7 @@ fun LawyerDashboardHost(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Transparent,
+        containerColor = Color(0xFFF7F1EA),
         contentWindowInsets = WindowInsets(0,0,0,0)
     ) { localPadding ->
         AvocatDashboardScreen(
