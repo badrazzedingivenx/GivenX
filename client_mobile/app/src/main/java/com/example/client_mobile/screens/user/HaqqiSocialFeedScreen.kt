@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,6 +83,17 @@ fun HaqqiSocialFeedScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val isError      by viewModel.isError.collectAsStateWithLifecycle()
 
+    var showStoryViewer by remember { mutableStateOf(false) }
+    var selectedStoryIndex by remember { mutableIntStateOf(0) }
+
+    if (showStoryViewer && stories != null) {
+        HaqqiStoryViewer(
+            stories = stories!!,
+            startIndex = selectedStoryIndex,
+            onDismiss = { showStoryViewer = false }
+        )
+    }
+
     Scaffold(
         topBar = { 
             StandardTopBar(
@@ -96,6 +108,12 @@ fun HaqqiSocialFeedScreen(
                         )
                     }
                 }
+            )
+        },
+        bottomBar = {
+            FeedNavBottomBar(
+                currentRoute = "feed_home",
+                onTabSelected = {} // Route handling would go here
             )
         },
         containerColor = Color.Transparent,
@@ -121,9 +139,13 @@ fun HaqqiSocialFeedScreen(
             ) {
                 // ── Stories row ───────────────────────────────────────────────
                 item(key = "stories") {
-                    StoriesSection(
+                    StoriesRow(
                         stories       = stories,
-                        modifier      = Modifier.background(Color.White)
+                        modifier      = Modifier.background(Color.White),
+                        onStoryClick  = { index ->
+                            selectedStoryIndex = index
+                            showStoryViewer = true
+                        }
                     )
                 }
 
@@ -205,149 +227,6 @@ fun HaqqiSocialFeedScreen(
     }
 }
 
-// ─── Stories Section ──────────────────────────────────────────────────────────
-
-@Composable
-private fun StoriesSection(
-    stories: List<StoryDto>?,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
-        LazyRow(
-            contentPadding      = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            when {
-                // Shimmer placeholders while loading
-                stories == null -> {
-                    items(5) { StoryShimmerItem() }
-                }
-                // Real stories
-                stories.isNotEmpty() -> {
-                    items(stories, key = { it.id }) { story ->
-                        StoryRingItem(story = story)
-                    }
-                }
-                // Empty — still show 5 shimmer so the row doesn't collapse
-                else -> {
-                    items(5) { StoryShimmerItem() }
-                }
-            }
-        }
-    }
-}
-
-// ─── Story Ring Item ──────────────────────────────────────────────────────────
-
-/** Circular avatar with animated Gold→Green gradient ring (drawn via Canvas). */
-@Composable
-private fun StoryRingItem(story: StoryDto) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier            = Modifier
-            .width(72.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication        = null,
-                onClick           = {}
-            )
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier         = Modifier.size(68.dp)
-        ) {
-            // Gradient ring drawn manually so we can use sweepGradient
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val strokePx = 3.dp.toPx()
-                val brush = Brush.sweepGradient(
-                    colors = listOf(RingGold, RingGreen, RingGold),
-                    center = Offset(size.width / 2f, size.height / 2f)
-                )
-                drawArc(
-                    brush      = brush,
-                    startAngle = 0f,
-                    sweepAngle = 360f,
-                    useCenter  = false,
-                    topLeft    = Offset(strokePx / 2, strokePx / 2),
-                    size       = Size(size.width - strokePx, size.height - strokePx),
-                    style      = Stroke(width = strokePx)
-                )
-            }
-
-            // Avatar image
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(CircleShape)
-                    .background(AppDarkGreen.copy(alpha = 0.07f))
-            ) {
-                if (story.lawyerAvatar.isNotBlank()) {
-                    AsyncImage(
-                        model             = story.lawyerAvatar,
-                        contentDescription = story.lawyerName,
-                        contentScale      = ContentScale.Crop,
-                        modifier          = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Icon(
-                            imageVector        = Icons.Default.Person,
-                            contentDescription = null,
-                            tint               = AppGoldColor,
-                            modifier           = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
-
-            // LIVE badge
-            if (story.isLive) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .offset(y = 2.dp)
-                        .background(Color.Red, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 5.dp, vertical = 1.dp)
-                ) {
-                    Text(
-                        "LIVE",
-                        color      = Color.White,
-                        fontSize   = 7.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text      = story.lawyerName.substringBefore(" ").take(10),
-            fontSize  = 10.sp,
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Medium,
-            color     = AppDarkGreen,
-            maxLines  = 1,
-            overflow  = TextOverflow.Ellipsis
-        )
-    }
-}
-
-// ─── Story Shimmer ────────────────────────────────────────────────────────────
-
-@Composable
-private fun StoryShimmerItem() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier            = Modifier.width(72.dp)
-    ) {
-        SkeletonBox(
-            modifier = Modifier.size(64.dp),
-            shape    = CircleShape
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        SkeletonBox(modifier = Modifier.width(48.dp).height(10.dp))
-    }
-}
 
 // ─── Legal Post Card ──────────────────────────────────────────────────────────
 
@@ -408,7 +287,7 @@ fun LegalPostCard(
                             fontWeight = FontWeight.Bold,
                             fontSize   = 15.sp,
                             color      = AppDarkGreen,
-                            fontFamily = FontFamily.Serif
+                            fontFamily = FontFamily.SansSerif
                         )
                     }
                 }
@@ -419,8 +298,8 @@ fun LegalPostCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text       = post.lawyerName,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            fontWeight = FontWeight.SemiBold,
                             fontSize   = 14.sp,
                             color      = AppDarkGreen,
                             maxLines   = 1,
@@ -439,9 +318,10 @@ fun LegalPostCard(
                     }
                     Text(
                         text      = formatTimeAgo(post.date),
-                        fontSize  = 11.sp,
-                        fontFamily = FontFamily.Serif,
-                        color     = Color.Gray
+                        fontSize  = 12.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Light,
+                        color     = Color.LightGray
                     )
                 }
 
@@ -465,7 +345,9 @@ fun LegalPostCard(
                     contentScale       = ContentScale.Crop,
                     modifier           = Modifier
                         .fillMaxWidth()
-                        .height(260.dp)
+                        .padding(horizontal = 16.dp)
+                        .aspectRatio(4f / 3f)
+                        .clip(RoundedCornerShape(12.dp))
                 )
             }
 
@@ -493,7 +375,7 @@ fun LegalPostCard(
                     Text(
                         text      = likeCount.toString(),
                         fontSize  = 13.sp,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.SemiBold,
                         color     = AppDarkGreen,
                         modifier  = Modifier.padding(end = 4.dp)
@@ -516,7 +398,7 @@ fun LegalPostCard(
                     Text(
                         text      = post.commentsCount.toString(),
                         fontSize  = 13.sp,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight.SemiBold,
                         color     = AppDarkGreen,
                         modifier  = Modifier.padding(end = 4.dp)
@@ -554,7 +436,7 @@ fun LegalPostCard(
                 ) {
                     Text(
                         text       = post.legalText,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = FontFamily.SansSerif,
                         fontSize   = 13.sp,
                         lineHeight = 20.sp,
                         color      = AppDarkGreen,
@@ -566,7 +448,7 @@ fun LegalPostCard(
                         Text(
                             text      = "Lire plus",
                             fontSize  = 12.sp,
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.SemiBold,
                             color     = RingGold,
                             modifier  = Modifier
@@ -648,14 +530,14 @@ private fun FeedErrorState(onRetry: () -> Unit) {
             )
             Text(
                 text       = "Connexion impossible",
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Bold,
                 fontSize   = 17.sp,
                 color      = AppDarkGreen
             )
             Text(
                 text      = "Vérifiez votre connexion internet\net réessayez.",
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.SansSerif,
                 fontSize   = 13.sp,
                 color      = Color.Gray
             )
@@ -669,7 +551,7 @@ private fun FeedErrorState(onRetry: () -> Unit) {
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Réessayer", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+                Text("Réessayer", fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -695,14 +577,14 @@ private fun FeedEmptyState() {
             )
             Text(
                 text       = "Aucune publication pour l'instant",
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Bold,
                 fontSize   = 16.sp,
                 color      = AppDarkGreen
             )
             Text(
                 text      = "Les avocats vérifiés partageront\nbientôt leurs conseils juridiques ici.",
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.SansSerif,
                 fontSize   = 13.sp,
                 color      = Color.Gray
             )

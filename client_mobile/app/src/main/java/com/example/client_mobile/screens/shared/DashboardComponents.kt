@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,10 +49,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
+import com.example.client_mobile.network.dto.StoryDto
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 val AppDarkGreen = Color(0xFF0F291E) // Deeper green for premium feel
 val AppGoldColor = Color(0xFFD4AF37) // Metallic Gold
+val RingGold = Color(0xFFC5A059) // Slightly softer gold for borders
 val AppGoldGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
     colors = listOf(Color(0xFFD4AF37), Color(0xFFC5A059))
 )
@@ -622,11 +631,211 @@ sealed class UserTab(val route: String, val icon: ImageVector, val label: String
     object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
 }
 
+// ─── StoriesRow (Moved from Feed) ───────────────────────────────────────────────────
+
+@Composable
+fun StoriesRow(
+    stories: List<StoryDto>?,
+    modifier: Modifier = Modifier,
+    onStoryClick: (Int) -> Unit = {}
+) {
+    Column(modifier = modifier.padding(vertical = 12.dp)) {
+        androidx.compose.foundation.lazy.LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            when {
+                stories == null -> {
+                    items(5) { StoryShimmerItem() }
+                }
+                stories.isNotEmpty() -> {
+                    itemsIndexed(stories, key = { _, it -> it.id }) { index, story ->
+                        StoryRingItem(story = story, onClick = { onStoryClick(index) })
+                    }
+                }
+                else -> {
+                    items(5) { StoryShimmerItem() }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StoryRingItem(story: StoryDto, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier            = Modifier
+            .width(72.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication        = null,
+                onClick           = onClick
+            )
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier         = Modifier.size(68.dp)
+        ) {
+            // Unseen Story Border Logic
+            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokePx = 3.dp.toPx()
+                val brush = if (story.hasUnseenStory) {
+                    androidx.compose.ui.graphics.Brush.sweepGradient(
+                        colors = listOf(AppGoldColor, RingGold, AppGoldColor),
+                        center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+                    )
+                } else {
+                    androidx.compose.ui.graphics.SolidColor(Color.Gray.copy(alpha = 0.3f))
+                }
+                
+                drawArc(
+                    brush      = brush,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter  = false,
+                    topLeft    = androidx.compose.ui.geometry.Offset(strokePx / 2, strokePx / 2),
+                    size       = androidx.compose.ui.geometry.Size(size.width - strokePx, size.height - strokePx),
+                    style      = androidx.compose.ui.graphics.drawscope.Stroke(width = strokePx)
+                )
+            }
+
+            // Avatar image
+            Box(
+                modifier = Modifier
+                    .size(58.dp)
+                    .clip(CircleShape)
+                    .background(AppDarkGreen.copy(alpha = 0.07f))
+            ) {
+                if (story.lawyerAvatar.isNotBlank()) {
+                    coil.compose.AsyncImage(
+                        model             = story.lawyerAvatar,
+                        contentDescription = story.lawyerName,
+                        contentScale      = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier          = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            imageVector        = Icons.Default.Person,
+                            contentDescription = null,
+                            tint               = AppGoldColor,
+                            modifier           = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+
+            if (story.isLive) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .offset(x = (-4).dp, y = (-4).dp)
+                        .background(Color(0xFFFF0000), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        "LIVE",
+                        color      = Color.White,
+                        fontSize   = 7.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        val parts = story.lawyerName.split(" ", limit = 2)
+        val prefix = if(parts.isNotEmpty()) parts[0] else "Me."
+        val lastName = if(parts.size > 1) parts[1] else ""
+        
+        Text(
+            text = buildAnnotatedString {
+                withStyle(SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal)) {
+                    append("$prefix ")
+                }
+                withStyle(SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)) {
+                    append(lastName)
+                }
+            },
+            fontSize  = 12.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+            color     = AppDarkGreen,
+            maxLines  = 1,
+            overflow  = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun StoryShimmerItem() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier            = Modifier.width(72.dp)
+    ) {
+        SkeletonBox(
+            modifier = Modifier.size(64.dp),
+            shape    = CircleShape
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        SkeletonBox(modifier = Modifier.width(48.dp).height(10.dp))
+    }
+}
+
 sealed class MainTab(val route: String, val icon: ImageVector, val label: String) {
     object Feed : MainTab("feed", Icons.Default.Home, "Fil")
     object Dashboard : MainTab("dashboard", Icons.Default.Layers, "Tableau")
     object Messages : MainTab("messages", Icons.AutoMirrored.Filled.Chat, "Messages")
     object Profile : MainTab("profile", Icons.Default.Person, "Profil")
+}
+
+sealed class FeedTab(val route: String, val icon: ImageVector, val label: String) {
+    object Home : FeedTab("feed_home", Icons.Default.Home, "Accueil")
+    object Search : FeedTab("feed_search", Icons.Default.Search, "Recherche")
+    object Add : FeedTab("feed_add", Icons.Default.Add, "Publier")
+    object Messages : FeedTab("feed_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
+    object Profile : FeedTab("feed_profile", Icons.Default.Person, "Profil")
+}
+
+@Composable
+fun FeedNavBottomBar(
+    currentRoute: String?,
+    onTabSelected: (FeedTab) -> Unit
+) {
+    val tabs = listOf(
+        FeedTab.Home,
+        FeedTab.Search,
+        FeedTab.Add,
+        FeedTab.Messages,
+        FeedTab.Profile
+    )
+    
+    Surface(
+        modifier = Modifier
+            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
+            .height(72.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = Color(0xFFF9F9F9), // Light gray background
+        shadowElevation = 12.dp,
+        border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.08f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tabs.forEach { tab ->
+                BottomNavLightItem(
+                    icon = tab.icon,
+                    label = tab.label,
+                    selected = currentRoute == tab.route,
+                    onClick = { onTabSelected(tab) }
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -827,6 +1036,57 @@ private fun BottomNavItem(
             Text(
                 text = label,
                 color = Color.White.copy(alpha = 0.5f),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomNavLightItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(if (selected) 1.15f else 1f)
+    val alpha by animateFloatAsState(if (selected) 1f else 0.5f)
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 4.dp, horizontal = 12.dp)
+            .scale(scale)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (selected) AppDarkGreen else Color.Gray,
+            modifier = Modifier.size(24.dp).graphicsLayer(alpha = alpha)
+        )
+        if (selected) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .size(4.dp)
+                    .clip(CircleShape)
+                    .background(AppDarkGreen)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = Color.Gray.copy(alpha = 0.5f),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Medium

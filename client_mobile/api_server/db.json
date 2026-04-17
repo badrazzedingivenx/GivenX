@@ -520,23 +520,36 @@
   "stories": [
     {
       "id": "story_001",
-      "lawyerName": "Jean Dupont",
+      "lawyerName": "Me. Jean Dupont",
       "lawyerAvatar": "https://randomuser.me/api/portraits/men/1.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500",
       "expiresAt": "2024-06-05T10:00:00Z",
       "isLive": false,
+      "hasUnseenStory": true,
       "views": 120,
       "timeLeft": "5h"
     },
     {
       "id": "story_002",
-      "lawyerName": "Marie Legrand",
+      "lawyerName": "Me. Marie Legrand",
       "lawyerAvatar": "https://randomuser.me/api/portraits/women/2.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=500",
       "expiresAt": "2024-06-05T12:00:00Z",
       "isLive": true,
+      "hasUnseenStory": true,
       "views": 85,
       "timeLeft": "Live"
+    },
+    {
+      "id": "story_003",
+      "lawyerName": "Me. Yassine Alaoui",
+      "lawyerAvatar": "https://randomuser.me/api/portraits/men/3.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1454165833767-131f72a6a9d8?w=500",
+      "expiresAt": "2024-06-05T13:00:00Z",
+      "isLive": false,
+      "hasUnseenStory": false,
+      "views": 44,
+      "timeLeft": "2h"
     }
   ],
   "reels": [

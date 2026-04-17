@@ -14,15 +14,16 @@ data class SaveConsultationRequest(
 // Matches: GET /api/stories
 // [{"id":"story_001","lawyerName":"Me. Yassine Alaoui","lawyerAvatar":"...","imageUrl":"...","expiresAt":"..."}]
 data class StoryDto(
-    @SerializedName("id")           val id:           String  = "",
-    @SerializedName("lawyerName")   val lawyerName:   String  = "",
-    @SerializedName("lawyerAvatar") val lawyerAvatar: String  = "",
-    @SerializedName("imageUrl")     val imageUrl:     String  = "",
-    @SerializedName("expiresAt")    val expiresAt:    String  = "",
-    @SerializedName("isLive")       val isLive:       Boolean = false,
+    @SerializedName("id")             val id:             String  = "",
+    @SerializedName("lawyerName")     val lawyerName:     String  = "",
+    @SerializedName("lawyerAvatar")   val lawyerAvatar:   String  = "",
+    @SerializedName("imageUrl")       val imageUrl:       String  = "",
+    @SerializedName("expiresAt")      val expiresAt:      String  = "",
+    @SerializedName("isLive")         val isLive:         Boolean = false,
+    @SerializedName("hasUnseenStory") val hasUnseenStory: Boolean = false,
     // Analytics fields (defaults apply if absent)
-    @SerializedName("views")        val views:        Int     = 0,
-    @SerializedName("timeLeft")     val timeLeft:     String  = ""
+    @SerializedName("views")          val views:          Int     = 0,
+    @SerializedName("timeLeft")       val timeLeft:       String  = ""
 )
 
 // ─── Reel ─────────────────────────────────────────────────────────────────────
