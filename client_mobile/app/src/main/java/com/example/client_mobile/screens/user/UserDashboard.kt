@@ -262,8 +262,8 @@ internal fun UserCasesTabContent(
                 DashCard {
                     SectionHeader(
                         title = "État du Dossier",
-                        actionText = "Voir tout",
-                        onActionClick = { onNavigateToDossier(d.id) }
+                        actionLabel = "Voir tout",
+                        onAction = { onNavigateToDossier(d.id) }
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -305,7 +305,7 @@ internal fun UserCasesTabContent(
         }
 
         // ── Document Vault ─────────────────────────────────────────────
-        SectionHeader(title = "Coffre-fort Numérique", actionText = "Ajouter", onActionClick = onNavigateToDocuments)
+        SectionHeader(title = "Coffre-fort Numérique", actionLabel = "Ajouter", onAction = onNavigateToDocuments)
         DashCard {
             documents.forEachIndexed { index, doc ->
                 DocumentVaultItem(doc = doc)

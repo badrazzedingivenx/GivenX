@@ -174,7 +174,7 @@ fun LawyerDetailScreen(
                 item { LocationCard(city = lawyer.city) }
 
                 // ── Reviews ───────────────────────────────────────────────────
-                item { SectionHeader(title = "Avis Clients", actionText = "${lawyer.reviewCount} avis") }
+                item { SectionHeader(title = "Avis Clients", actionLabel = "${lawyer.reviewCount} avis") }
                 item {
                     DashCard {
                         if (sampleReviews.isEmpty()) {
