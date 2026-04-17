@@ -110,12 +110,6 @@ fun HaqqiSocialFeedScreen(
                 }
             )
         },
-        bottomBar = {
-            FeedNavBottomBar(
-                currentRoute = "feed_home",
-                onTabSelected = {} // Route handling would go here
-            )
-        },
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0,0,0,0)
     ) { localPadding ->

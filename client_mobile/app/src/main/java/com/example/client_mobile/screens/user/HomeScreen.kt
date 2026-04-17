@@ -91,40 +91,62 @@ fun MainDashboardHost(
         showBackground = false,
         topBar = {}, // Empty to allow per-screen detailed headers
         bottomBar = {
-            MainNavBottomBar(currentRoute = current) { tab ->
-                when (tab) {
-                    is MainTab.Profile -> onProfile()
-                    else -> {
-                        innerNav.navigate(tab.route) {
-                            popUpTo(MainTab.Feed.route) { inclusive = false }
-                            launchSingleTop = true
-                            restoreState = true
+            HaqqiPremiumBottomBar(
+                currentRoute = current,
+                onTabSelected = { tab ->
+                    when (tab) {
+                        is MainTab.Profile -> onProfile()
+                        else -> {
+                            innerNav.navigate(tab.route) {
+                                popUpTo(MainTab.Reels.route) { inclusive = false }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     }
+                },
+                onReelsClick = {
+                    innerNav.navigate(MainTab.Reels.route) {
+                        popUpTo(MainTab.Reels.route) { inclusive = false }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
-            }
+            )
         }
     ) { padding ->
         NavHost(
             navController    = innerNav,
-            startDestination = MainTab.Feed.route,
+            startDestination = MainTab.Reels.route,
             modifier         = Modifier.fillMaxSize()
         ) {
             // ── Tab 1: Social Feed (Primary) ──────────────────────────────────
-            composable(MainTab.Feed.route) {
+            composable(MainTab.Accueil.route) {
                 HaqqiSocialFeedScreen(
-                    paddingValues = padding, // Pass padding so it can be applied securely to final item spacer
+                    paddingValues = padding,
                     isLawyer      = isLawyer,
                     onNavigateToNotifications = onNavigateToNotifications,
-                    onCreatePost  = {
-                        // Lawyer create post → navigate to Creator Studio
-                        onNavigateToCreator()
-                    }
+                    onCreatePost  = { onNavigateToCreator() }
                 )
             }
 
-            // ── Tab 2: Role-Specific Dashboard ────────────────────────────────
-            composable(MainTab.Dashboard.route) {
+            // ── Tab 2: Messages ───────────────────────────────────────────────
+            composable(MainTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer      = isLawyer,
+                    paddingValues = padding,
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+
+            // ── Tab 3: Reels (center FAB destination) ─────────────────────────
+            composable(MainTab.Reels.route) {
+                LegalReelsScreen(paddingValues = padding)
+            }
+
+            // ── Tab 4: Dossiers (role-specific dashboard) ─────────────────────
+            composable(MainTab.Dossiers.route) {
                 if (isLawyer) {
                     LawyerDashboardHost(
                         paddingValues             = padding,
@@ -152,19 +174,8 @@ fun MainDashboardHost(
                 }
             }
 
-            // ── Tab 3: Messages ───────────────────────────────────────────────
-            composable(MainTab.Messages.route) {
-                MessagesInboxScreen(
-                    isLawyer      = isLawyer,
-                    paddingValues = padding,
-                    onNavigateToNotifications = onNavigateToNotifications,
-                    onNavigateToChat = onNavigateToChat
-                )
-            }
-
-            // ── Tab 4: Profile (navigates out of inner nav) ───────────────────
+            // ── Tab 5: Profile (navigates out of inner nav) ───────────────────
             composable(MainTab.Profile.route) {
-                // profile is handled by outer nav; placeholder box keeps state
                 Box(Modifier.fillMaxSize())
             }
         }

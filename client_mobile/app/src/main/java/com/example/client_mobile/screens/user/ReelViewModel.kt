@@ -46,10 +46,12 @@ class ReelViewModel : ViewModel() {
                     LegalReel(
                         id         = uiId,
                         lawyerName = dto.lawyerName,
-                        specialty  = "",
+                        specialty  = dto.title,
                         title      = dto.caption,
                         likes      = dto.likes,
-                        views      = "",
+                        comments   = (dto.likes * 0.07).toInt(),
+                        shares     = (dto.likes * 0.035).toInt(),
+                        views      = if (dto.views > 0) "${dto.views}" else "",
                         videoUrl   = dto.videoUrl
                     )
                 }
