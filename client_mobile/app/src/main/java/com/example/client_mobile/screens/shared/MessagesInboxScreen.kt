@@ -58,6 +58,7 @@ private val SectionLabelColor    = Color(0xFF4A5D55)    // Muted green-gray
 fun MessagesInboxScreen(
     isLawyer: Boolean,
     paddingValues: PaddingValues = PaddingValues(),
+    unreadCount: Int = 0,
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
     conversationViewModel: ConversationViewModel = viewModel()
@@ -76,11 +77,6 @@ fun MessagesInboxScreen(
         }
     }
 
-    val notifUnreadCount = if (isLawyer)
-        NotificationRepository.lawyerNotifications.count { !it.isRead }
-    else
-        NotificationRepository.userNotifications.count { !it.isRead }
-
     Scaffold(
         topBar = {
             StandardTopBar(
@@ -89,9 +85,9 @@ fun MessagesInboxScreen(
                     IconButton(onClick = onNavigateToNotifications) {
                         BadgedBox(
                             badge = {
-                                if (notifUnreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
+                                if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
                                     Text(
-                                        text       = if (notifUnreadCount > 99) "99+" else "$notifUnreadCount",
+                                        text       = if (unreadCount > 99) "99+" else "$unreadCount",
                                         color      = Color.White,
                                         fontSize   = 9.sp,
                                         fontWeight = FontWeight.Bold

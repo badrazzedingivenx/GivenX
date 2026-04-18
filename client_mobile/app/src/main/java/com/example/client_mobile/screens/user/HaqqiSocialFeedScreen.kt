@@ -72,6 +72,7 @@ private val FeedBackground = Color(0xFFF7F1EA)  // Uniform cream
 fun HaqqiSocialFeedScreen(
     paddingValues: PaddingValues = PaddingValues(),
     isLawyer: Boolean = TokenManager.getUserType() == "lawyer",
+    unreadCount: Int = 0,
     onNavigateToNotifications: () -> Unit = {},
     onCreatePost: () -> Unit = {},
     viewModel: SocialFeedViewModel = viewModel()
@@ -93,11 +94,6 @@ fun HaqqiSocialFeedScreen(
             onDismiss = { showStoryViewer = false }
         )
     }
-
-    val unreadCount = if (isLawyer)
-        NotificationRepository.lawyerNotifications.count { !it.isRead }
-    else
-        NotificationRepository.userNotifications.count { !it.isRead }
 
     Scaffold(
         topBar = { 

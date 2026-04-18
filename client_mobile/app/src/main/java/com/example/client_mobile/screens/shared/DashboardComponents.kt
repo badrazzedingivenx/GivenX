@@ -843,7 +843,7 @@ private fun createBarNotchShape(fabRadiusPx: Float, notchMarginPx: Float): Shape
  * Premium bottom bar with a gold center FAB (Reels) and smooth notch cutout.
  * Layout: [Accueil] [Messages] ── ●Reels● ── [Dossiers] [Profil]
  *
- * Lawyer mode: long-press the center FAB to reveal Camera + Creator Studio mini-FABs.
+ * Lawyer mode: double-click the center FAB to reveal Camera + Creator Studio mini-FABs.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1001,7 +1001,7 @@ fun HaqqiPremiumBottomBar(
                             expanded = false
                             onReelsClick()
                         },
-                        onLongClick = if (isLawyer) {
+                        onDoubleClick = if (isLawyer) {
                             { expanded = !expanded }
                         } else null
                     ),

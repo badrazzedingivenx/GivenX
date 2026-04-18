@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -194,6 +195,7 @@ fun LegalReelsScreen(
             isMuted = isMuted,
             onToggleMute = { isMuted = !isMuted },
             modifier = Modifier
+                .zIndex(10f)
                 .statusBarsPadding()
                 .align(Alignment.TopCenter)
         )

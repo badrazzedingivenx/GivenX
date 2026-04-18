@@ -62,6 +62,7 @@ data class TaskItem(val label: String, val dueDate: String, val isDone: Boolean)
 @Composable
 fun LawyerDashboardHost(
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    unreadCount: Int = 0,
     fullName: String = "",
     speciality: String = "",
     profileImageUri: Uri? = null,
@@ -127,7 +128,7 @@ fun LawyerDashboardHost(
                 title = "MON TABLEAU",
                 actions = {
                     TopBarActions(
-                        unreadCount = lawyerStats?.newRequests ?: 0,
+                        unreadCount = unreadCount,
                         photoUrl = null,
                         initials = displayName.firstOrNull()?.toString(),
                         onNotifications = onNavigateToNotifications,

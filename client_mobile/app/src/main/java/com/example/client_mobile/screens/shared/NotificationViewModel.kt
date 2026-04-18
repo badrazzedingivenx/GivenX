@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.dto.NotificationDto
 import com.example.client_mobile.network.TokenManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +28,17 @@ class NotificationViewModel : ViewModel() {
     init {
         fetchUnreadCount()
         fetch()
+        startPolling()
+    }
+
+    /** Polls the server every 30 seconds for the latest unread count. */
+    private fun startPolling() {
+        viewModelScope.launch {
+            while (true) {
+                delay(30_000L)
+                fetchUnreadCount()
+            }
+        }
     }
 
     fun fetchUnreadCount() {

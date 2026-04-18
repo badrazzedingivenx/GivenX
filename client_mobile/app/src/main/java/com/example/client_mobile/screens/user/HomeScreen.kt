@@ -43,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.screens.lawyer.CameraCaptureScreen
 import com.example.client_mobile.screens.lawyer.LawyerCreatorManagementScreen
 import com.example.client_mobile.screens.lawyer.LawyerDashboardHost
 
@@ -97,39 +98,42 @@ fun MainDashboardHost(
         showBackground = false,
         topBar = {}, // Empty to allow per-screen detailed headers
         bottomBar = {
-            HaqqiPremiumBottomBar(
-                currentRoute = current,
-                onTabSelected = { tab ->
-                    when (tab) {
-                        is MainTab.Profile -> onProfile()
-                        else -> {
-                            innerNav.navigate(tab.route) {
-                                popUpTo(MainTab.Reels.route) { inclusive = false }
-                                launchSingleTop = true
-                                restoreState = true
+            // Hide bottom bar on full-screen Camera
+            if (current != "CameraCapture") {
+                HaqqiPremiumBottomBar(
+                    currentRoute = current,
+                    onTabSelected = { tab ->
+                        when (tab) {
+                            is MainTab.Profile -> onProfile()
+                            else -> {
+                                innerNav.navigate(tab.route) {
+                                    popUpTo(MainTab.Reels.route) { inclusive = false }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         }
+                    },
+                    onReelsClick = {
+                        innerNav.navigate(MainTab.Reels.route) {
+                            popUpTo(MainTab.Reels.route) { inclusive = false }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    isLawyer = isLawyer,
+                    onRecordReel = {
+                        innerNav.navigate("CameraCapture") {
+                            launchSingleTop = true
+                        }
+                    },
+                    onCreatorStudio = {
+                        innerNav.navigate("LawyerCreatorStudio") {
+                            launchSingleTop = true
+                        }
                     }
-                },
-                onReelsClick = {
-                    innerNav.navigate(MainTab.Reels.route) {
-                        popUpTo(MainTab.Reels.route) { inclusive = false }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                isLawyer = isLawyer,
-                onRecordReel = {
-                    innerNav.navigate("LawyerCreatorStudio") {
-                        launchSingleTop = true
-                    }
-                },
-                onCreatorStudio = {
-                    innerNav.navigate("LawyerCreatorStudio") {
-                        launchSingleTop = true
-                    }
-                }
-            )
+                )
+            }
         }
     ) { padding ->
         NavHost(
@@ -142,6 +146,7 @@ fun MainDashboardHost(
                 HaqqiSocialFeedScreen(
                     paddingValues = padding,
                     isLawyer      = isLawyer,
+                    unreadCount   = unreadCount,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onCreatePost  = {
                         innerNav.navigate("LawyerCreatorStudio") {
@@ -156,6 +161,7 @@ fun MainDashboardHost(
                 MessagesInboxScreen(
                     isLawyer      = isLawyer,
                     paddingValues = padding,
+                    unreadCount   = unreadCount,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToChat = onNavigateToChat
                 )
@@ -163,7 +169,16 @@ fun MainDashboardHost(
 
             // ── Tab 3: Reels (center FAB destination) ─────────────────────────
             composable(MainTab.Reels.route) {
-                LegalReelsScreen(paddingValues = padding)
+                LegalReelsScreen(
+                    paddingValues = padding,
+                    onBack = {
+                        if (!innerNav.popBackStack()) {
+                            innerNav.navigate(MainTab.Accueil.route) {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                )
             }
 
             // ── Tab 4: Dossiers (role-specific dashboard) ─────────────────────
@@ -171,6 +186,7 @@ fun MainDashboardHost(
                 if (isLawyer) {
                     LawyerDashboardHost(
                         paddingValues             = padding,
+                        unreadCount               = unreadCount,
                         onNavigateToProfile       = onNavigateToLawyerProfile,
                         onNavigateToNotifications = onNavigateToNotifications,
                         onNavigateToChat          = onNavigateToChat,
@@ -185,6 +201,7 @@ fun MainDashboardHost(
                 } else {
                     UserDashboardHost(
                         paddingValues             = padding,
+                        unreadCount               = unreadCount,
                         onNavigateToProfile       = onNavigateToUserProfile,
                         onNavigateToAbout         = onNavigateToAbout,
                         onNavigateToLawyerDetail  = onNavigateToLawyerDetail,
@@ -208,6 +225,18 @@ fun MainDashboardHost(
                 LawyerCreatorManagementScreen(
                     onBack = { innerNav.popBackStack() }
                 )
+            }
+
+            // ── Camera Capture (Instagram-style) ────────────────────────
+            composable("CameraCapture") {
+                CameraCaptureScreen(
+                    onClose = { innerNav.popBackStack() },
+                    onNavigateToLive = {
+                        // Live is handled as an inline overlay inside LawyerDashboard;
+                        // navigate to Dossiers tab where the live flow is hosted.
+                        innerNav.popBackStack()
+                    }
+                )
             }        }
     }
 }
@@ -217,6 +246,7 @@ fun MainDashboardHost(
 @Composable
 fun UserDashboardHost(
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    unreadCount: Int = 0,
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
@@ -258,7 +288,7 @@ fun UserDashboardHost(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
             TopBarActions(
-                unreadCount     = NotificationRepository.userNotifications.count(),
+                unreadCount     = unreadCount,
                 photoUrl        = photoUrl,
                 initials        = initials,
                 onNotifications = onNavigateToNotifications,
