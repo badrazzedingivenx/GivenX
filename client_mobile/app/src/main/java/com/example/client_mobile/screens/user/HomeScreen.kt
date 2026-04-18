@@ -43,6 +43,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.screens.lawyer.CameraCaptureScreen
+import com.example.client_mobile.screens.lawyer.LawyerCreatorManagementScreen
 import com.example.client_mobile.screens.lawyer.LawyerDashboardHost
 
 
@@ -85,59 +87,121 @@ fun MainDashboardHost(
     val backEntry by innerNav.currentBackStackEntryAsState()
     val current   = backEntry?.destination?.route
 
+    // Global notification VM — created here so init{} fires immediately after login
+    // and the unread count persists across all tab switches.
+    val notificationViewModel: NotificationViewModel = viewModel()
+    val unreadCount by notificationViewModel.unreadCount.collectAsStateWithLifecycle()
+
     val onProfile = if (isLawyer) onNavigateToLawyerProfile else onNavigateToUserProfile
 
     AppScaffold(
         showBackground = false,
         topBar = {}, // Empty to allow per-screen detailed headers
         bottomBar = {
-            MainNavBottomBar(currentRoute = current) { tab ->
-                when (tab) {
-                    is MainTab.Profile -> onProfile()
-                    else -> {
-                        innerNav.navigate(tab.route) {
-                            popUpTo(MainTab.Feed.route) { inclusive = false }
+            // Hide bottom bar on full-screen Camera
+            if (current != "CameraCapture") {
+                HaqqiPremiumBottomBar(
+                    currentRoute = current,
+                    onTabSelected = { tab ->
+                        when (tab) {
+                            is MainTab.Profile -> onProfile()
+                            else -> {
+                                innerNav.navigate(tab.route) {
+                                    popUpTo(MainTab.Reels.route) { inclusive = false }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        }
+                    },
+                    onReelsClick = {
+                        innerNav.navigate(MainTab.Reels.route) {
+                            popUpTo(MainTab.Reels.route) { inclusive = false }
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    isLawyer = isLawyer,
+                    onRecordReel = {
+                        innerNav.navigate("CameraCapture") {
+                            launchSingleTop = true
+                        }
+                    },
+                    onCreatorStudio = {
+                        innerNav.navigate("LawyerCreatorStudio") {
+                            launchSingleTop = true
+                        }
                     }
-                }
+                )
             }
         }
     ) { padding ->
         NavHost(
             navController    = innerNav,
-            startDestination = MainTab.Feed.route,
+            startDestination = MainTab.Reels.route,
             modifier         = Modifier.fillMaxSize()
         ) {
             // ── Tab 1: Social Feed (Primary) ──────────────────────────────────
-            composable(MainTab.Feed.route) {
+            composable(MainTab.Accueil.route) {
                 HaqqiSocialFeedScreen(
-                    paddingValues = padding, // Pass padding so it can be applied securely to final item spacer
+                    paddingValues = padding,
                     isLawyer      = isLawyer,
+                    unreadCount   = unreadCount,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onCreatePost  = {
-                        // Lawyer create post → navigate to Creator Studio
-                        onNavigateToCreator()
+                        innerNav.navigate("LawyerCreatorStudio") {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
 
-            // ── Tab 2: Role-Specific Dashboard ────────────────────────────────
-            composable(MainTab.Dashboard.route) {
+            // ── Tab 2: Messages ───────────────────────────────────────────────
+            composable(MainTab.Messages.route) {
+                MessagesInboxScreen(
+                    isLawyer      = isLawyer,
+                    paddingValues = padding,
+                    unreadCount   = unreadCount,
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+
+            // ── Tab 3: Reels (center FAB destination) ─────────────────────────
+            composable(MainTab.Reels.route) {
+                LegalReelsScreen(
+                    paddingValues = padding,
+                    onBack = {
+                        if (!innerNav.popBackStack()) {
+                            innerNav.navigate(MainTab.Accueil.route) {
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                )
+            }
+
+            // ── Tab 4: Dossiers (role-specific dashboard) ─────────────────────
+            composable(MainTab.Dossiers.route) {
                 if (isLawyer) {
                     LawyerDashboardHost(
                         paddingValues             = padding,
+                        unreadCount               = unreadCount,
                         onNavigateToProfile       = onNavigateToLawyerProfile,
                         onNavigateToNotifications = onNavigateToNotifications,
                         onNavigateToChat          = onNavigateToChat,
                         onNavigateToRequests      = onNavigateToRequests,
                         onNavigateToPayments      = onNavigateToPayments,
-                        onNavigateToCreator       = onNavigateToCreator
+                        onNavigateToCreator       = {
+                            innerNav.navigate("LawyerCreatorStudio") {
+                                launchSingleTop = true
+                            }
+                        }
                     )
                 } else {
                     UserDashboardHost(
                         paddingValues             = padding,
+                        unreadCount               = unreadCount,
                         onNavigateToProfile       = onNavigateToUserProfile,
                         onNavigateToAbout         = onNavigateToAbout,
                         onNavigateToLawyerDetail  = onNavigateToLawyerDetail,
@@ -152,22 +216,28 @@ fun MainDashboardHost(
                 }
             }
 
-            // ── Tab 3: Messages ───────────────────────────────────────────────
-            composable(MainTab.Messages.route) {
-                MessagesInboxScreen(
-                    isLawyer      = isLawyer,
-                    paddingValues = padding,
-                    onNavigateToNotifications = onNavigateToNotifications,
-                    onNavigateToChat = onNavigateToChat
+            // ── Tab 5: Profile (navigates out of inner nav) ───────────────────
+            composable(MainTab.Profile.route) {
+                Box(Modifier.fillMaxSize())
+            }
+            // ── Creator Studio (inside shell so bottom bar stays visible) ────
+            composable("LawyerCreatorStudio") {
+                LawyerCreatorManagementScreen(
+                    onBack = { innerNav.popBackStack() }
                 )
             }
 
-            // ── Tab 4: Profile (navigates out of inner nav) ───────────────────
-            composable(MainTab.Profile.route) {
-                // profile is handled by outer nav; placeholder box keeps state
-                Box(Modifier.fillMaxSize())
-            }
-        }
+            // ── Camera Capture (Instagram-style) ────────────────────────
+            composable("CameraCapture") {
+                CameraCaptureScreen(
+                    onClose = { innerNav.popBackStack() },
+                    onNavigateToLive = {
+                        // Live is handled as an inline overlay inside LawyerDashboard;
+                        // navigate to Dossiers tab where the live flow is hosted.
+                        innerNav.popBackStack()
+                    }
+                )
+            }        }
     }
 }
 
@@ -176,6 +246,7 @@ fun MainDashboardHost(
 @Composable
 fun UserDashboardHost(
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    unreadCount: Int = 0,
     onNavigateToProfile: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToLawyerDetail: (String) -> Unit = {},
@@ -217,7 +288,7 @@ fun UserDashboardHost(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
             TopBarActions(
-                unreadCount     = NotificationRepository.userNotifications.count(),
+                unreadCount     = unreadCount,
                 photoUrl        = photoUrl,
                 initials        = initials,
                 onNotifications = onNavigateToNotifications,

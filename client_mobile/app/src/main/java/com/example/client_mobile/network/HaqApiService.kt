@@ -248,6 +248,10 @@ interface HaqApiService {
     @GET("notifications")
     suspend fun getNotifications(): Response<ApiResponse<List<com.example.client_mobile.network.dto.NotificationDto>>>
 
+    /** GET /notifications/unread-count — quick unread badge count. */
+    @GET("notifications/unread-count")
+    suspend fun getUnreadCount(): Response<ApiResponse<com.example.client_mobile.network.dto.UnreadCountDto>>
+
     // ── Payments ─────────────────────────────────────────────────────────────
 
     /** GET /payments?clientId={id} or /payments?lawyerId={id} — returns payments. */

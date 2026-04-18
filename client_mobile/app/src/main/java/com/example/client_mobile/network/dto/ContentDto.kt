@@ -90,6 +90,11 @@ data class NotificationDto(
     @SerializedName("type")        val type:        String  = "CASE_UPDATE"
 )
 
+// Matches: GET /api/notifications/unread-count
+data class UnreadCountDto(
+    @SerializedName("unreadCount") val unreadCount: Int = 0
+)
+
 // ─── Live ─────────────────────────────────────────────────────────────────────
 // Matches: GET /api/lives
 // [{"id":"live_001","title":"Live: Droit de travail...","lawyerName":"...","viewersCount":124,"thumbnail":"..."}]

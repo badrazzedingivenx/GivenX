@@ -7,10 +7,17 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -26,20 +33,28 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -80,6 +95,7 @@ val StatusGray      = Color(0xFF4B5563)   // Gray-600
 val StatusGrayBg    = Color(0xFFF3F4F6)   // Gray-100
 val AppGoldBg       = Color(0xFFC5A059).copy(alpha = 0.12f)
 val AppSubtitleGray = Color(0xFF4A4A4A)
+val AppCreamBg      = Color(0xFFF7F1EA)
 
 // ─── Base Screen Template ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,34 +109,15 @@ fun AppScaffold(
     showBackground: Boolean = true,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        if (showBackground) {
-            // Layer 1: Background Image
-            Image(
-                painter = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            // Layer 2: White Overlay (Only affects the background image)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White.copy(alpha = 0.20f))
-            )
-        }
-
-        // Layer 3: UI Content (Above the overlay)
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = topBar,
-            bottomBar = bottomBar,
-            floatingActionButton = floatingActionButton,
-            snackbarHost = snackbarHost,
-            containerColor = if (showBackground) Color.Transparent else MaterialTheme.colorScheme.background,
-            content = content
-        )
-    }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = topBar,
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        snackbarHost = snackbarHost,
+        containerColor = AppCreamBg,
+        content = content
+    )
 }
 
 /**
@@ -342,8 +339,9 @@ fun StandardTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    val containerHeight = 120.dp
-    
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val containerHeight = 44.dp + statusBarTop
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -353,8 +351,8 @@ fun StandardTopBar(
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color.Transparent,
-            shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
-            shadowElevation = 10.dp
+            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+            shadowElevation = 8.dp
         ) {
             Box(
                 modifier = Modifier
@@ -364,20 +362,20 @@ fun StandardTopBar(
                 // Subtle decorative element
                 Box(
                     modifier = Modifier
-                        .size(150.dp)
-                        .offset(x = (-50).dp, y = (-50).dp)
+                        .size(100.dp)
+                        .offset(x = (-40).dp, y = (-40).dp)
                         .background(Color.White.copy(alpha = 0.03f), CircleShape)
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 16.dp, top = 20.dp, end = 16.dp)
+                        .padding(start = 16.dp, top = statusBarTop, end = 16.dp)
                 ) {
                     // Navigation Icon (Left)
                     if (onBack != null) {
                         Surface(
-                            modifier = Modifier.align(Alignment.CenterStart).padding(top = 20.dp),
+                            modifier = Modifier.align(Alignment.CenterStart),
                             shape = CircleShape,
                             color = Color.White.copy(alpha = 0.1f)
                         ) {
@@ -389,7 +387,7 @@ fun StandardTopBar(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -397,19 +395,19 @@ fun StandardTopBar(
 
                     // Center Content (Logo/Title)
                     Box(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxHeight(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(modifier = Modifier.padding(top = 20.dp)) {
-                            title()
-                        }
+                        title()
                     }
 
                     // Actions (Right)
                     Row(
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(top = 20.dp),
+                        modifier = Modifier.align(Alignment.CenterEnd),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         actions()
                     }
@@ -430,7 +428,9 @@ fun StandardTopBar(
             Image(
                 painter = painterResource(id = R.drawable.simple_app),
                 contentDescription = "GivenX Logo",
-                modifier = Modifier.height(70.dp),
+                modifier = Modifier
+                    .fillMaxHeight(0.85f)
+                    .wrapContentWidth(),
                 contentScale = ContentScale.Fit
             )
         },
@@ -458,7 +458,7 @@ fun RowScope.TopBarActions(
             badge = {
                 if (unreadCount > 0) Badge(containerColor = Color(0xFFD32F2F)) {
                     Text(
-                        text       = if (unreadCount > 9) "9+" else "$unreadCount",
+                        text       = if (unreadCount > 99) "99+" else "$unreadCount",
                         color      = Color.White,
                         fontSize   = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -491,7 +491,9 @@ fun StandardTopBar(
                 Image(
                     painter = painterResource(id = R.drawable.simple_app),
                     contentDescription = "GivenX Logo",
-                    modifier = Modifier.height(70.dp),
+                    modifier = Modifier
+                        .fillMaxHeight(0.85f)
+                        .wrapContentWidth(),
                     contentScale = ContentScale.Fit
                 )
             } else {
@@ -786,313 +788,293 @@ private fun StoryShimmerItem() {
     }
 }
 
+// ─── Premium Bottom Bar ───────────────────────────────────────────────────────
+private val SlateGrey   = Color(0xFF8E8E93)
+private val ForestGreen = Color(0xFF1A3C34)
+private val FabGold     = Color(0xFFC5A059)
+
 sealed class MainTab(val route: String, val icon: ImageVector, val label: String) {
-    object Feed : MainTab("feed", Icons.Default.Home, "Fil")
-    object Dashboard : MainTab("dashboard", Icons.Default.Layers, "Tableau")
-    object Messages : MainTab("messages", Icons.AutoMirrored.Filled.Chat, "Messages")
-    object Profile : MainTab("profile", Icons.Default.Person, "Profil")
+    object Accueil  : MainTab("feed",     Icons.Default.Home,                   "Accueil")
+    object Messages : MainTab("messages", Icons.AutoMirrored.Filled.Chat,       "Messages")
+    object Reels    : MainTab("reels",    Icons.Default.Movie,                  "Reels")
+    object Dossiers : MainTab("dossiers", Icons.Default.Work,                   "Dossiers")
+    object Profile  : MainTab("profile",  Icons.Default.Person,                 "Profil")
 }
 
-sealed class FeedTab(val route: String, val icon: ImageVector, val label: String) {
-    object Home : FeedTab("feed_home", Icons.Default.Home, "Accueil")
-    object Search : FeedTab("feed_search", Icons.Default.Search, "Recherche")
-    object Add : FeedTab("feed_add", Icons.Default.Add, "Publier")
-    object Messages : FeedTab("feed_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
-    object Profile : FeedTab("feed_profile", Icons.Default.Person, "Profil")
-}
+/**
+ * Creates a [Shape] with a smooth concave notch centered at the top edge,
+ * sized to cradle the center FAB.
+ */
+private fun createBarNotchShape(fabRadiusPx: Float, notchMarginPx: Float): Shape {
+    return object : Shape {
+        override fun createOutline(
+            size: androidx.compose.ui.geometry.Size,
+            layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+            density: androidx.compose.ui.unit.Density
+        ): Outline {
+            val cx = size.width / 2f
+            val totalR = fabRadiusPx + notchMarginPx
+            val halfW = totalR + notchMarginPx * 2
+            val depth = totalR
 
-@Composable
-fun FeedNavBottomBar(
-    currentRoute: String?,
-    onTabSelected: (FeedTab) -> Unit
-) {
-    val tabs = listOf(
-        FeedTab.Home,
-        FeedTab.Search,
-        FeedTab.Add,
-        FeedTab.Messages,
-        FeedTab.Profile
-    )
-    
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = Color(0xFFF9F9F9), // Light gray background
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEach { tab ->
-                BottomNavLightItem(
-                    icon = tab.icon,
-                    label = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick = { onTabSelected(tab) }
+            return Outline.Generic(Path().apply {
+                moveTo(0f, 0f)
+                lineTo(cx - halfW, 0f)
+                cubicTo(
+                    cx - halfW + notchMarginPx * 2, 0f,
+                    cx - totalR, depth * 0.85f,
+                    cx, depth
                 )
-            }
+                cubicTo(
+                    cx + totalR, depth * 0.85f,
+                    cx + halfW - notchMarginPx * 2, 0f,
+                    cx + halfW, 0f
+                )
+                lineTo(size.width, 0f)
+                lineTo(size.width, size.height)
+                lineTo(0f, size.height)
+                close()
+            })
         }
     }
 }
 
+/**
+ * Premium bottom bar with a gold center FAB (Reels) and smooth notch cutout.
+ * Layout: [Accueil] [Messages] ── ●Reels● ── [Dossiers] [Profil]
+ *
+ * Lawyer mode: double-click the center FAB to reveal Camera + Creator Studio mini-FABs.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MainNavBottomBar(
+fun HaqqiPremiumBottomBar(
     currentRoute: String?,
-    onTabSelected: (MainTab) -> Unit
+    onTabSelected: (MainTab) -> Unit,
+    onReelsClick: () -> Unit,
+    isLawyer: Boolean = false,
+    onRecordReel: () -> Unit = {},
+    onCreatorStudio: () -> Unit = {}
 ) {
-    val tabs = listOf(
-        MainTab.Feed,
-        MainTab.Dashboard,
-        MainTab.Messages,
-        MainTab.Profile
-    )
-    
-    Surface(
+    val density = LocalDensity.current
+    val fabDiameter = 58.dp
+    val barHeight = 64.dp
+    val notchMargin = 8.dp
+
+    val fabRadiusPx = with(density) { (fabDiameter / 2).toPx() }
+    val notchMarginPx = with(density) { notchMargin.toPx() }
+
+    val barShape = remember(fabRadiusPx, notchMarginPx) {
+        createBarNotchShape(fabRadiusPx, notchMarginPx)
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
         modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+            .fillMaxWidth()
+            .height(barHeight + fabDiameter / 2),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+        // ── Bar with notch ──────────────────────────────────────────────────
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(barHeight)
+                .align(Alignment.BottomCenter),
+            color = Color(0xFFFAF9F7),
+            shadowElevation = 12.dp,
+            shape = barShape
         ) {
-            tabs.forEach { tab ->
-                BottomNavItem(
-                    icon = tab.icon,
-                    label = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick = { onTabSelected(tab) }
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left: Accueil, Messages
+                PremiumNavItem(
+                    icon = MainTab.Accueil.icon,
+                    label = MainTab.Accueil.label,
+                    selected = currentRoute == MainTab.Accueil.route,
+                    onClick = { onTabSelected(MainTab.Accueil) },
+                    modifier = Modifier.weight(1f)
+                )
+                PremiumNavItem(
+                    icon = MainTab.Messages.icon,
+                    label = MainTab.Messages.label,
+                    selected = currentRoute == MainTab.Messages.route,
+                    onClick = { onTabSelected(MainTab.Messages) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Center gap for the FAB
+                Spacer(modifier = Modifier.weight(1.2f))
+
+                // Right: Dossiers, Profil
+                PremiumNavItem(
+                    icon = MainTab.Dossiers.icon,
+                    label = MainTab.Dossiers.label,
+                    selected = currentRoute == MainTab.Dossiers.route,
+                    onClick = { onTabSelected(MainTab.Dossiers) },
+                    modifier = Modifier.weight(1f)
+                )
+                PremiumNavItem(
+                    icon = MainTab.Profile.icon,
+                    label = MainTab.Profile.label,
+                    selected = currentRoute == MainTab.Profile.route,
+                    onClick = { onTabSelected(MainTab.Profile) },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
-    }
-}
 
-@Composable
-fun LawyerNavBottomBar(
-    currentRoute: String?,
-    onTabSelected: (LawyerTab) -> Unit
-) {
-    val tabs = listOf(
-        LawyerTab.Home,
-        LawyerTab.Messages,
-        LawyerTab.Clients,
-        LawyerTab.Creator,
-        LawyerTab.Profile
-    )
-    
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEach { tab ->
-                BottomNavItem(
-                    icon = tab.icon,
-                    label = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick = { onTabSelected(tab) }
-                )
+        // ── Expandable mini-FABs (Lawyer only) ─────────────────────────────
+        if (isLawyer) {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = (-52).dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Camera mini-FAB
+                    Surface(
+                        modifier = Modifier.size(42.dp),
+                        shape = CircleShape,
+                        color = AppDarkGreen,
+                        border = BorderStroke(1.5.dp, FabGold),
+                        shadowElevation = 6.dp,
+                        onClick = {
+                            expanded = false
+                            onRecordReel()
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Videocam,
+                                contentDescription = "Record Reel",
+                                tint = FabGold,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    // Creator Studio mini-FAB
+                    Surface(
+                        modifier = Modifier.size(42.dp),
+                        shape = CircleShape,
+                        color = AppDarkGreen,
+                        border = BorderStroke(1.5.dp, FabGold),
+                        shadowElevation = 6.dp,
+                        onClick = {
+                            expanded = false
+                            onCreatorStudio()
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "Creator Studio",
+                                tint = FabGold,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
-    }
-}
 
-@Composable
-fun UserNavBottomBar(
-    currentRoute: String?,
-    onTabSelected: (UserTab) -> Unit
-) {
-    val tabs = listOf(
-        UserTab.Home,
-        UserTab.Messages,
-        UserTab.Profile
-    )
-
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+        // ── Gold center FAB (Reels) ─────────────────────────────────────────
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.align(Alignment.TopCenter)
         ) {
-            tabs.forEach { tab ->
-                BottomNavItem(
-                    icon = tab.icon,
-                    label = tab.label,
-                    selected = currentRoute == tab.route,
-                    onClick = { onTabSelected(tab) }
-                )
+            Surface(
+                modifier = Modifier
+                    .size(fabDiameter)
+                    .combinedClickable(
+                        onClick = {
+                            expanded = false
+                            onReelsClick()
+                        },
+                        onDoubleClick = if (isLawyer) {
+                            { expanded = !expanded }
+                        } else null
+                    ),
+                shape = CircleShape,
+                color = FabGold,
+                shadowElevation = 8.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Movie,
+                        contentDescription = "Reels",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
-        }
-    }
-}
-
-// ─── App Bottom Navigation ────────────────────────────────────────────────────
-@Composable
-fun AppBottomNavigation(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = AppDarkGreen,
-        shadowElevation = 12.dp,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomNavItem(
-                icon = Icons.Default.Home,
-                label = "Accueil",
-                selected = currentRoute == "home",
-                onClick = { onNavigate("home") }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Reels",
+                color = FabGold,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = FontFamily.SansSerif
             )
-            BottomNavItem(
-                icon = Icons.AutoMirrored.Filled.Chat,
-                label = "Messages",
-                selected = currentRoute == "messages",
-                onClick = { onNavigate("messages") }
-            )
-            BottomNavItem(
-                icon = Icons.Default.Person,
-                label = "Profil",
-                selected = currentRoute == "profile",
-                onClick = { onNavigate("profile") }
-            )
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(
+private fun PremiumNavItem(
     icon: ImageVector,
     label: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val scale by animateFloatAsState(if (selected) 1.15f else 1f)
-    val alpha by animateFloatAsState(if (selected) 1f else 0.5f)
+    val scale by animateFloatAsState(if (selected) 1.1f else 1f, label = "nav_scale")
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
-            .padding(vertical = 4.dp, horizontal = 12.dp)
+            .padding(vertical = 6.dp)
             .scale(scale)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (selected) AppGoldColor else Color.White,
-            modifier = Modifier.size(24.dp).graphicsLayer(alpha = alpha)
+            tint = if (selected) ForestGreen else SlateGrey,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            color = if (selected) ForestGreen else SlateGrey,
+            fontSize = 10.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            fontFamily = FontFamily.SansSerif,
+            maxLines = 1
         )
         if (selected) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Box(
                 modifier = Modifier
-                    .size(4.dp)
+                    .size(5.dp)
                     .clip(CircleShape)
                     .background(AppGoldColor)
-            )
-        } else {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                color = Color.White.copy(alpha = 0.5f),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomNavLightItem(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val scale by animateFloatAsState(if (selected) 1.15f else 1f)
-    val alpha by animateFloatAsState(if (selected) 1f else 0.5f)
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-            .padding(vertical = 4.dp, horizontal = 12.dp)
-            .scale(scale)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = if (selected) AppDarkGreen else Color.Gray,
-            modifier = Modifier.size(24.dp).graphicsLayer(alpha = alpha)
-        )
-        if (selected) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Box(
-                modifier = Modifier
-                    .size(4.dp)
-                    .clip(CircleShape)
-                    .background(AppDarkGreen)
-            )
-        } else {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                color = Color.Gray.copy(alpha = 0.5f),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Medium
-                )
             )
         }
     }
