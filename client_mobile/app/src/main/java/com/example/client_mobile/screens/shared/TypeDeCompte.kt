@@ -26,9 +26,17 @@ fun TypeCompteScreen(
     onNavigateToRegister: (String) -> Unit
 ) {
     val darkGreen = Color(0xFF1B3124)
-    AppScaffold(
-        showBackground = showBackground
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background_app),
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        AppScaffold(
+            showBackground = showBackground,
+            containerColor = Color.Transparent
+        ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -97,6 +105,7 @@ fun TypeCompteScreen(
             Spacer(modifier = Modifier.weight(2f))
         }
     }
+    }
 }
 
 @Composable
@@ -110,7 +119,7 @@ fun AccountOptionCard(
     Surface(
         modifier = modifier.height(350.dp),
         shape = RoundedCornerShape(35.dp),
-        color = Color.White,
+        color = Color.White.copy(alpha = 0.85f),
         shadowElevation = 2.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.3f))
     ) {

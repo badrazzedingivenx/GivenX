@@ -68,9 +68,17 @@ fun CreeUserScreen(
 
     val darkGreen = Color(0xFF1B3124)
 
-    AppScaffold(
-        showBackground = true
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background_app),
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        AppScaffold(
+            showBackground = true,
+            containerColor = Color.Transparent
+        ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,7 +90,7 @@ fun CreeUserScreen(
                     .fillMaxWidth(0.9f)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(50.dp))
-                    .background(Color.White)
+                    .background(Color.White.copy(alpha = 0.85f))
                     .border(
                         width = 1.dp,
                         color = Color.White.copy(alpha = 0.4f),
@@ -239,6 +247,7 @@ fun CreeUserScreen(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -278,9 +287,9 @@ fun CustomInputFieldUser(
             singleLine = true,
             isError = isError,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White, 
-                unfocusedContainerColor = Color.White,
-                errorContainerColor = Color.White,
+                focusedContainerColor = Color.White.copy(alpha = 0.9f), 
+                unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
+                errorContainerColor = Color.White.copy(alpha = 0.9f),
                 focusedBorderColor = Color.Transparent,
                 unfocusedBorderColor = Color.Transparent,
                 errorBorderColor = Color.Red

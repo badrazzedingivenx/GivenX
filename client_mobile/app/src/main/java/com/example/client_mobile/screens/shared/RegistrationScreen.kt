@@ -65,9 +65,17 @@ fun RegistrationScreen(
         }
     }
 
-    AppScaffold(
-        showBackground = true
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background_app),
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        AppScaffold(
+            showBackground = true,
+            containerColor = Color.Transparent
+        ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,10 +87,10 @@ fun RegistrationScreen(
                     .fillMaxWidth(0.92f)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(Color.White)
+                    .background(Color.White.copy(alpha = 0.85f))
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        color = Color.White.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(32.dp)
                     )
                     .padding(horizontal = 24.dp, vertical = 32.dp)
@@ -258,5 +266,6 @@ fun RegistrationScreen(
                 }
             }
         }
+    }
     }
 }

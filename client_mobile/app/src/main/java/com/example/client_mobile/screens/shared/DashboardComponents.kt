@@ -107,6 +107,7 @@ fun AppScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     showBackground: Boolean = true,
+    containerColor: Color = AppCreamBg,
     content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
@@ -115,7 +116,7 @@ fun AppScaffold(
         bottomBar = bottomBar,
         floatingActionButton = floatingActionButton,
         snackbarHost = snackbarHost,
-        containerColor = AppCreamBg,
+        containerColor = containerColor,
         content = content
     )
 }

@@ -71,9 +71,17 @@ fun LoginScreen(
         }
     }
 
-    AppScaffold(
-        showBackground = true
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background_app),
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        AppScaffold(
+            showBackground = true,
+            containerColor = Color.Transparent
+        ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -85,10 +93,10 @@ fun LoginScreen(
                     .fillMaxWidth(0.92f)
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(32.dp))
-                    .background(Color.White)
+                    .background(Color.White.copy(alpha = 0.85f))
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        color = Color.White.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(32.dp)
                     )
                     .padding(horizontal = 24.dp, vertical = 40.dp)
@@ -214,6 +222,7 @@ fun LoginScreen(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -254,11 +263,11 @@ fun CustomInputField(
             singleLine = true,
             isError = isError,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White, 
-                unfocusedContainerColor = Color.White,
-                errorContainerColor = Color.White,
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                focusedContainerColor = Color.White.copy(alpha = 0.9f), 
+                unfocusedContainerColor = Color.White.copy(alpha = 0.7f),
+                errorContainerColor = Color.White.copy(alpha = 0.9f),
+                focusedBorderColor = AppDarkGreen,
+                unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.1f),
                 errorBorderColor = MaterialTheme.colorScheme.error
             )
         )
