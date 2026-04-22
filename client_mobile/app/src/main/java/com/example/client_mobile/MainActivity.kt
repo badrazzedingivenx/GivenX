@@ -5,9 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
-import com.example.client_mobile.Navigation.AppNavigation
-import com.example.client_mobile.network.TokenManager
-import com.example.client_mobile.ui.theme.LegalAgroTheme
+import com.example.client_mobile.AppNavigation
+import com.example.client_mobile.core.utils.TokenManager
+import com.example.client_mobile.core.theme.LegalAgroTheme
 import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 

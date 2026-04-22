@@ -495,6 +495,12 @@
       "conversationId": "Alice_Martin_2",
       "type": "text",
       "id": "h5cs-2Q"
+    },
+    {
+      "content": "sdcd",
+      "conversationId": "conv_001",
+      "type": "text",
+      "id": "s9688qS"
     }
   ],
   "notifications": [
@@ -592,7 +598,7 @@
       "lawyer_name": "Me. Fatima Zahra Benali",
       "avatar_url": "https://randomuser.me/api/portraits/women/44.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
-      "legal_text": "🏢 Droit des affaires : La création d'une SARL au Maroc nécessite un capital minimum de 10 000 DH depuis la réforme. Cependant, plusieurs aspects statutaires sont souvent négligés par les entrepreneurs. Notre cabinet accompagne les startups de A à Z.\n\n#StartupMaroc #DroitDesAffaires #SARL",
+      "legal_text": " Droit des affaires : La création d'une SARL au Maroc nécessite un capital minimum de 10 000 DH depuis la réforme. Cependant, plusieurs aspects statutaires sont souvent négligés par les entrepreneurs. Notre cabinet accompagne les startups de A à Z.\n\n#StartupMaroc #DroitDesAffaires #SARL",
       "date": "2026-04-15T14:30:00Z",
       "likes_count": 89,
       "is_liked": false,
@@ -604,7 +610,7 @@
       "lawyer_name": "Me. Karim Tazi",
       "avatar_url": "https://randomuser.me/api/portraits/men/86.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800",
-      "legal_text": "📋 Saviez-vous que le délai de prescription pour les infractions pénales varie selon leur gravité ? \n• Crimes : 15 ans\n• Délits : 5 ans  \n• Contraventions : 1 an\n\nCes délais courent à partir du jour où l'infraction a été commise. Partagez pour informer !\n\n#DroitPénal #Justice #Haqqi",
+      "legal_text": " Saviez-vous que le délai de prescription pour les infractions pénales varie selon leur gravité ? \n• Crimes : 15 ans\n• Délits : 5 ans  \n• Contraventions : 1 an\n\nCes délais courent à partir du jour où l'infraction a été commise. Partagez pour informer !\n\n#DroitPénal #Justice #Haqqi",
       "date": "2026-04-15T09:00:00Z",
       "likes_count": 207,
       "is_liked": false,
@@ -616,7 +622,7 @@
       "lawyer_name": "Me. Sara El Mansouri",
       "avatar_url": "https://randomuser.me/api/portraits/women/62.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1521791055366-0d553872952f?w=800",
-      "legal_text": "🏠 Droit immobilier : Avant de signer un compromis de vente, vérifiez TOUJOURS :\n✅ Le titre foncier (réquisition d'immatriculation)\n✅ L'absence de servitudes cachées\n✅ Le certificat de conformité\n✅ Les charges de copropriété en souffrance\n\nContactez-nous pour un audit complet de votre projet immobilier.\n\n#DroitImmobilier #Casablanca",
+      "legal_text": " Droit immobilier : Avant de signer un compromis de vente, vérifiez TOUJOURS :\n Le titre foncier (réquisition d'immatriculation)\n L'absence de servitudes cachées\n Le certificat de conformité\n Les charges de copropriété en souffrance\n\nContactez-nous pour un audit complet de votre projet immobilier.\n\n#DroitImmobilier #Casablanca",
       "date": "2026-04-14T16:00:00Z",
       "likes_count": 334,
       "is_liked": false,
@@ -628,7 +634,7 @@
       "lawyer_name": "Me. Hassan Idrissi",
       "avatar_url": "https://randomuser.me/api/portraits/men/22.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=800",
-      "legal_text": "💼 Code du travail : Tout licenciement abusif ouvre droit à des dommages-intérêts. Selon l'article 41 du Code du Travail marocain, l'employeur doit respecter la procédure disciplinaire sous peine de nullité. Vos droits valent d'être défendus.\n\n#DroitDuTravail #LicenciementAbusif #Haqqi",
+      "legal_text": " Code du travail : Tout licenciement abusif ouvre droit à des dommages-intérêts. Selon l'article 41 du Code du Travail marocain, l'employeur doit respecter la procédure disciplinaire sous peine de nullité. Vos droits valent d'être défendus.\n\n#DroitDuTravail #LicenciementAbusif #Haqqi",
       "date": "2026-04-13T11:00:00Z",
       "likes_count": 156,
       "is_liked": false,
