@@ -32,14 +32,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import com.example.client_mobile.network.TokenManager
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -78,6 +82,8 @@ fun LegalReelsScreen(
     onBack: () -> Unit = {},
     viewModel: ReelViewModel = viewModel()
 ) {
+    // Determine role once — "user" means CLIENT, "lawyer" means AVOCAT
+    val isClient = remember { TokenManager.getUserType() != "lawyer" }
     val apiReels     by viewModel.reels.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val isError      by viewModel.isError.collectAsStateWithLifecycle()
@@ -166,6 +172,7 @@ fun LegalReelsScreen(
                     reel     = reel,
                     isActive = isActive,
                     isMuted  = isMuted,
+                    showBookButton = isClient,
                     onBookConsultation = {
                         sheetReel = reel
                         scope.launch { sheetState.show() }
@@ -267,6 +274,7 @@ private fun ReelPage(
     reel: LegalReel,
     isActive: Boolean,
     isMuted: Boolean,
+    showBookButton: Boolean,
     onBookConsultation: () -> Unit,
     onLike: () -> Unit
 ) {
@@ -393,6 +401,7 @@ private fun ReelPage(
         // ── Bottom info card ──────────────────────────────────────────────
         ReelBottomCard(
             reel = reel,
+            showBookButton = showBookButton,
             onBookConsultation = onBookConsultation,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -527,9 +536,11 @@ private fun SidebarAction(
 @Composable
 private fun ReelBottomCard(
     reel: LegalReel,
+    showBookButton: Boolean = true,
     onBookConsultation: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(28.dp),
@@ -593,7 +604,7 @@ private fun ReelBottomCard(
                 }
             }
 
-            // ── Row 2: Legal tip text ─────────────────────────────────────
+            // ── Row 2: Legal tip text (expandable) ───────────────────────
             if (reel.title.isNotBlank()) {
                 Row(
                     verticalAlignment = Alignment.Top,
@@ -603,45 +614,65 @@ private fun ReelBottomCard(
                         Icons.Default.Balance,
                         contentDescription = null,
                         tint     = ReelGold,
-                        modifier = Modifier.size(16.dp).padding(top = 2.dp)
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(top = 2.dp)
                     )
+                    val captionText   = reel.title
+                    val toggleLabel   = if (isExpanded) " Voir moins" else "... Voir plus"
+                    val annotated = buildAnnotatedString {
+                        append(captionText)
+                        withStyle(
+                            SpanStyle(
+                                color      = Color.White.copy(alpha = 0.45f),
+                                fontSize   = 12.sp,
+                                fontFamily = FontFamily.SansSerif
+                            )
+                        ) { append(toggleLabel) }
+                    }
                     Text(
-                        text       = reel.title,
+                        text       = annotated,
                         color      = Color.White.copy(alpha = 0.90f),
                         fontFamily = FontFamily.Serif,
                         fontSize   = 13.sp,
                         lineHeight = 18.sp,
-                        maxLines   = 2,
-                        overflow   = TextOverflow.Ellipsis
+                        maxLines   = if (isExpanded) Int.MAX_VALUE else 2,
+                        overflow   = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+                        modifier   = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication        = null
+                        ) { isExpanded = !isExpanded }
                     )
                 }
             }
 
-            // ── CTA Button ────────────────────────────────────────────────
-            Button(
-                onClick  = onBookConsultation,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape  = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ReelGold,
-                    contentColor   = Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Icon(
-                    Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Réserver une Consultation",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 14.sp
-                )
+            // ── CTA Button — visible for CLIENT users only ─────────────────
+            if (showBookButton) {
+                Button(
+                    onClick  = onBookConsultation,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape  = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ReelGold,
+                        contentColor   = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Réserver une Consultation",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 14.sp
+                    )
+                }
             }
         }
     }
