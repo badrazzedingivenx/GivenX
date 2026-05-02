@@ -280,6 +280,9 @@ private fun ReelPage(
 ) {
     val context = LocalContext.current
 
+    // ── Play/Pause state (TikTok-style toggle) ────────────────────────────────
+    var isPlaying by remember { mutableStateOf(true) }
+
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             repeatMode = Player.REPEAT_MODE_ONE
@@ -287,15 +290,21 @@ private fun ReelPage(
         }
     }
 
-    // Manage playback and mute state
+    // Sync media item + auto-play when page becomes active
     LaunchedEffect(reel.videoUrl, isActive) {
         if (reel.videoUrl.isNotBlank()) {
             exoPlayer.setMediaItem(MediaItem.fromUri(reel.videoUrl))
             exoPlayer.prepare()
-            exoPlayer.playWhenReady = isActive
+            // When scrolled away force pause; when scrolled back honour isPlaying
+            exoPlayer.playWhenReady = isActive && isPlaying
         } else {
             exoPlayer.pause()
         }
+    }
+
+    // Apply user's play/pause intention immediately
+    LaunchedEffect(isPlaying, isActive) {
+        exoPlayer.playWhenReady = isActive && isPlaying
     }
 
     LaunchedEffect(isMuted, isActive) {
@@ -321,7 +330,15 @@ private fun ReelPage(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    // ── Tap anywhere on the video to toggle Play/Pause ────
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication        = null
+                    ) {
+                        isPlaying = !isPlaying
+                    }
             )
         } else {
             Box(
@@ -363,8 +380,10 @@ private fun ReelPage(
                 )
         )
 
-        // ── Center play icon (no video fallback) ─────────────────────────
-        if (reel.videoUrl.isBlank()) {
+        // ── Center play icon ──────────────────────────────────────────────
+        // Show when: no video URL (placeholder) OR video is paused by user
+        val showPlayIcon = reel.videoUrl.isBlank() || (!isPlaying && isActive)
+        if (showPlayIcon) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -374,14 +393,14 @@ private fun ReelPage(
                 Surface(
                     modifier = Modifier.size(72.dp),
                     shape    = CircleShape,
-                    color    = Color.White.copy(alpha = 0.12f)
+                    color    = Color.Black.copy(alpha = 0.45f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Default.PlayArrow,
-                            contentDescription = "Lire",
+                            contentDescription = if (isPlaying) null else "Reprendre la lecture",
                             tint     = Color.White,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(44.dp)
                         )
                     }
                 }
