@@ -1,0 +1,242 @@
+.la-wrapper {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.la-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.la-header h1 {
+  font-size: 28px;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.la-header p {
+  color: var(--text-muted);
+}
+
+.la-calendar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.la-calendar-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+}
+
+.la-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.la-stat-box {
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.la-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.la-search {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.la-search svg {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.la-search input {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  background: var(--bg-white);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.la-search input:focus {
+  border-color: var(--primary);
+}
+
+.la-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-pill {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-pill.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.la-table-container {
+  background: var(--bg-white);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.la-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.la-table th {
+  padding: 16px;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.la-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.client-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.client-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.time-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.confirmed {
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
+}
+
+.status-badge.pending {
+  background: rgba(217, 119, 6, 0.1);
+  color: #d97706;
+}
+
+.status-badge.cancelled {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.action-btn:hover {
+  background: var(--bg-hover);
+}
+
+@media (max-width: 768px) {
+  .la-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .la-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .la-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .la-search {
+    max-width: none;
+  }
+}

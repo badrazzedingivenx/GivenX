@@ -1,0 +1,434 @@
+.lawyers-page-premium {
+  width: 100%;
+}
+
+.lawyers-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.badge-premium {
+  display: inline-block;
+  background: var(--bg-white);
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary);
+  border: 1px solid var(--border-medium);
+  margin-bottom: 16px;
+}
+
+.lawyers-header h1 {
+  font-size: 42px;
+  color: var(--text-main);
+  margin-bottom: 12px;
+}
+
+.lawyers-header p {
+  color: var(--text-muted);
+  font-size: 17px;
+}
+
+/* CONTROLS */
+.lawyers-controls {
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-container-premium {
+  background: var(--bg-white);
+  border: 1px solid var(--border-medium);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: var(--shadow-sm);
+}
+
+.search-icon {
+  color: var(--text-muted);
+}
+
+.search-container-premium input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-family: var(--font-ar);
+}
+
+.filters-premium {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-pill-modern {
+  padding: 10px 24px;
+  border-radius: 50px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.filter-pill-modern:hover {
+  border-color: var(--primary);
+  background: var(--bg-cream);
+}
+
+.filter-pill-modern.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.results-count {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* GRID */
+.lawyers-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.lawyer-card-premium {
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.lawyer-card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.card-top-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.lawyer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.avatar-box {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lw-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #cbd5e1;
+}
+
+.star.filled {
+  color: var(--gold);
+}
+
+.review-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.lawyer-identity {
+  text-align: left; /* Since we are in RTL, this means Right side for Arabic text usually, wait */
+}
+
+/* Fixing alignment for RTL */
+.lawyers-page-premium[dir="rtl"] .lawyer-identity {
+  text-align: right;
+}
+
+.lawyer-card-premium h3 {
+  font-size: 20px;
+  margin-bottom: 4px;
+  color: var(--text-main);
+}
+
+.field-tag {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.card-body {
+  flex-grow: 1;
+  margin-bottom: 24px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.l-tag {
+  font-size: 11px;
+  background: var(--bg-cream);
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.card-footer-premium {
+  border-top: 1px solid var(--border-light);
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+.price-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.booking-btn {
+  background: var(--primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.booking-btn.busy {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* MODAL */
+.bm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.bm-modal {
+  width: 100%;
+  max-width: 500px;
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.25);
+}
+
+.bm-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 20px;
+  color: var(--text-muted);
+  background: none;
+}
+
+.bm-title {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.bm-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.bm-label {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.bm-days {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 24px;
+}
+
+.bm-day {
+  min-width: 80px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg-white);
+  transition: 0.2s;
+}
+
+.bm-day:hover {
+  border-color: var(--primary);
+}
+
+.bm-day.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.bm-day-name {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.bm-day-date {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.bm-times {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.bm-time {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg-cream);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bm-time.active {
+  background: var(--gold);
+  color: white;
+}
+
+.bm-next-btn {
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.bm-next-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bm-confirm {
+  text-align: center;
+}
+
+.success-icon {
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+.bm-confirm h3 {
+  font-size: 22px;
+  margin-bottom: 24px;
+}
+
+.bm-confirm-details {
+  background: var(--bg-cream);
+  padding: 24px;
+  border-radius: var(--radius-md);
+  margin-bottom: 32px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bm-confirm-details p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.bm-confirm-btn {
+  width: 100%;
+  background: var(--gold);
+  color: white;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.bm-back-link {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 700;
+  background: none;
+}
