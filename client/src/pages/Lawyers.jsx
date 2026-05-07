@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Search, MapPin, Star, Calendar, Clock, Banknote, ShieldCheck } from "lucide-react";
 import "./Lawyers.css";
 
 /* ─── DATA ─── */
@@ -6,10 +7,10 @@ const lawyers = [
   {
     id: 1, initial: "ع", name: "عمر الحسيني",
     field: "قانون الأعمال", fieldKey: "الأعمال",
-    city: "الدار البيضاء", rating: 4, reviews: 203,
+    city: "الدار البيضاء", rating: 5, reviews: 203,
     tags: ["الشركات", "العقود", "الإفلاس"],
     price: 500, available: false,
-    avatarColor: "linear-gradient(135deg,#1a4731,#14532d)",
+    avatarColor: "var(--primary)",
   },
   {
     id: 2, initial: "ف", name: "فاطمة الزهراء المرابطي",
@@ -17,7 +18,7 @@ const lawyers = [
     city: "الرباط", rating: 4, reviews: 89,
     tags: ["الطلاق", "الحضانة", "النفقة"],
     price: 350, available: true,
-    avatarColor: "linear-gradient(135deg,#7c3aed,#5b21b6)",
+    avatarColor: "var(--gold)",
   },
   {
     id: 3, initial: "ي", name: "يوسف البكالي",
@@ -25,7 +26,7 @@ const lawyers = [
     city: "الدار البيضاء", rating: 4, reviews: 127,
     tags: ["عقود الشغل", "الطرد التعسفي", "النزاعات"],
     price: 400, available: true,
-    avatarColor: "linear-gradient(135deg,#0369a1,#0c4a6e)",
+    avatarColor: "#0369a1",
   },
   {
     id: 4, initial: "س", name: "سمية أوحمو",
@@ -33,15 +34,15 @@ const lawyers = [
     city: "طنجة", rating: 4, reviews: 112,
     tags: ["المقاول الذاتي", "الضرائب", "العقود"],
     price: 480, available: true,
-    avatarColor: "linear-gradient(135deg,#b45309,#d97706)",
+    avatarColor: "#b45309",
   },
   {
     id: 5, initial: "ك", name: "كريم التازي",
     field: "القانون الجنائي", fieldKey: "الجنائي",
-    city: "فاس", rating: 4, reviews: 74,
+    city: "فاس", rating: 5, reviews: 74,
     tags: ["الدفاع", "الطعون", "الاستئناف"],
     price: 600, available: true,
-    avatarColor: "linear-gradient(135deg,#9d174d,#be185d)",
+    avatarColor: "#9d174d",
   },
   {
     id: 6, initial: "ن", name: "نجوى بنسالم",
@@ -49,58 +50,49 @@ const lawyers = [
     city: "مراكش", rating: 4, reviews: 156,
     tags: ["التسجيل", "النزاعات", "الكراء"],
     price: 450, available: true,
-    avatarColor: "linear-gradient(135deg,#0f766e,#0d9488)",
+    avatarColor: "#0f766e",
   },
 ];
 
 const FILTERS = ["الكل", "الأسرة", "الشغل", "الأعمال", "العقار", "الجنائي"];
 
-/* Slots randomly marked as booked for demo */
-const BOOKED_SLOTS = ["10:00", "15:00"];
-
 const Stars = ({ count }) => (
-  <span className="lw-stars">
+  <div className="lw-stars">
     {[1,2,3,4,5].map(i => (
-      <span key={i} className={i <= count ? "star filled" : "star"}>★</span>
+      <Star key={i} size={14} className={i <= count ? "star filled" : "star"} />
     ))}
-  </span>
+  </div>
 );
 
 /* ─── BOOKING MODAL ─── */
 function BookingModal({ lawyer, onClose }) {
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
-  const [step, setStep] = useState(1); // 1 = pick date/time, 2 = confirm
+  const [step, setStep] = useState(1);
 
-  const times = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+  const times = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
   const days = [...Array(7)].map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return {
       day: d.toLocaleDateString("ar-MA", { weekday: "long" }),
       date: d.getDate(),
+      month: d.toLocaleDateString("ar-MA", { month: "short" })
     };
   });
 
   return (
     <div className="bm-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bm-modal" dir="rtl">
-
-        {/* Progress bar */}
-        <div className="bm-progress">
-          <div className="bm-progress-fill" style={{ width: step === 1 ? "50%" : "100%" }} />
-        </div>
-
-        {/* Close */}
+      <div className="bm-modal glass" dir="rtl">
         <button className="bm-close" onClick={onClose}>✕</button>
 
-        <h2 className="bm-title">حجز مع {lawyer.name}</h2>
+        <h2 className="bm-title">حجز استشارة قانونية</h2>
+        <p className="bm-subtitle">أنت بصدد الحجز مع {lawyer.name}</p>
 
         {step === 1 ? (
           <>
-            {/* Date Picker */}
             <div className="bm-section">
-              <p className="bm-label">اختر التاريخ</p>
+              <p className="bm-label">اختر اليوم</p>
               <div className="bm-days">
                 {days.map((d, i) => (
                   <div
@@ -109,30 +101,24 @@ function BookingModal({ lawyer, onClose }) {
                     onClick={() => setSelectedDay(i)}
                   >
                     <span className="bm-day-name">{d.day}</span>
-                    <span className="bm-day-date">{d.date}</span>
+                    <span className="bm-day-date">{d.date} {d.month}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Time Picker */}
             <div className="bm-section">
-              <p className="bm-label">اختر الوقت</p>
+              <p className="bm-label">الوقت المتاح</p>
               <div className="bm-times">
-                {times.map(t => {
-                  const booked = BOOKED_SLOTS.includes(t);
-                  return (
-                    <button
-                      key={t}
-                      className={`bm-time ${selectedTime === t ? "active" : ""} ${booked ? "booked" : ""}`}
-                      onClick={() => !booked && setSelectedTime(t)}
-                      disabled={booked}
-                    >
-                      {t}
-                      {booked && <span className="bm-booked-label">محجوز</span>}
-                    </button>
-                  );
-                })}
+                {times.map(t => (
+                  <button
+                    key={t}
+                    className={`bm-time ${selectedTime === t ? "active" : ""}`}
+                    onClick={() => setSelectedTime(t)}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -140,37 +126,20 @@ function BookingModal({ lawyer, onClose }) {
               className={`bm-next-btn ${(!selectedDay && selectedDay !== 0) || !selectedTime ? "disabled" : ""}`}
               onClick={() => selectedTime && (selectedDay !== null) && setStep(2)}
             >
-              التالي ←
+              متابعة الحجز
             </button>
           </>
         ) : (
-          /* Confirmation Step */
-          <div className="bm-confirm">
-            <div className="bm-confirm-avatar" style={{ background: lawyer.avatarColor }}>
-              {lawyer.initial}
-            </div>
-            <div className="bm-confirm-name">{lawyer.name}</div>
-            <div className="bm-confirm-field">{lawyer.field}</div>
-
-            <div className="bm-confirm-details">
-              <div className="bm-confirm-row">
-                <span className="bm-confirm-icon">📅</span>
-                <span>{days[selectedDay]?.day}، {days[selectedDay]?.date}</span>
-              </div>
-              <div className="bm-confirm-row">
-                <span className="bm-confirm-icon">🕐</span>
-                <span>{selectedTime}</span>
-              </div>
-              <div className="bm-confirm-row">
-                <span className="bm-confirm-icon">💰</span>
-                <span>{lawyer.price} MAD / ساعة</span>
-              </div>
-            </div>
-
-            <div className="bm-confirm-btns">
-              <button className="bm-back-btn" onClick={() => setStep(1)}>← رجوع</button>
-              <button className="bm-confirm-btn">✓ تأكيد الحجز</button>
-            </div>
+          <div className="bm-confirm animate-fade-in">
+             <div className="success-icon"><ShieldCheck size={48} /></div>
+             <h3>تأكيد الطلب</h3>
+             <div className="bm-confirm-details">
+                <p><Calendar size={18} /> {days[selectedDay]?.day} {days[selectedDay]?.date} {days[selectedDay]?.month}</p>
+                <p><Clock size={18} /> {selectedTime}</p>
+                <p><Banknote size={18} /> {lawyer.price} MAD (دفع إلكتروني آمن)</p>
+             </div>
+             <button className="bm-confirm-btn">تأكيد وأداء</button>
+             <button className="bm-back-link" onClick={() => setStep(1)}>الرجوع لتعديل الوقت</button>
           </div>
         )}
       </div>
@@ -181,49 +150,43 @@ function BookingModal({ lawyer, onClose }) {
 /* ─── LAWYER CARD ─── */
 function LawyerCard({ lawyer, onBook }) {
   return (
-    <div className="lw-card">
-      {/* Top */}
-      <div className="lw-card-top">
-        <div className="lw-info">
-          <div className="lw-rating-row">
-            <Stars count={lawyer.rating} />
-            <span className="lw-reviews">({lawyer.reviews})</span>
+    <div className="lawyer-card-premium animate-slide-up">
+      <div className="card-top-info">
+          <div className="lawyer-meta">
+              <div className="avatar-box" style={{ background: lawyer.avatarColor }}>
+                  {lawyer.initial}
+              </div>
+              <div className="ratings">
+                  <Stars count={lawyer.rating} />
+                  <span className="review-count">({lawyer.reviews} مراجعة)</span>
+              </div>
           </div>
-          <div className="lw-name">{lawyer.name}</div>
-        </div>
-        <div className="lw-avatar" style={{ background: lawyer.avatarColor }}>
-          {lawyer.initial}
-        </div>
+          <div className="lawyer-identity">
+              <h3>{lawyer.name}</h3>
+              <p className="field-tag">{lawyer.field}</p>
+          </div>
       </div>
 
-      {/* Middle */}
-      <div className="lw-card-mid">
-        <span className="lw-field-tag">{lawyer.field}</span>
-        <div className="lw-location">
-          <span className="lw-loc-icon">📍</span>
-          <span>{lawyer.city}</span>
-        </div>
-        <div className="lw-tags">
-          {lawyer.tags.map(t => <span key={t} className="lw-tag">{t}</span>)}
-        </div>
+      <div className="card-body">
+          <div className="info-row">
+              <MapPin size={16} /> <span>{lawyer.city}</span>
+          </div>
+          <div className="tags-container">
+              {lawyer.tags.map(t => <span key={t} className="l-tag">{t}</span>)}
+          </div>
       </div>
 
-      {/* Bottom */}
-      <div className="lw-card-bottom">
-        <div className="lw-bottom-right">
-          <div className="lw-price">{lawyer.price} MAD<span>/ساعة</span></div>
-          <div className={`lw-status ${lawyer.available ? "available" : "busy"}`}>
-            <span className="lw-dot" />
-            {lawyer.available ? "متاح الآن" : "غير متاح"}
+      <div className="card-footer-premium">
+          <div className="price-box">
+              <span className="price-val">{lawyer.price} MAD</span>
+              <span className="price-label">/ ساعة</span>
           </div>
-        </div>
-        <button
-          className={`lw-book-btn ${!lawyer.available ? "disabled" : ""}`}
-          disabled={!lawyer.available}
-          onClick={() => lawyer.available && onBook(lawyer)}
-        >
-          {lawyer.available ? "📅 احجز" : "غير متاح"}
-        </button>
+          <button 
+              className={`booking-btn ${!lawyer.available ? 'busy' : ''}`}
+              onClick={() => lawyer.available && onBook(lawyer)}
+          >
+              {lawyer.available ? 'احجز الآن' : 'غير متوفر'}
+          </button>
       </div>
     </div>
   );
@@ -242,54 +205,52 @@ export default function Lawyers() {
   });
 
   return (
-    <div className="lw-page" dir="rtl">
-
-      {/* ── Hero & Search ── */}
-      <section className="lw-hero">
-        <div className="lw-hero-content">
-          <div className="lw-hero-badge">🏛️ محامون معتمدون</div>
-          <h1 className="lw-hero-title">شبكة المحامين المعتمدين 🏛️</h1>
-          <p className="lw-hero-sub">محامون متحقق منهم — احجز استشارة في ظرف 24 ساعة</p>
-
-          <div className="lw-search-bar">
-            <input
-              type="text"
-              className="lw-search-input"
-              placeholder="ابحث بالاسم أو التخصص أو المدينة..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            <button className="lw-search-btn">🔍 بحث</button>
+    <div className="lawyers-page-premium">
+      <div className="page-wrapper">
+          <div className="lawyers-header animate-fade-in">
+              <div className="badge-premium">🏛️ شبكة المحامين</div>
+              <h1>ابحث عن استشارك القانوني</h1>
+              <p>مئات المحامين المعتمدين والمتحقق من هويتهم لمساعدتك في قضاياك.</p>
           </div>
 
-          <div className="lw-filters">
-            {FILTERS.map(f => (
-              <button
-                key={f}
-                className={`lw-filter-pill ${activeFilter === f ? "active" : ""}`}
-                onClick={() => setActiveFilter(f)}
-              >
-                {f}
-              </button>
-            ))}
+          <div className="lawyers-controls animate-slide-up">
+              <div className="search-container-premium">
+                  <Search className="search-icon" size={20} />
+                  <input
+                      type="text"
+                      placeholder="ابحث بالاسم، المدينة أو التخصص..."
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                  />
+              </div>
+              <div className="filters-premium">
+                  {FILTERS.map(f => (
+                      <button
+                          key={f}
+                          className={`filter-pill-modern ${activeFilter === f ? "active" : ""}`}
+                          onClick={() => setActiveFilter(f)}
+                      >
+                          {f}
+                      </button>
+                  ))}
+              </div>
           </div>
-        </div>
-      </section>
 
-      {/* ── Grid ── */}
-      <section className="lw-grid-section">
-        <div className="lw-results-info">
-          <span>{filtered.length} محامٍ متاح</span>
-        </div>
-        <div className="lw-grid">
-          {filtered.length > 0
-            ? filtered.map(l => <LawyerCard key={l.id} lawyer={l} onBook={setBookingLawyer} />)
-            : <p className="lw-empty">لا يوجد محامون مطابقون للبحث</p>
-          }
-        </div>
-      </section>
+          <div className="results-count animate-fade-in">
+              {filtered.length} محامي متاح لمساعدتك
+          </div>
 
-      {/* ── Booking Modal ── */}
+          <div className="lawyers-grid-premium">
+              {filtered.length > 0 ? (
+                  filtered.map(l => <LawyerCard key={l.id} lawyer={l} onBook={setBookingLawyer} />)
+              ) : (
+                  <div className="empty-results">
+                      <p>لا توجد نتائج تطابق بحثك حالياً.</p>
+                  </div>
+              )}
+          </div>
+      </div>
+
       {bookingLawyer && (
         <BookingModal lawyer={bookingLawyer} onClose={() => setBookingLawyer(null)} />
       )}

@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import "./HeroSection.css";
 import categories from "../../data/legalCategories";
 
 function HeroSection({ onAsk, chatRef }) {
+  const navigate = useNavigate();
+
   return (
     <section className="ai-hero" dir="rtl">
       <div className="ai-hero-content">
@@ -15,7 +18,7 @@ function HeroSection({ onAsk, chatRef }) {
         </div>
         <div className="ai-categories">
           {categories.map((cat, index) => (
-            <button key={index} className="category-chip" onClick={() => onAsk(cat.question)}>
+            <button key={index} className="category-chip" onClick={() => navigate(`/ai/${cat.name}`)}>
               <span className="cat-icon">{cat.icon}</span> {cat.name}
             </button>
           ))}

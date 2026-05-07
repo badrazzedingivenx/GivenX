@@ -1,175 +1,218 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  FileText, 
+  Calendar, 
+  MessageSquare, 
+  PlayCircle, 
+  LogOut, 
+  Plus, 
+  TrendingUp, 
+  Clock, 
+  CheckCircle2, 
+  ExternalLink,
+  Crown,
+  Search,
+  Bell,
+  Settings,
+  ShieldCheck
+} from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   // Mock Data
   const stats = [
-    { id: 4, label: 'فيديوهات', value: '8', icon: '🎬', iconBg: 'bg-indigo-50' },
-    { id: 3, label: 'استشارات', value: '1', icon: '👤', iconBg: 'bg-orange-50' },
-    { id: 2, label: 'أسئلة AI', value: '12', icon: '💬', iconBg: 'bg-purple-50' },
-    { id: 1, label: 'عقود مولدة', value: '3', icon: '📄', iconBg: 'bg-gray-50' },
+    { id: 1, label: 'العقود المولدة', value: '03', icon: <FileText size={20} />, color: '#064e3b', trend: '+12%' },
+    { id: 2, label: 'أسئلة AI', value: '12', icon: <MessageSquare size={20} />, color: '#b8860b', trend: '+5%' },
+    { id: 3, label: 'الاستشارات', value: '01', icon: <Calendar size={20} />, color: '#0369a1', trend: '0%' },
+    { id: 4, label: 'الفيديوهات', value: '08', icon: <PlayCircle size={20} />, color: '#7c3aed', trend: '+20%' },
   ];
 
   const contracts = [
-    { id: 1, title: 'عقد الكراء - درب عمر', date: '2 مارس 2025', status: 'مكتمل', statusBg: 'bg-[#e7f5ed]', statusColor: 'text-[#1a4d2e]', icon: '🏠' },
-    { id: 2, title: 'عقد عمل - مطور ويب', date: '28 فبراير 2025', status: 'مراجعة', statusBg: 'bg-[#fcf3e8]', statusColor: 'text-[#9c6d2e]', icon: '💼' },
+    { id: 1, title: 'عقد كراء - محل تجاري', date: '02 مارس 2025', status: 'مكتمل', statusType: 'success' },
+    { id: 2, title: 'اتفاقية عدم الإفصاح', date: '28 فبراير 2025', status: 'قيد المراجعة', statusType: 'warning' },
   ];
 
   const consultations = [
-    { id: 1, name: 'ذ. يوسف البقالي', date: 'الخميس 13 مارس، 14:00', status: 'مؤكد', statusBg: 'bg-[#e7f5ed]', statusColor: 'text-[#1a4d2e]' },
-    { id: 2, name: 'ذت. فاطمة الزهراء', date: '23 فبراير - منتهية', status: 'منتهية', statusBg: 'bg-gray-100', statusColor: 'text-gray-400' },
-  ];
-
-  const savedVideos = [
-    { id: 1, title: 'كيفاش تأسس شركة في المغرب - عمر الحسني', time: 'محفوظ منذ يوم' },
-    { id: 2, title: 'حقوق الطرد التعسفي - يوسف البقالي', time: 'محفوظ منذ 3 أيام' },
+    { id: 1, name: 'ذ. يوسف البقالي', date: 'الخميس 13 مارس، 14:00', status: 'مؤكد', statusType: 'success' },
+    { id: 2, name: 'ذت. فاطمة الزهراء', date: '23 فبراير - منتهية', status: 'منتهية', statusType: 'neutral' },
   ];
 
   return (
-    <div className="dashboard-container" dir="rtl">
-      <div className="dashboard-content">
-        {/* Greeting Section */}
-        <div className="greeting-section">
-          <h1 className="greeting-title">
-            مرحباً، محمد <span>👋</span>
-          </h1>
-          <p className="greeting-subtitle">ملخص حسابك القانوني - السبت 8 مارس 2025</p>
-        </div>
-
-        {/* Stats Row */}
-        <div className="stats-grid">
-          {stats.map((stat) => (
-            <div key={stat.id} className="stat-card">
-              <div className={`stat-icon-box ${stat.iconBg}`}>
-                {stat.icon}
-              </div>
-              <span className="stat-number">{stat.value}</span>
-              <span className="stat-label">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Main Grid */}
-        <div className="main-dashboard-grid">
-          
-          {/* Right Side - Top: Contracts, Bottom: Videos */}
-          <div className="column-stack">
-            {/* Contracts Card */}
-            <div className="dashboard-card h-full">
-              <div className="card-top-bar">
-                <h2 className="card-heading">
-                  <span>📋</span>
-                  عقودي
-                </h2>
-                <button className="card-action-btn">
-                  <span className="ml-1 text-lg">+</span> جديد
-                </button>
-              </div>
-              <div className="list-content">
-                {contracts.map((contract) => (
-                  <div key={contract.id} className="list-item">
-                    <div className="item-info">
-                      <div className="item-icon">
-                        {contract.icon}
-                      </div>
-                      <div>
-                        <h3 className="item-title">{contract.title}</h3>
-                        <p className="item-subtitle">{contract.date}</p>
-                      </div>
-                    </div>
-                    <span className={`status-badge ${contract.statusBg} ${contract.statusColor}`}>
-                      {contract.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Saved Videos Card */}
-            <div className="dashboard-card min-h-[300px]">
-              <div className="card-top-bar">
-                <h2 className="card-heading">
-                  <span>🎬</span>
-                  فيديوهات حفظتها
-                </h2>
-                <button className="card-action-btn">عرض الكل</button>
-              </div>
-              <div className="video-list">
-                {savedVideos.map((video) => (
-                  <div key={video.id} className="video-item">
-                    <div className="video-dot"></div>
-                    <h3 className="video-title">{video.title}</h3>
-                    <p className="video-time">{video.time}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <div className="db-premium-container" dir="rtl">
+      
+      {/* Top Navigation Bar */}
+      <nav className="db-top-nav">
+        <div className="nav-left">
+          <div className="search-bar">
+            <Search size={18} />
+            <input type="text" placeholder="البحث عن وثائق، محامين..." />
           </div>
+        </div>
+        <div className="nav-right">
+          <div className="top-user-info">
+            <span className="top-username">محمد</span>
+            <div className="top-avatar">م</div>
+          </div>
+          <div className="nav-divider"></div>
+          <button className="nav-icon-btn" onClick={() => navigate('/notifications')}>
+            <Bell size={20} /><span className="notif-dot"></span>
+          </button>
+          <button className="nav-icon-btn" onClick={() => navigate('/settings')}>
+            <Settings size={20} />
+          </button>
+          <button className="logout-minimal" onClick={() => {
+            localStorage.removeItem('token');
+            navigate('/login');
+          }}>
+            <LogOut size={18} />
+          </button>
+        </div>
+      </nav>
 
-          {/* Left Side - Top: Consultations, Bottom: Subscription */}
-          <div className="column-stack">
-            {/* Consultations Card */}
-            <div className="dashboard-card h-full">
-              <div className="card-top-bar">
-                <h2 className="card-heading">
-                  <span>📅</span>
-                  استشاراتي
-                </h2>
-                <button className="card-action-btn">
-                  <span className="ml-1 text-lg">+</span> حجز
-                </button>
+      <div className="db-content-grid">
+        
+        {/* Main Content Area */}
+        <div className="db-main-area">
+          
+          <header className="welcome-hero">
+            <div className="hero-content">
+              <div className="user-profile-badge">
+                <div className="avatar-wrapper">
+                  <span className="avatar-letter">م</span>
+                  <div className="status-indicator"></div>
+                </div>
+                <div className="badge-text">
+                  <h3>مرحباً، محمد</h3>
+                  <p>عضو متميز في حقي</p>
+                </div>
               </div>
-              <div className="list-content">
-                {consultations.map((consultation) => (
-                  <div key={consultation.id} className="list-item">
-                    <div className="item-info">
-                      <div className="item-icon">
-                        👤
-                      </div>
-                      <div>
-                        <h3 className="item-title">{consultation.name}</h3>
-                        <p className="item-subtitle">{consultation.date}</p>
-                      </div>
-                    </div>
-                    <span className={`status-badge ${consultation.statusBg} ${consultation.statusColor}`}>
-                      {consultation.status}
-                    </span>
-                  </div>
-                ))}
+              <div className="hero-message">
+                <h1>لديك <span className="highlight-text">3 تنبيهات</span> جديدة بخصوص عقودك</h1>
+                <p>تم تحديث حالة "اتفاقية عدم الإفصاح" بالأمس. هل ترغب في مراجعتها الآن؟</p>
+                <div className="hero-actions">
+                  <button className="btn-primary" onClick={() => navigate('/contracts')}>مراجعة العقود</button>
+                  <button className="btn-outline">تجاهل</button>
+                </div>
               </div>
             </div>
+            <div className="hero-illustration">
+              <ShieldCheck size={120} strokeWidth={1} />
+            </div>
+          </header>
 
-            {/* Subscription Card */}
-            <div className="subscription-section">
-              <div className="sub-header">
-                <span>💳</span>
-                <h2 className="sub-title">اشتراكي</h2>
-              </div>
-              
-              <div className="premium-banner">
-                <div className="banner-content">
-                  <div className="banner-row">
-                    <div>
-                      <p className="plan-label">الخطة الحالية</p>
-                      <h3 className="plan-name">مجاني</h3>
-                    </div>
-                    <p className="plan-info">سؤالان AI متبقيان هذا الشهر</p>
-                  </div>
-                  <div className="progress-container">
-                    <div className="progress-track">
-                      <div className="progress-fill" style={{ width: '40%' }}></div>
-                    </div>
+          <section className="stats-grid">
+            {stats.map(stat => (
+              <div key={stat.id} className="modern-stat-card">
+                <div className="stat-icon-bg" style={{ backgroundColor: `${stat.color}15`, color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <div className="stat-info">
+                  <span className="stat-label">{stat.label}</span>
+                  <div className="stat-row">
+                    <h2 className="stat-number">{stat.value}</h2>
+                    <span className={`stat-trend-tag ${stat.trend.startsWith('+') ? 'up' : ''}`}>
+                      {stat.trend}
+                    </span>
                   </div>
                 </div>
-                <div className="banner-decoration"></div>
               </div>
+            ))}
+          </section>
 
-              <button className="upgrade-btn">
-                ترقية إلى البريميوم — 149 MAD <span>🚀</span>
-              </button>
+          <div className="activity-grid">
+            <div className="activity-card large">
+              <div className="card-header">
+                <h3>العقود الأخيرة</h3>
+                <button className="text-link" onClick={() => navigate('/contracts')}>عرض الكل</button>
+              </div>
+              <div className="contract-table">
+                {contracts.map(contract => (
+                  <div key={contract.id} className="contract-row">
+                    <div className="c-info">
+                      <div className="c-icon"><FileText size={18} /></div>
+                      <div>
+                        <h4>{contract.title}</h4>
+                        <span className="c-date">{contract.date}</span>
+                      </div>
+                    </div>
+                    <div className={`c-status ${contract.statusType}`}>
+                      {contract.status}
+                    </div>
+                    <button className="c-action-btn"><ExternalLink size={16} /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="activity-card small">
+              <div className="card-header">
+                <h3>حالة الاشتراك</h3>
+              </div>
+              <div className="sub-widget">
+                <div className="sub-plan">
+                  <div className="plan-icon"><Crown size={24} /></div>
+                  <div>
+                    <h4>الخطة المجانية</h4>
+                    <span className="plan-exp">تنتهي خلال 12 يوم</span>
+                  </div>
+                </div>
+                <div className="usage-stats">
+                  <div className="usage-item">
+                    <span>رصيد AI</span>
+                    <span>12 / 15</span>
+                  </div>
+                  <div className="progress-bar-small">
+                    <div className="progress-fill" style={{ width: '80%' }}></div>
+                  </div>
+                </div>
+                <button className="btn-upgrade" onClick={() => navigate('/pricing')}>ترقية الحساب</button>
+              </div>
             </div>
           </div>
+
         </div>
+
+        {/* Side Widgets */}
+        <div className="db-side-widgets">
+          <div className="widget-card appointment-widget">
+            <h3>المواعيد القادمة</h3>
+            <div className="apt-list">
+              {consultations.map(consult => (
+                <div key={consult.id} className="apt-item">
+                  <div className="apt-date-box">
+                    <span className="day">13</span>
+                    <span className="month">مارس</span>
+                  </div>
+                  <div className="apt-details">
+                    <h4>{consult.name}</h4>
+                    <span><Clock size={12} /> 14:00</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="btn-block" onClick={() => navigate('/lawyers')}>حجز موعد جديد</button>
+          </div>
+
+          <div className="widget-card quick-actions">
+            <h3>روابط سريعة</h3>
+            <div className="action-btns">
+              <button className="action-chip" onClick={() => navigate('/ai')}><MessageSquare size={16} /> اسأل المساعد</button>
+              <button className="action-chip" onClick={() => navigate('/contracts')}><Plus size={16} /> توليد عقد</button>
+              <button className="action-chip" onClick={() => navigate('/lawyers')}><Calendar size={16} /> تواصل مع محامٍ</button>
+            </div>
+          </div>
+
+          <div className="widget-card help-box">
+            <div className="help-icon"><CheckCircle2 size={32} /></div>
+            <h4>هل تحتاج لمساعدة؟</h4>
+            <p>فريق الدعم الفني جاهز للإجابة على استفساراتكم على مدار الساعة.</p>
+            <button className="btn-text">تحدث معنا الآن</button>
+          </div>
+        </div>
+
       </div>
     </div>
   );

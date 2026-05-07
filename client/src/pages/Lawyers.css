@@ -1,655 +1,434 @@
-/* ══════════════════════════════
-   LAWYER DIRECTORY PAGE
-   Deep Green + Cream Theme
-   ══════════════════════════════ */
-
-.lw-page {
-  min-height: 100vh;
-  background: #f7f7f2;
-  font-family: 'Tajawal', 'Cairo', sans-serif;
-  color: #1a1a1a;
+.lawyers-page-premium {
+  width: 100%;
 }
 
-/* ── Hero Section ── */
-.lw-hero {
-  background: #126d41;
-  padding: 28px 5% 22px;
-  text-align: right;
+.lawyers-header {
+  text-align: center;
+  margin-bottom: 50px;
 }
 
-.lw-hero-content {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.lw-hero-badge {
-  display: none;
-}
-
-.lw-hero-title {
-  font-size: 28px;
-  font-weight: 900;
-  color: white;
-  margin-bottom: 6px;
-  line-height: 1.2;
-}
-
-.lw-hero-sub {
-  font-size: 14px;
-  color: rgba(255,255,255,0.6);
+.badge-premium {
+  display: inline-block;
+  background: var(--bg-white);
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary);
+  border: 1px solid var(--border-medium);
   margin-bottom: 16px;
 }
 
-/* Search Bar */
-.lw-search-bar {
-  display: flex;
-  flex-direction: row-reverse;
-  gap: 10px;
-  margin-bottom: 20px;
-  max-width: 680px;
+.lawyers-header h1 {
+  font-size: 42px;
+  color: var(--text-main);
+  margin-bottom: 12px;
 }
 
-.lw-search-input {
+.lawyers-header p {
+  color: var(--text-muted);
+  font-size: 17px;
+}
+
+/* CONTROLS */
+.lawyers-controls {
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-container-premium {
+  background: var(--bg-white);
+  border: 1px solid var(--border-medium);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: var(--shadow-sm);
+}
+
+.search-icon {
+  color: var(--text-muted);
+}
+
+.search-container-premium input {
   flex: 1;
-  padding: 14px 20px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-size: 14.5px;
-  outline: none;
-  transition: 0.25s;
-  font-family: 'Tajawal', sans-serif;
-  text-align: right;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(8px);
-}
-
-.lw-search-input::placeholder { color: rgba(255,255,255,0.45); }
-
-.lw-search-input:focus {
-  border-color: rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.15);
-}
-
-.lw-search-btn {
-  padding: 14px 26px;
-  background: #d9a24a;
-  color: #1a1a1a;
   border: none;
-  border-radius: 14px;
-  font-size: 14.5px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: 0.25s;
-  font-family: 'Tajawal', sans-serif;
-  white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(217,162,74,0.3);
-}
-
-.lw-search-btn:hover {
-  background: #c4893a;
-  transform: translateY(-1px);
-}
-
-/* Filter Pills */
-.lw-filters {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  flex-direction: row-reverse;
-}
-
-.lw-filter-pill {
-  padding: 7px 18px;
-  border-radius: 30px;
-  border: 1.5px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.7);
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.25s;
-  font-family: 'Tajawal', sans-serif;
-}
-
-.lw-filter-pill:hover {
-  background: rgba(255,255,255,0.14);
-  color: white;
-}
-
-.lw-filter-pill.active {
-  background: white;
-  color: #1a4731;
-  border-color: white;
-  font-weight: 900;
-}
-
-/* ── Grid Section ── */
-.lw-grid-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 36px 5% 72px;
-}
-
-.lw-results-info {
-  color: #8a9e90;
-  font-size: 13.5px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  text-align: right;
-}
-
-.lw-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-}
-
-.lw-empty {
-  grid-column: 1/-1;
-  text-align: center;
-  padding: 60px;
-  color: #aaa;
+  outline: none;
   font-size: 16px;
+  font-family: var(--font-ar);
 }
 
-/* ── Lawyer Card ── */
-.lw-card {
-  background: white;
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 16px;
+.filters-premium {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-pill-modern {
+  padding: 10px 24px;
+  border-radius: 50px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.filter-pill-modern:hover {
+  border-color: var(--primary);
+  background: var(--bg-cream);
+}
+
+.filter-pill-modern.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.results-count {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+/* GRID */
+.lawyers-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.lawyer-card-premium {
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium);
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.lw-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 40px rgba(26,71,49,0.12);
-  border-color: rgba(26,71,49,0.2);
+.lawyer-card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
 }
 
-/* Card Top */
-.lw-card-top {
+.card-top-info {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.lw-info { flex: 1; }
-
-.lw-avatar {
-  width: 54px; height: 54px;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 900; color: white;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.lw-rating-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
-
-.lw-stars { display: flex; gap: 2px; flex-direction: row-reverse; }
-.star { font-size: 14px; color: #d1d5db; }
-.star.filled { color: #f59e0b; }
-
-.lw-reviews { font-size: 11.5px; color: #9ca3af; }
-
-.lw-name {
-  font-size: 16px; font-weight: 900;
-  color: #1a1a1a;
-  text-align: right;
-}
-
-/* Card Middle */
-.lw-card-mid {
+.lawyer-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
+  gap: 10px;
 }
 
-.lw-field-tag {
-  display: inline-block;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #14532d;
-  font-size: 12px; font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 20px;
-}
-
-.lw-location {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  color: #6b7280;
-  flex-direction: row-reverse;
-}
-
-.lw-loc-icon { font-size: 13px; }
-
-.lw-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.lw-tag {
-  background: #f3f4f6;
-  color: #4b5563;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 10px;
-}
-
-/* Card Bottom */
-.lw-card-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 14px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.lw-bottom-right { text-align: right; }
-
-.lw-price {
-  font-size: 17px; font-weight: 900;
-  color: #1a4731;
-}
-
-.lw-price span {
-  font-size: 12px; font-weight: 600;
-  color: #6b7280; margin-right: 2px;
-}
-
-.lw-status {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px; font-weight: 700;
-  margin-top: 4px;
-  flex-direction: row-reverse;
-}
-
-.lw-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.lw-status.available { color: #16a34a; }
-.lw-status.available .lw-dot { background: #16a34a; box-shadow: 0 0 6px #16a34a; }
-
-.lw-status.busy { color: #9ca3af; }
-.lw-status.busy .lw-dot { background: #9ca3af; }
-
-/* Book Button */
-.lw-book-btn {
-  padding: 10px 20px;
-  background: #1a4731;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 13.5px; font-weight: 900;
-  cursor: pointer;
-  transition: 0.25s;
-  font-family: 'Tajawal', sans-serif;
-  white-space: nowrap;
-}
-
-.lw-book-btn:hover:not(.disabled) {
-  background: #d9a24a;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(217,162,74,0.3);
-}
-
-.lw-book-btn.disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
-  cursor: not-allowed;
-  font-weight: 700;
-}
-
-/* ── Responsive ── */
-@media (max-width: 1024px) {
-  .lw-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 640px) {
-  .lw-hero-title { font-size: 22px; }
-  .lw-grid { grid-template-columns: 1fr; }
-  .lw-search-bar { flex-direction: column; }
-  .lw-search-btn { width: 100%; }
-}
-
-/* ══════════════════════════════
-   BOOKING MODAL
-   ══════════════════════════════ */
-
-.bm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+.avatar-box {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lw-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #cbd5e1;
+}
+
+.star.filled {
+  color: var(--gold);
+}
+
+.review-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.lawyer-identity {
+  text-align: left; /* Since we are in RTL, this means Right side for Arabic text usually, wait */
+}
+
+/* Fixing alignment for RTL */
+.lawyers-page-premium[dir="rtl"] .lawyer-identity {
+  text-align: right;
+}
+
+.lawyer-card-premium h3 {
+  font-size: 20px;
+  margin-bottom: 4px;
+  color: var(--text-main);
+}
+
+.field-tag {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.card-body {
+  flex-grow: 1;
+  margin-bottom: 24px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.l-tag {
+  font-size: 11px;
+  background: var(--bg-cream);
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.card-footer-premium {
+  border-top: 1px solid var(--border-light);
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.price-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+.price-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.booking-btn {
+  background: var(--primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.booking-btn.busy {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* MODAL */
+.bm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
 }
 
 .bm-modal {
-  background: #0d1f0d;
-  border: 1px solid rgba(34,197,94,0.15);
-  border-radius: 20px;
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 32px 28px 28px;
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  padding: 40px;
   position: relative;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-  scrollbar-width: none;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.25);
 }
 
-.bm-modal::-webkit-scrollbar { display: none; }
-
-/* Progress Bar */
-.bm-progress {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 20px 20px 0 0;
-  overflow: hidden;
-}
-
-.bm-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #16a34a, #22c55e);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
-
-/* Close */
 .bm-close {
   position: absolute;
-  top: 14px; left: 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.5);
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: .2s;
-}
-
-.bm-close:hover { color: white; background: rgba(255,255,255,0.12); }
-
-/* Title */
-.bm-title {
+  top: 20px;
+  right: 20px;
   font-size: 20px;
-  font-weight: 900;
-  color: white;
-  text-align: right;
-  margin-bottom: 24px;
-  padding-top: 8px;
+  color: var(--text-muted);
+  background: none;
 }
 
-/* Section */
-.bm-section { margin-bottom: 22px; }
-
-.bm-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #4ade80;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-align: right;
-  margin-bottom: 10px;
-  display: block;
-}
-
-/* Day Grid */
-.bm-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.bm-day {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 8px 4px;
-  text-align: center;
-  cursor: pointer;
-  transition: .2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.bm-day:hover {
-  border-color: rgba(34,197,94,0.4);
-  background: rgba(34,197,94,0.08);
-}
-
-.bm-day.active {
-  background: rgba(34,197,94,0.18);
-  border-color: #22c55e;
-}
-
-.bm-day-name {
-  font-size: 9px;
-  color: rgba(255,255,255,0.45);
-  display: block;
-}
-
-.bm-day-date {
-  font-size: 16px;
-  font-weight: 900;
-  color: white;
-  display: block;
-}
-
-/* Time Grid */
-.bm-times {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.bm-time {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: white;
-  border-radius: 10px;
-  padding: 12px 8px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: .2s;
-  font-family: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.bm-time:hover:not(:disabled) {
-  background: rgba(34,197,94,0.15);
-  border-color: #22c55e;
-  color: #4ade80;
-}
-
-.bm-time.active {
-  background: rgba(34,197,94,0.2);
-  border-color: #22c55e;
-  color: #4ade80;
-}
-
-.bm-time.booked {
-  background: rgba(255,255,255,0.02);
-  border-color: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.25);
-  cursor: not-allowed;
-}
-
-.bm-booked-label {
-  font-size: 10px;
-  font-weight: 500;
-  color: rgba(255,255,255,0.25);
-}
-
-/* Next Button */
-.bm-next-btn {
-  width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #052e16;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: .25s;
-  font-family: inherit;
-  box-shadow: 0 4px 16px rgba(34,197,94,0.25);
-  margin-top: 4px;
-}
-
-.bm-next-btn:hover:not(.disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(34,197,94,0.35);
-}
-
-.bm-next-btn.disabled {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.3);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* Confirmation Step */
-.bm-confirm {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-  padding-top: 8px;
-}
-
-.bm-confirm-avatar {
-  width: 72px; height: 72px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 900;
-  color: white;
-  margin-bottom: 4px;
-}
-
-.bm-confirm-name {
-  font-size: 18px;
-  font-weight: 900;
-  color: white;
-}
-
-.bm-confirm-field {
-  font-size: 13px;
-  color: #4ade80;
+.bm-title {
+  font-size: 24px;
   margin-bottom: 8px;
 }
 
-.bm-confirm-details {
+.bm-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.bm-label {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.bm-days {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 24px;
+}
+
+.bm-day {
+  min-width: 80px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg-white);
+  transition: 0.2s;
+}
+
+.bm-day:hover {
+  border-color: var(--primary);
+}
+
+.bm-day.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.bm-day-name {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.bm-day-date {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.bm-times {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.bm-time {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg-cream);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bm-time.active {
+  background: var(--gold);
+  color: white;
+}
+
+.bm-next-btn {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 16px 20px;
+  background: var(--primary);
+  color: white;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.bm-next-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bm-confirm {
+  text-align: center;
+}
+
+.success-icon {
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+.bm-confirm h3 {
+  font-size: 22px;
+  margin-bottom: 24px;
+}
+
+.bm-confirm-details {
+  background: var(--bg-cream);
+  padding: 24px;
+  border-radius: var(--radius-md);
+  margin-bottom: 32px;
+  text-align: right;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.bm-confirm-row {
+.bm-confirm-details p {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.8);
-  justify-content: flex-end;
-}
-
-.bm-confirm-icon { font-size: 16px; }
-
-.bm-confirm-btns {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  margin-top: 8px;
-}
-
-.bm-back-btn {
-  flex: 1;
-  padding: 14px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.7);
-  border-radius: 12px;
-  font-size: 14px;
+  gap: 12px;
   font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: .2s;
+  color: var(--text-main);
 }
-
-.bm-back-btn:hover { background: rgba(255,255,255,0.1); color: white; }
 
 .bm-confirm-btn {
-  flex: 2;
-  padding: 14px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #052e16;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 900;
-  cursor: pointer;
-  font-family: inherit;
-  transition: .2s;
-  box-shadow: 0 4px 14px rgba(34,197,94,0.25);
+  width: 100%;
+  background: var(--gold);
+  color: white;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  margin-bottom: 16px;
 }
 
-.bm-confirm-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(34,197,94,0.35);
+.bm-back-link {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 700;
+  background: none;
 }

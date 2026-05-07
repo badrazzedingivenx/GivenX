@@ -1,9 +1,10 @@
 .ai-page-wrapper {
-  background: #f7f3ec;
   min-height: 100vh;
+  background: var(--bg-cream);
+  padding: 24px;
 }
 
 .chat-content-area {
-  padding: 0 20px;
-  position: relative;
+  max-width: 1000px;
+  margin: 0 auto;
 }

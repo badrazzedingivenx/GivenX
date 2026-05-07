@@ -1,75 +1,70 @@
 .ai-hero {
-  background: #126d41;
-  color: white;
-  padding: 20px 40px 30px 40px; /* Minimal padding for slim height */
-  text-align: right; /* Right alignment as seen in image */
-  position: relative;
+  padding: 40px 20px;
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .ai-hero-content {
-  max-width: 1200px; /* Wider container for right alignment */
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Align children to the right (RTL context) */
+  align-items: center;
 }
 
 .hero-text-wrapper {
-  margin-bottom: 5px;
+  margin-bottom: 24px;
 }
 
 .hero-title {
-  font-size: 32px; /* Smaller font for slim height */
+  font-size: 36px;
   font-weight: 800;
-  margin-bottom: 2px;
+  margin-bottom: 12px;
+  color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 12px;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .robot-emoji {
-  background: transparent; /* Cleaner look for slim header */
-  width: auto;
-  height: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  box-shadow: none;
+  font-size: 32px;
 }
 
 .hero-desc {
-  font-size: 15px; /* Smaller font */
-  color: #cfe5d6;
-  margin-bottom: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  color: var(--text-muted);
+  max-width: 600px;
+  line-height: 1.6;
 }
 
 .ai-categories {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .category-chip {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 6px 14px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 20px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  transition: 0.3s;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
 .category-chip:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+  border-color: var(--primary);
 }
 
 .cat-icon {

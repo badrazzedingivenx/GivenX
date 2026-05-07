@@ -1,225 +1,225 @@
 import { useNavigate } from "react-router-dom"
+import { 
+  Bot, 
+  FileText, 
+  Users, 
+  Film, 
+  CheckCircle2, 
+  ArrowRight,
+  Video
+} from "lucide-react"
 import Footer from "../components/Footer/Footer"
 import "./HomePage.css"
 
 function HomePage() {
   const navigate = useNavigate()
+  
   return (
-    <>
-    <div className="home-page" dir="rtl">
-      <section className="hero-split">
-        
-        {/* Left Side: Mini Chat Preview */}
-        <div className="hero-left">
-          <div className="mini-chat-box">
-            <div className="chat-header">
-               <span className="chat-avatar">⚖️</span>
-               <span className="chat-title">المساعد القانوني AI</span>
-            </div>
-            
-            <div className="chat-body">
-              <div className="preview-msg user">
-                <p>واش عندي الحق نفسخ العقد قبل المدة؟</p>
-              </div>
-              <div className="preview-msg ai">
-                <p>
-                  نعم، يمكنك فسخ عقد الكراء بإشعار مسبق بشهر واحد بالبريد المضمون وفق القانون 67.12...
-                </p>
-              </div>
-            </div>
-            
-            <div className="chat-footer">
-              <div className="mock-input">
-                <button className="mock-send">→</button>
-                <span className="mock-placeholder">اكتب سؤالك القانوني...</span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="home-container" dir="rtl">
 
-        {/* Right Side: Content Area */}
-        <div className="hero-right">
-          <div className="content-wrapper">
-            <div className="top-badge">
-               <span className="badge-text">المنصة القانونية الأولى بالمغرب</span>
-               <span className="badge-flag">🇲🇦</span>
-            </div>
-            
-            <h1 className="main-title">
-              حقك القانوني <br /> 
-              <span className="gold-text">في متناول يدك</span>
-            </h1>
-            
-            <p className="main-subtitle">
-              مساعد AI بالدارجة، عقود احترافية، محامون معتمدون، وفيديوهات قانونية تعليمية — كل ما تحتاجه في مكان واحد.
-            </p>
-            
-            <div className="cta-buttons">
-              <button className="btn-gold" onClick={() => navigate('/ai')}>جرب المساعد مجاناً</button>
-              <button className="btn-outline" onClick={() => navigate('/culture')}>ثقافة قانونية 🎬</button>
-            </div>
-            
-            <div className="stats-row">
-              <div className="stat-item">
-                <span className="stat-value">99 MAD</span>
-                <span className="stat-label">ابتداءً من</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">+36M</span>
-                <span className="stat-label">مغربي</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">12K+</span>
-                <span className="stat-label">محامٍ معتمد</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── HERO ── */}
+      <section className="hero-modern">
 
-      {/* Services Section */}
-      <section className="services-section">
-        <div className="services-header">
-          <span className="section-label">الخدمات</span>
-          <h2 className="section-title">كل ما تحتاجه قانونياً</h2>
-          <p className="section-subtitle">
-            منصة متكاملة تجمع الذكاء الاصطناعي والخبرة البشرية والمحتوى التعليمي في تجربة واحدة.
+        {/* LEFT — Text content */}
+        <div className="hero-content">
+          <div className="hero-badge">
+            <span className="badge-icon">🇲🇦</span>
+            <span className="badge-text">أول منصة قانونية ذكية في المغرب</span>
+          </div>
+
+          <h1 className="hero-title">
+            حلول قانونية ذكية<br />
+            <span className="text-gradient">بين يديك وفي كل لحظة</span>
+          </h1>
+
+          <p className="hero-subtitle">
+            نجمع بين قوة الذكاء الاصطناعي وخبرة أفضل المحامين لنمنحك
+            تجربة قانونية سريعة، موثوقة، وبأسعار شفافة.
           </p>
+
+          <div className="hero-actions">
+            <button className="cta-primary" onClick={() => navigate('/ai')}>
+              جرب المساعد الذكي مجاناً <ArrowRight size={18} />
+            </button>
+            <button className="cta-secondary" onClick={() => navigate('/culture')}>
+              اكتشف الثقافة القانونية <Film size={18} />
+            </button>
+          </div>
+
+          <div className="hero-social-proof">
+            <div className="avatars">
+              <div className="avatar">⚖️</div>
+              <div className="avatar">⚖️</div>
+              <div className="avatar">⚖️</div>
+            </div>
+            <p className="proof-text">
+              انضم إلى أكثر من <strong>50,000</strong> مستخدم يثقون في حقي
+            </p>
+          </div>
         </div>
 
-        <div className="services-grid">
-          {/* Card 1: AI Assistant */}
-          <div className="service-card">
-            <div className="service-icon">🤖</div>
-            <h3 className="service-title">مساعد AI قانوني</h3>
-            <p className="service-desc">
-              أسئلة قانونية بالدارجة والعربية مبنية على القانون المغربي بإجابات فورية.
-            </p>
-            <span className="service-tag free">مجاني للبدء</span>
+        {/* RIGHT — Visual panel (NO floating/overlapping cards) */}
+        <div className="hero-visual">
+
+          {/* Row 1: Two stat cards */}
+          <div className="visual-top-row">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Bot size={18} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">المساعد الذكي</span>
+                <span className="stat-val">إجابة فورية بالدارجة</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon gold">
+                <FileText size={18} />
+              </div>
+              <div className="stat-info">
+                <span className="stat-label">العقود</span>
+                <span className="stat-val">توليد في دقائق</span>
+              </div>
+            </div>
           </div>
 
-          {/* Card 2: Smart Contracts */}
-          <div className="service-card">
-            <div className="service-icon">📄</div>
-            <h3 className="service-title">توليد العقود الذكية</h3>
-            <p className="service-desc">
-              عقود إيجار وعمل وشراكة في دقائق — تُراجع من محامٍ معتمد قبل التسليم.
-            </p>
-            <span className="service-tag price">من 49 MAD</span>
+          {/* Row 2: Chat preview */}
+          <div className="main-visual-box">
+            <div className="chat-interface">
+              <div className="chat-header-mock">
+                <div className="status-dot"></div>
+                <span>المساعد القانوني الذكي</span>
+              </div>
+
+              <div className="chat-body-mock">
+                <div className="chat-line user">
+                  أهلاً، واش عندي الحق نفسخ عقد كراء؟
+                </div>
+                <div className="chat-line ai">
+                  أهلاً بك. نعم، وفق القانون 67.12 المتعلق بكراء المحلات
+                  المخصصة للسكن، يمكنك إنهاء العقد في حالات محددة مثل توجيه
+                  إشعار بالإفراغ...
+                </div>
+                <div className="chat-line user">
+                  شنو هي الإجراءات المطلوبة؟
+                </div>
+              </div>
+
+              <div className="chat-suggestions-mock">
+                <span className="suggestion">كيفاش نكتب إشعار؟</span>
+                <span className="suggestion">شنو هي مدة الإخطار؟</span>
+              </div>
+
+              <div className="chat-input-mock">
+                <input
+                  type="text"
+                  placeholder="اسأل عن أي موضوع قانوني..."
+                  readOnly
+                />
+                <button className="send-btn">
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Card 3: Lawyers Network */}
-          <div className="service-card">
-            <div className="service-icon">👨‍💼</div>
-            <h3 className="service-title">شبكة المحامين</h3>
-            <p className="service-desc">
-              محامون معتمدون، استشارة فيديو في 24 ساعة، أسعار شفافة بدون مفاجآت.
-            </p>
-            <span className="service-tag response">24h استجابة</span>
+        </div>
+      </section>
+
+      {/* ── SERVICES ── */}
+      <section className="services-modern wrapper">
+        <div className="section-header">
+          <span className="label">خدماتنا</span>
+          <h2 className="title">حلول متكاملة لجميع احتياجاتك</h2>
+        </div>
+
+        <div className="grid-container">
+          <div className="modern-card" onClick={() => navigate('/ai')}>
+            <div className="icon-box"><Bot size={30} /></div>
+            <h3>مساعد AI قانوني</h3>
+            <p>إجابات دقيقة مبنية على القانون المغربي ومتاحة بالدارجة المغربية لسهولة التواصل.</p>
+            <button className="card-link">ابدأ المحادثة <ArrowRight size={15} /></button>
           </div>
 
-          {/* Card 4: Legal Culture */}
-          <div className="service-card">
-            <div className="service-icon">🎬</div>
-            <h3 className="service-title">ثقافة قانونية</h3>
-            <p className="service-desc">
-              فيديوهات تعليمية من محامين حقيقيين — تابع واحجز مباشرة من الفيديو.
-            </p>
-            <span className="service-tag new">جديد 🔥</span>
+          <div className="modern-card" onClick={() => navigate('/contracts')}>
+            <div className="icon-box gold"><FileText size={30} /></div>
+            <h3>توليد العقود الذكية</h3>
+            <p>أنشئ عقودك المهنية والشخصية بضغطة زر مع ضمان مراجعتها من قبل خبراء.</p>
+            <button className="card-link">توليد عقد <ArrowRight size={15} /></button>
           </div>
 
-          {/* Card 5: B2B Business Packages */}
-          <div className="service-card">
-            <div className="service-icon">🏢</div>
-            <h3 className="service-title">باقات المقاولات B2B</h3>
-            <p className="service-desc">
-              حلول للمقاول الذاتي والـ TPE: عقود غير محدودة واستشارات شهرية ثابتة.
-            </p>
-            <span className="service-tag b2b">B2B</span>
+          <div className="modern-card" onClick={() => navigate('/lawyers')}>
+            <div className="icon-box"><Users size={30} /></div>
+            <h3>شبكة المحامين</h3>
+            <p>تواصل مع نخبة من المحامين المعتمدين في جميع التخصصات عبر استشارات فيديو.</p>
+            <button className="card-link">احجز استشارة <ArrowRight size={15} /></button>
           </div>
 
-          {/* Card 6: Electronic Signature */}
-          <div className="service-card">
-            <div className="service-icon">✍️</div>
-            <h3 className="service-title">التوقيع الإلكتروني</h3>
-            <p className="service-desc">
-              وقع وثائقك وفق القانون 53.05 مع تخزين آمن ومشفر.
-            </p>
-            <span className="service-tag soon">قريباً</span>
+          <div className="modern-card" onClick={() => navigate('/culture')}>
+            <div className="icon-box"><Video size={30} /></div>
+            <h3>المحتوى التعليمي</h3>
+            <p>تبسيط القوانين عبر فيديوهات قصيرة وممتعة تساعدك على معرفة حقوقك وواجباتك.</p>
+            <button className="card-link">شاهد الفيديوهات <ArrowRight size={15} /></button>
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="pricing-section">
-        <div className="pricing-header">
-          <span className="section-label dark">الأسعار</span>
-          <h2 className="section-title">شفاف بدون مفاجآت</h2>
-          <p className="section-subtitle">
-            ابدأ مجاناً واشترك عندما تجد القيمة الحقيقية.
-          </p>
-        </div>
-
-        <div className="pricing-grid" dir="rtl">
-          {/* Plan: Free */}
-          <div className="pricing-card side">
-            <div className="card-header">
-              <span className="plan-name">مجاني</span>
-              <div className="plan-price">
-                <span className="price-value">0</span>
-                <span className="price-currency">MAD / شهر</span>
-              </div>
-            </div>
-            <ul className="feature-list">
-              <li><span className="check">✓</span> 3 أسئلة AI / شهر</li>
-              <li><span className="check">✓</span> قالب عقد مجاني</li>
-              <li><span className="check">✓</span> مشاهدة الفيديوهات</li>
-              <li><span className="cross">✕</span> استشارات المحامين</li>
-            </ul>
-            <button className="btn-pricing-outline">ابدأ مجاناً</button>
+      {/* ── PRICING ── */}
+      <section className="pricing-modern">
+        <div className="wrapper">
+          <div className="section-header light">
+            <h2 className="title">اختر الباقة المناسبة لك</h2>
+            <p className="subtitle">أسعار شفافة وبدون التزامات خفية</p>
           </div>
 
-          {/* Plan: Premium (Featured) */}
-          <div className="pricing-card featured">
-            <div className="featured-badge">الأكثر شيوعاً</div>
-            <div className="card-header">
-              <span className="plan-name">بريميوم</span>
-              <div className="plan-price">
-                <span className="price-value">149</span>
-                <span className="price-currency">MAD / شهر</span>
+          <div className="pricing-tabs">
+            <div className="pricing-card-modern">
+              <div className="p-header">
+                <h3>مجاني</h3>
+                <div className="p-price">0 <span>MAD</span></div>
               </div>
+              <ul className="p-features">
+                <li><CheckCircle2 size={17} className="check" /> 3 أسئلة AI شهرياً</li>
+                <li><CheckCircle2 size={17} className="check" /> تصفح العقود المجانية</li>
+                <li><CheckCircle2 size={17} className="check" /> مشاهدة المحتوى التعليمي</li>
+              </ul>
+              <button className="p-btn">ابدأ الآن</button>
             </div>
-            <div className="card-divider"></div>
-            <ul className="feature-list">
-              <li><span className="check">✓</span> AI غير محدود</li>
-              <li><span className="check">✓</span> 10 عقود / شهر</li>
-              <li><span className="check">✓</span> متابعة محامين + حجز</li>
-              <li><span className="check">✓</span> تخزين الوثائق</li>
-            </ul>
-            <button className="btn-pricing-gold">اشترك الآن</button>
-          </div>
 
-          {/* Plan: B2B */}
-          <div className="pricing-card side">
-            <div className="card-header">
-              <span className="plan-name">مقاولات B2B</span>
-              <div className="plan-price">
-                <span className="price-value">499</span>
-                <span className="price-currency">MAD / شهر</span>
+            <div className="pricing-card-modern featured">
+              <div className="featured-label">الأكثر مبيعاً</div>
+              <div className="p-header">
+                <h3>بريميوم</h3>
+                <div className="p-price">149 <span>MAD</span></div>
               </div>
+              <ul className="p-features">
+                <li><CheckCircle2 size={17} className="check" /> أسئلة AI غير محدودة</li>
+                <li><CheckCircle2 size={17} className="check" /> 10 عقود احترافية شهرياً</li>
+                <li><CheckCircle2 size={17} className="check" /> مراجعة قانونية سريعة</li>
+                <li><CheckCircle2 size={17} className="check" /> دعم فني مخصص</li>
+              </ul>
+              <button className="p-btn primary">اشترك الآن</button>
             </div>
-            <ul className="feature-list">
-              <li><span className="check">✓</span> عقود غير محدودة</li>
-              <li><span className="check">✓</span> استشارتان مشمولتان</li>
-              <li><span className="check">✓</span> مدير حساب مخصص</li>
-            </ul>
-            <button className="btn-pricing-outline">تواصل معنا</button>
+
+            <div className="pricing-card-modern">
+              <div className="p-header">
+                <h3>للمقاولات</h3>
+                <div className="p-price">499 <span>MAD</span></div>
+              </div>
+              <ul className="p-features">
+                <li><CheckCircle2 size={17} className="check" /> استشارات قانونية غير محدودة</li>
+                <li><CheckCircle2 size={17} className="check" /> توليد عقود B2B مخصصة</li>
+                <li><CheckCircle2 size={17} className="check" /> مدير حساب قانوني مخصص</li>
+              </ul>
+              <button className="p-btn">احصل على الباقة</button>
+            </div>
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
-    <Footer />
-  </>
   )
 }
 

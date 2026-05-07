@@ -52,7 +52,7 @@ export default function DiscoverPage() {
             <button
               key={f}
               className={`dp-pill ${active === f ? "active" : ""}`}
-              onClick={() => setActive(f)}
+              onClick={() => f === "الكل" ? setActive("الكل") : navigate(`/field/${f}`)}
             >
               {f}
             </button>
