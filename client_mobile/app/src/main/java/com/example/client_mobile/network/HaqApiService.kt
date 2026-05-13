@@ -236,8 +236,8 @@ interface HaqApiService {
     @Multipart
     @POST("reels")
     suspend fun uploadReel(
-        @Part file: MultipartBody.Part,
-        @Part("caption") caption: RequestBody
+        @Part video: MultipartBody.Part,
+        @Part("title") title: RequestBody
     ): Response<ApiResponse<ReelDto>>
     // ── Stories ────────────────────────────────────────────────────
     /** GET /stories — shape: {"data":{"stories":[...]}} */
@@ -248,7 +248,7 @@ interface HaqApiService {
     @Multipart
     @POST("stories")
     suspend fun uploadStory(
-        @Part file: MultipartBody.Part
+        @Part media: MultipartBody.Part
     ): Response<ApiResponse<StoryDto>>
 
     // ── Legal Feed ─────────────────────────────────────────────────

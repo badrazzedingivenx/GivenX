@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -17,6 +18,7 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FileOutputOptions
+import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -222,17 +225,47 @@ private fun CameraContent(
     // ── CameraX use cases ─────────────────────────────────────────────────────
     val imageCapture = remember { ImageCapture.Builder().build() }
     val recorder     = remember {
-        Recorder.Builder().setQualitySelector(QualitySelector.from(Quality.HD)).build()
+        val qualitySelector = QualitySelector.from(
+            Quality.LOWEST,
+            FallbackStrategy.lowerQualityOrHigherThan(Quality.LOWEST)
+        )
+        Recorder.Builder().setQualitySelector(qualitySelector).build()
     }
     val videoCapture    = remember(recorder) { VideoCapture.withOutput(recorder) }
     var activeRecording by remember { mutableStateOf<Recording?>(null) }
 
     // ── Post-capture state ────────────────────────────────────────────────────
-    var capturedUri   by remember { mutableStateOf<Uri?>(null) }
+    var capturedFile  by remember { mutableStateOf<File?>(null) }
     var capturedIsVid by remember { mutableStateOf(false) }
     var isUploading   by remember { mutableStateOf(false) }
     var uploadError   by remember { mutableStateOf(false) }
     var uploadDone    by remember { mutableStateOf(false) }
+
+    // ── Gallery picker launcher ────────────────────────────────────────────────
+    val mediaPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                coroutineScope.launch {
+                    try {
+                        val mimeType = context.contentResolver.getType(uri) ?: "image/*"
+                        val isVideo = mimeType.startsWith("video/")
+                        val ext = if (isVideo) ".mp4" else ".jpg"
+                        val file = File(context.cacheDir, "gallery_${System.currentTimeMillis()}$ext")
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            file.outputStream().use { output -> input.copyTo(output) }
+                        }
+                        capturedFile  = file
+                        capturedIsVid = isVideo
+                        uploadError   = false
+                        uploadDone    = false
+                    } catch (e: Exception) {
+                        Log.e("CameraCapture", "Gallery pick error: ${e.message}", e)
+                    }
+                }
+            }
+        }
+    )
 
     val modes = remember { CaptureMode.entries }
 
@@ -302,67 +335,94 @@ private fun CameraContent(
                 .padding(bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ── Capture Button ────────────────────────────────────────────────
-            CaptureButton(
-                mode = selectedMode,
-                isRecording = isRecording,
-                onClick = {
-                    when (selectedMode) {
-                        CaptureMode.Live -> onNavigateToLive()
+            // ── Gallery + Capture Row ─────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Gallery button (left side)
+                IconButton(
+                    onClick = {
+                        mediaPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                        )
+                    },
+                    modifier = Modifier.padding(start = 24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoLibrary,
+                        contentDescription = "Galerie",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
 
-                        CaptureMode.Post -> {
-                            // ── Take photo → upload as Story ──────────────────
-                            val file = File(context.cacheDir, "story_${System.currentTimeMillis()}.jpg")
-                            val options = ImageCapture.OutputFileOptions.Builder(file).build()
-                            imageCapture.takePicture(
-                                options,
-                                ContextCompat.getMainExecutor(context),
-                                object : ImageCapture.OnImageSavedCallback {
-                                    override fun onImageSaved(result: ImageCapture.OutputFileResults) {
-                                        capturedUri   = Uri.fromFile(file)
-                                        capturedIsVid = false
-                                        uploadError   = false
-                                        uploadDone    = false
-                                    }
-                                    override fun onError(exc: ImageCaptureException) {
-                                        Log.e("CameraCapture", "Photo capture failed: ${exc.message}", exc)
-                                    }
-                                }
-                            )
-                        }
+                Spacer(Modifier.weight(1f))
 
-                        CaptureMode.Reel -> {
-                            if (!isRecording) {
-                                // ── Start video recording ─────────────────────
-                                val file = File(context.cacheDir, "reel_${System.currentTimeMillis()}.mp4")
-                                val outputOptions = FileOutputOptions.Builder(file).build()
-                                activeRecording = videoCapture.output
-                                    .prepareRecording(context, outputOptions)
-                                    .withAudioEnabled()
-                                    .start(ContextCompat.getMainExecutor(context)) { event ->
-                                        if (event is VideoRecordEvent.Finalize) {
-                                            isRecording = false
-                                            if (!event.hasError()) {
-                                                capturedUri   = Uri.fromFile(file)
-                                                capturedIsVid = true
-                                                uploadError   = false
-                                                uploadDone    = false
-                                            } else {
-                                                Log.e("CameraCapture", "Video error: ${event.cause?.message}")
-                                            }
+                // ── Capture Button ────────────────────────────────────────────
+                CaptureButton(
+                    mode = selectedMode,
+                    isRecording = isRecording,
+                    onClick = {
+                        when (selectedMode) {
+                            CaptureMode.Live -> onNavigateToLive()
+
+                            CaptureMode.Post -> {
+                                // ── Take photo → upload as Story ──────────────
+                                val file = File(context.cacheDir, "story_${System.currentTimeMillis()}.jpg")
+                                val options = ImageCapture.OutputFileOptions.Builder(file).build()
+                                imageCapture.takePicture(
+                                    options,
+                                    ContextCompat.getMainExecutor(context),
+                                    object : ImageCapture.OnImageSavedCallback {
+                                        override fun onImageSaved(result: ImageCapture.OutputFileResults) {
+                                            capturedFile  = file
+                                            capturedIsVid = false
+                                            uploadError   = false
+                                            uploadDone    = false
+                                        }
+                                        override fun onError(exc: ImageCaptureException) {
+                                            Log.e("CameraCapture", "Photo capture failed: ${exc.message}", exc)
                                         }
                                     }
-                                isRecording = true
-                            } else {
-                                // ── Stop recording ────────────────────────────
-                                activeRecording?.stop()
-                                activeRecording = null
-                                // isRecording is reset in VideoRecordEvent.Finalize
+                                )
+                            }
+
+                            CaptureMode.Reel -> {
+                                if (!isRecording) {
+                                    // ── Start video recording ─────────────────
+                                    val file = File(context.cacheDir, "reel_${System.currentTimeMillis()}.mp4")
+                                    val outputOptions = FileOutputOptions.Builder(file).build()
+                                    activeRecording = videoCapture.output
+                                        .prepareRecording(context, outputOptions)
+                                        .withAudioEnabled()
+                                        .start(ContextCompat.getMainExecutor(context)) { event ->
+                                            if (event is VideoRecordEvent.Finalize) {
+                                                isRecording = false
+                                                if (!event.hasError()) {
+                                                    capturedFile  = file
+                                                    capturedIsVid = true
+                                                    uploadError   = false
+                                                    uploadDone    = false
+                                                } else {
+                                                    Log.e("CameraCapture", "Video error: ${event.cause?.message}")
+                                                }
+                                            }
+                                        }
+                                    isRecording = true
+                                } else {
+                                    // ── Stop recording ────────────────────────
+                                    activeRecording?.stop()
+                                    activeRecording = null
+                                    // isRecording is reset in VideoRecordEvent.Finalize
+                                }
                             }
                         }
                     }
-                }
-            )
+                )
+
+                Spacer(Modifier.weight(1f))
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -375,23 +435,23 @@ private fun CameraContent(
         }
 
         // ── Post-capture preview + upload overlay ─────────────────────────────
-        if (capturedUri != null) {
+        if (capturedFile != null) {
             CapturePreviewOverlay(
-                uri         = capturedUri!!,
+                uri         = Uri.fromFile(capturedFile!!),
                 isVideo     = capturedIsVid,
                 mode        = selectedMode,
                 isUploading = isUploading,
                 uploadError = uploadError,
                 uploadDone  = uploadDone,
-                onPublish   = { caption ->
+                onPublish   = { title ->
                     isUploading = true
                     uploadError = false
                     coroutineScope.launch {
                         val success = if (selectedMode == CaptureMode.Post) {
-                            MainRepository.uploadStory(context, capturedUri!!)
+                            MainRepository.uploadStory(capturedFile!!)
                         } else {
                             MainRepository.uploadReel(
-                                context, capturedUri!!, caption.ifBlank { "Conseil juridique" }
+                                capturedFile!!, title.ifBlank { "Conseil juridique" }
                             )
                         }
                         isUploading = false
@@ -405,7 +465,7 @@ private fun CameraContent(
                     }
                 },
                 onDiscard = {
-                    capturedUri   = null
+                    capturedFile  = null
                     capturedIsVid = false
                     uploadError   = false
                     uploadDone    = false
@@ -568,98 +628,6 @@ private fun CapturePreviewOverlay(
     }
 }
 
-
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(OverlayDark, CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Fermer",
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Flash toggle
-                IconButton(
-                    onClick = { flashEnabled = !flashEnabled },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(OverlayDark, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                        contentDescription = "Flash",
-                        tint = if (flashEnabled) CameraGold else Color.White,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                // Flip camera
-                IconButton(
-                    onClick = { useFrontCamera = !useFrontCamera },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(OverlayDark, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraFront,
-                        contentDescription = "Retourner",
-                        tint = Color.White,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
-        }
-
-        // ── Bottom Controls ─────────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.8f)
-                        )
-                    )
-                )
-                .navigationBarsPadding()
-                .padding(bottom = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // ── Capture Button ──────────────────────────────────────────────
-            CaptureButton(
-                mode = selectedMode,
-                isRecording = isRecording,
-                onClick = {
-                    when (selectedMode) {
-                        CaptureMode.Live -> onNavigateToLive()
-                        CaptureMode.Reel -> isRecording = !isRecording
-                        CaptureMode.Post -> {
-                            // Photo capture — placeholder
-                        }
-                    }
-                }
-            )
-
-            Spacer(Modifier.height(20.dp))
-
-            // ── Snapping Mode Picker ────────────────────────────────────────
-            SnapModePicker(
-                modes = modes,
-                selectedMode = selectedMode,
-                onModeChanged = { selectedMode = it }
-            )
-        }
-    }
-}
-
 // ─── Camera Preview (CameraX) ─────────────────────────────────────────────────
 
 @Composable
@@ -667,12 +635,21 @@ private fun CameraPreview(
     context: Context,
     lifecycleOwner: LifecycleOwner,
     useFrontCamera: Boolean,
-    flashEnabled: Boolean
+    flashEnabled: Boolean,
+    imageCapture: ImageCapture,
+    videoCapture: VideoCapture<*>
 ) {
     val cameraSelector = if (useFrontCamera) {
         CameraSelector.DEFAULT_FRONT_CAMERA
     } else {
         CameraSelector.DEFAULT_BACK_CAMERA
+    }
+
+    // Sync flash mode
+    imageCapture.flashMode = if (flashEnabled && !useFrontCamera) {
+        ImageCapture.FLASH_MODE_ON
+    } else {
+        ImageCapture.FLASH_MODE_OFF
     }
 
     AndroidView(
@@ -698,7 +675,9 @@ private fun CameraPreview(
                     val camera = cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
-                        preview
+                        preview,
+                        imageCapture,
+                        videoCapture
                     )
                     camera.cameraControl.enableTorch(flashEnabled && !useFrontCamera)
                 } catch (e: Exception) {

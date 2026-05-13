@@ -67,7 +67,7 @@ fun HaqqiStoryViewer(
     var dragOffsetY by remember { mutableFloatStateOf(0f) }
 
     // Parse (Prefix + Name) for Insta-style header
-    val parts = story.lawyerName.split(" ", limit = 2)
+    val parts = story.authorName.split(" ", limit = 2)
     val prefix = if(parts.isNotEmpty()) parts[0] else "Me."
     val lastName = if(parts.size > 1) parts[1] else ""
 
@@ -116,7 +116,7 @@ fun HaqqiStoryViewer(
             // Main Story Content (Photo)
             AsyncImage(
                 model = story.imageUrl,
-                contentDescription = "Story of ${story.lawyerName}",
+                contentDescription = "Story of ${story.authorName}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -187,10 +187,10 @@ fun HaqqiStoryViewer(
                             .border(1.5.dp, AppGoldColor, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (story.lawyerAvatar.isNotBlank()) {
+                        if (story.authorAvatarUrl.isNotBlank()) {
                             AsyncImage(
-                                model = story.lawyerAvatar,
-                                contentDescription = story.lawyerName,
+                                model = story.authorAvatarUrl,
+                                contentDescription = story.authorName,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )

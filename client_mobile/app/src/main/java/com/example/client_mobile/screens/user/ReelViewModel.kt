@@ -44,10 +44,11 @@ class ReelViewModel : ViewModel() {
                     val uiId = dto.id.hashCode()
                     reelApiIds[uiId] = dto.id
                     LegalReel(
-                        id         = uiId,
-                        lawyerName = dto.lawyerName,
-                        specialty  = dto.title,
-                        title      = dto.caption,
+                        id           = uiId,
+                        lawyerName   = dto.authorName,
+                        lawyerAvatar = dto.authorAvatarUrl,
+                        specialty    = dto.title,
+                        title        = dto.caption,
                         likes      = dto.likes,
                         comments   = (dto.likes * 0.07).toInt(),
                         shares     = (dto.likes * 0.035).toInt(),
@@ -55,7 +56,7 @@ class ReelViewModel : ViewModel() {
                         videoUrl   = dto.videoUrl
                     )
                 }
-                if (dtos.isEmpty() && !isRefresh) _isError.value = true
+                // Empty API response is not an error — just means no reels yet
             } catch (_: Exception) {
                 if (_reels.value == null) _reels.value = emptyList()
                 _isError.value = true

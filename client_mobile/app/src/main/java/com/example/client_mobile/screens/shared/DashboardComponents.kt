@@ -693,10 +693,10 @@ private fun StoryRingItem(story: StoryDto, onClick: () -> Unit) {
                     .clip(CircleShape)
                     .background(AppDarkGreen.copy(alpha = 0.07f))
             ) {
-                if (story.lawyerAvatar.isNotBlank()) {
+                if (story.authorAvatarUrl.isNotBlank()) {
                     coil.compose.AsyncImage(
-                        model             = story.lawyerAvatar,
-                        contentDescription = story.lawyerName,
+                        model             = story.authorAvatarUrl,
+                        contentDescription = story.authorName,
                         contentScale      = androidx.compose.ui.layout.ContentScale.Crop,
                         modifier          = Modifier.fillMaxSize()
                     )
@@ -733,7 +733,7 @@ private fun StoryRingItem(story: StoryDto, onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(4.dp))
         
-        val parts = story.lawyerName.split(" ", limit = 2)
+        val parts = story.authorName.split(" ", limit = 2)
         val prefix = if(parts.isNotEmpty()) parts[0] else "Me."
         val lastName = if(parts.size > 1) parts[1] else ""
         

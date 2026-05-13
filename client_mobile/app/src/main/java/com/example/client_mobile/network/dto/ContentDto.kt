@@ -15,34 +15,50 @@ data class SaveConsultationRequest(
 // Response shape: {"success":true,"data":{"stories":[...]}}
 // [{"id":"story_001","lawyerName":"Me. Yassine Alaoui","lawyerAvatar":"...","imageUrl":"...","expiresAt":"..."}]
 data class StoryDto(
-    @SerializedName("id")             val id:             String  = "",
-    @SerializedName("lawyerName")     val lawyerName:     String  = "",
-    @SerializedName("lawyerAvatar")   val lawyerAvatar:   String  = "",
-    @SerializedName("imageUrl")       val imageUrl:       String  = "",
-    @SerializedName("expiresAt")      val expiresAt:      String  = "",
-    @SerializedName("isLive")         val isLive:         Boolean = false,
-    @SerializedName("hasUnseenStory") val hasUnseenStory: Boolean = false,
+    @SerializedName("id")             val id:             String     = "",
+    @SerializedName("lawyerName")     val lawyerName:     String     = "",
+    @SerializedName("lawyerAvatar")   val lawyerAvatar:   String     = "",
+    @SerializedName("imageUrl")       val imageUrl:       String     = "",
+    @SerializedName("expiresAt")      val expiresAt:      String     = "",
+    @SerializedName("isLive")         val isLive:         Boolean    = false,
+    @SerializedName("hasUnseenStory") val hasUnseenStory: Boolean    = false,
     // Analytics fields (defaults apply if absent)
-    @SerializedName("views")          val views:          Int     = 0,
-    @SerializedName("timeLeft")       val timeLeft:       String  = ""
-)
+    @SerializedName("views")          val views:          Int        = 0,
+    @SerializedName("timeLeft")       val timeLeft:       String     = "",
+    // Nested author objects (backend may return these instead of flat fields)
+    @SerializedName("lawyer")         val lawyer:         LawyerDto? = null,
+    @SerializedName("user")           val user:           HaqUserDto? = null
+) {
+    /** Resolved author name: flat field → nested lawyer → nested user → fallback */
+    val authorName: String get() = lawyerName.ifBlank { lawyer?.name ?: user?.fullName ?: "Avocat" }
+    /** Resolved author avatar URL: flat field → nested lawyer → nested user → empty */
+    val authorAvatarUrl: String get() = lawyerAvatar.ifBlank { lawyer?.avatarUrl ?: user?.avatar ?: "" }
+}
 
 // ─── Reel ─────────────────────────────────────────────────────────────────────
 // Matches: GET /api/reels
 // [{"id":"reel_001","videoUrl":"...","lawyerName":"Me. Karim Bennani","likes":542,"caption":"..."}]
 data class ReelDto(
-    @SerializedName("id")         val id:         String = "",
-    @SerializedName("videoUrl")   val videoUrl:   String = "",
-    @SerializedName("lawyerName") val lawyerName: String = "",
-    @SerializedName("likes")      val likes:      Int    = 0,
-    @SerializedName("caption")    val caption:    String = "",
+    @SerializedName("id")         val id:         String     = "",
+    @SerializedName("videoUrl")   val videoUrl:   String     = "",
+    @SerializedName("lawyerName") val lawyerName: String     = "",
+    @SerializedName("likes")      val likes:      Int        = 0,
+    @SerializedName("caption")    val caption:    String     = "",
     // Analytics fields (defaults apply if absent)
-    @SerializedName("title")      val title:      String = "",
-    @SerializedName("views")      val views:      Int    = 0,
-    @SerializedName("duration")   val duration:   String = "",
+    @SerializedName("title")      val title:      String     = "",
+    @SerializedName("views")      val views:      Int        = 0,
+    @SerializedName("duration")   val duration:   String     = "",
     /** "up" | "down" | "" */
-    @SerializedName("trend")      val trend:      String = ""
-)
+    @SerializedName("trend")      val trend:      String     = "",
+    // Nested author objects (backend may return these instead of flat fields)
+    @SerializedName("lawyer")     val lawyer:     LawyerDto? = null,
+    @SerializedName("user")       val user:       HaqUserDto? = null
+) {
+    /** Resolved author name: flat field → nested lawyer → nested user → fallback */
+    val authorName: String get() = lawyerName.ifBlank { lawyer?.name ?: user?.fullName ?: "Avocat" }
+    /** Resolved author avatar: nested lawyer → nested user → empty */
+    val authorAvatarUrl: String get() = lawyer?.avatarUrl ?: user?.avatar ?: ""
+}
 
 // ─── Like response ────────────────────────────────────────────────────────────
 // Matches: POST /api/reels/{id}/like → { "is_liked": true, "likes_count": 543 }

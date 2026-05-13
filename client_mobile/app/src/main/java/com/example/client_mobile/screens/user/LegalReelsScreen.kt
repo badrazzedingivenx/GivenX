@@ -68,6 +68,7 @@ data class LegalReel(
     val shares: Int = 0,
     val views: String,
     val videoUrl: String = "",
+    val lawyerAvatar: String = "",
     val isLiked: Boolean = false,
     val isLive: Boolean = false
 )
@@ -94,13 +95,14 @@ fun LegalReelsScreen(
         val loaded = apiReels ?: return@LaunchedEffect
         val creatorMapped = CreatorRepository.reels.map { cr ->
             LegalReel(
-                id         = cr.id.toInt(),
-                lawyerName = cr.lawyerName,
-                specialty  = cr.specialty,
-                title      = cr.title,
-                likes      = cr.likes,
-                views      = "${cr.views}",
-                isLiked    = cr.isLiked
+                id           = cr.id.toInt(),
+                lawyerName   = cr.lawyerName,
+                lawyerAvatar = "",
+                specialty    = cr.specialty,
+                title        = cr.title,
+                likes        = cr.likes,
+                views        = "${cr.views}",
+                isLiked      = cr.isLiked
             )
         }
         allReels.clear()
@@ -453,12 +455,21 @@ private fun ReelSidebar(
                 border   = androidx.compose.foundation.BorderStroke(2.dp, ReelGold)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = null,
-                        tint     = ReelGold,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    if (reel.lawyerAvatar.isNotBlank()) {
+                        coil.compose.AsyncImage(
+                            model             = reel.lawyerAvatar,
+                            contentDescription = reel.lawyerName,
+                            contentScale      = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier          = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = null,
+                            tint     = ReelGold,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
             // Gold '+' badge

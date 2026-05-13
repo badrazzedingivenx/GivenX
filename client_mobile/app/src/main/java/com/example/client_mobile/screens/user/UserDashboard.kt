@@ -131,7 +131,7 @@ internal fun UserCasesTabContent(
     val allStories = (storiesState?.map { dto ->
         LegalStory(
             id          = dto.id.hashCode(),
-            lawyerName  = dto.lawyerName,
+            lawyerName  = dto.authorName,
             specialty   = "",
             hasNewStory = true,
             isLive      = dto.isLive

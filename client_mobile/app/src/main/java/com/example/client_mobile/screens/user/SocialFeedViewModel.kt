@@ -81,14 +81,7 @@ class SocialFeedViewModel : ViewModel() {
 
             // Posts
             val fetchedPosts = MainRepository.getLegalFeed()
-            if (fetchedPosts.isNotEmpty()) {
-                _posts.value = fetchedPosts
-            } else {
-                _posts.value = emptyList()
-                if (fetchedStories.isEmpty()) {
-                    _isError.value = true
-                }
-            }
+            _posts.value = fetchedPosts
             _isRefreshing.value = false
         }
     }

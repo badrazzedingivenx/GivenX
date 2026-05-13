@@ -13,6 +13,7 @@ import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.screens.shared.Conversation
 import com.example.client_mobile.screens.shared.ConversationRepository
+import java.io.File
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -69,7 +70,24 @@ object MainRepository {
      */
     suspend fun uploadStory(context: Context, uri: Uri): Boolean {
         return try {
-            val part = buildFilePart(context, uri, "file") ?: return false
+            val part = buildFilePart(context, uri, "media") ?: return false
+            val response = RetrofitClient.haqApi.uploadStory(part)
+            if (!response.isSuccessful) {
+                Log.e("ContentUpload", "uploadStory HTTP ${response.code()} — ${response.errorBody()?.string()}")
+            }
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "uploadStory threw: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Upload a File directly as a Story (used by CameraX capture).
+     */
+    suspend fun uploadStory(file: File): Boolean {
+        return try {
+            val part = buildFilePart(file, "media") ?: return false
             val response = RetrofitClient.haqApi.uploadStory(part)
             if (!response.isSuccessful) {
                 Log.e("ContentUpload", "uploadStory HTTP ${response.code()} — ${response.errorBody()?.string()}")
@@ -85,11 +103,29 @@ object MainRepository {
      * Upload an image/video as a Reel to POST /reels.
      * Returns true on HTTP 2xx success.
      */
-    suspend fun uploadReel(context: Context, uri: Uri, caption: String): Boolean {
+    suspend fun uploadReel(context: Context, uri: Uri, title: String): Boolean {
         return try {
-            val part = buildFilePart(context, uri, "file") ?: return false
-            val captionBody = caption.toRequestBody("text/plain".toMediaTypeOrNull())
-            val response = RetrofitClient.haqApi.uploadReel(part, captionBody)
+            val videoPart  = buildFilePart(context, uri, "video") ?: return false
+            val titleBody  = title.toRequestBody("text/plain".toMediaTypeOrNull())
+            val response = RetrofitClient.haqApi.uploadReel(videoPart, titleBody)
+            if (!response.isSuccessful) {
+                Log.e("ContentUpload", "uploadReel HTTP ${response.code()} — ${response.errorBody()?.string()}")
+            }
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "uploadReel threw: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Upload a File directly as a Reel (used by CameraX video capture).
+     */
+    suspend fun uploadReel(file: File, title: String): Boolean {
+        return try {
+            val videoPart = buildFilePart(file, "video") ?: return false
+            val titleBody = title.toRequestBody("text/plain".toMediaTypeOrNull())
+            val response = RetrofitClient.haqApi.uploadReel(videoPart, titleBody)
             if (!response.isSuccessful) {
                 Log.e("ContentUpload", "uploadReel HTTP ${response.code()} — ${response.errorBody()?.string()}")
             }
@@ -110,6 +146,25 @@ object MainRepository {
             MultipartBody.Part.createFormData(partName, fileName, requestBody)
         } catch (e: Exception) {
             Log.e("ContentUpload", "buildFilePart failed: ${e.message}", e)
+            null
+        }
+    }
+
+    /** Wraps a local [File] directly into a [MultipartBody.Part] (no ContentResolver needed). */
+    private fun buildFilePart(file: File, partName: String): MultipartBody.Part? {
+        return try {
+            val bytes = file.readBytes()
+            val mimeType = when {
+                file.extension.lowercase() in listOf("jpg", "jpeg") -> "image/jpeg"
+                file.extension.lowercase() in listOf("png")         -> "image/png"
+                file.extension.lowercase() in listOf("mp4")         -> "video/mp4"
+                file.extension.lowercase() in listOf("3gp")         -> "video/3gp"
+                else                                                -> "application/octet-stream"
+            }
+            val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+            MultipartBody.Part.createFormData(partName, file.name, requestBody)
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "buildFilePart(file) failed: ${e.message}", e)
             null
         }
     }

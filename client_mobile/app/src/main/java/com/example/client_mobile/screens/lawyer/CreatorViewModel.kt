@@ -110,7 +110,6 @@ class CreatorViewModel : ViewModel() {
             _activeLiveCount.value = livesActive
 
             _aiInsight.value = buildInsight(totalViews, totalLikes, engagement, reelsResult.size)
-            _isError.value   = reelsResult.isEmpty() && storiesResult.isEmpty()
             _isLoading.value    = false
             _isRefreshing.value = false
         }
