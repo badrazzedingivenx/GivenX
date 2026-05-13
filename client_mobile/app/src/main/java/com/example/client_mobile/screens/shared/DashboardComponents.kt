@@ -26,16 +26,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.PeopleAlt
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
@@ -615,23 +610,6 @@ fun LegalInputField(
             )
         }
     }
-}
-
-// ─── App Navigation Tokens ──────────────────────────────────────────────────────
-
-sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
-    object Home : LawyerTab("lawyer_home", Icons.Default.Home, "Accueil")
-    object Messages : LawyerTab("lawyer_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
-    object Clients : LawyerTab("lawyer_clients", Icons.Default.Groups, "Clients")
-    object Profile : LawyerTab("lawyer_profile", Icons.Default.Person, "Profil")
-    object Creator : LawyerTab("lawyer_creator", Icons.Default.AutoAwesome, "Créateur")
-}
-
-sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
-    object Home : UserTab("user_home", Icons.Default.Home, "Accueil")
-    object Networking : UserTab("user_networking", Icons.Default.PeopleAlt, "Réseau")
-    object Messages : UserTab("user_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
-    object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
 }
 
 // ─── StoriesRow (Moved from Feed) ───────────────────────────────────────────────────

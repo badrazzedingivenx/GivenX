@@ -14,7 +14,6 @@ import androidx.navigation.navArgument
 import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.user.*
 import com.example.client_mobile.screens.lawyer.*
-import com.example.client_mobile.screens.shared.RegistrationScreen
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.services.UserService
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -212,25 +211,6 @@ fun AppNavigation() {
         composable("EditLawyerProfile") {
             EditLawyerProfileScreen(
                 onBack = { navController.popBackStack() }
-            )
-        }
-
-        // 6. User Home / Profile
-        composable("UserHome") {
-            val clientId = TokenManager.getClientId()
-            UserDashboardHost(
-                onNavigateToProfile = { navController.navigate("UserProfile") { launchSingleTop = true } },
-                onNavigateToAbout = { navController.navigate("About") },
-                onNavigateToLawyerDetail = { lawyerId -> navController.navigate("LawyerDetail/$lawyerId") },
-                onNavigateToCategory = { domaine ->
-                    navController.navigate("LawyerList/${android.net.Uri.encode(domaine)}")
-                },
-                onNavigateToNotifications = { navController.navigate("Notifications/user") },
-                onNavigateToChat = { convId -> navController.navigate("Chat/$convId") },
-                onNavigateToAppointments = { navController.navigate("Appointments") },
-                onNavigateToDocuments = { navController.navigate("DocumentVault") },
-                onNavigateToFacturation = { navController.navigate("Billing?clientId=$clientId") },
-                onNavigateToDossier = { caseId -> navController.navigate("DossierDetail/$caseId") }
             )
         }
 
