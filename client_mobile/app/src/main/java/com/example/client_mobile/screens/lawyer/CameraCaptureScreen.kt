@@ -1,6 +1,7 @@
 package com.example.client_mobile.screens.lawyer
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,8 +12,17 @@ import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FileOutputOptions
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -29,6 +39,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CameraFront
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.FlashOff
@@ -39,27 +50,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import coil.compose.AsyncImage
+import com.example.client_mobile.network.MainRepository
 import com.example.client_mobile.screens.shared.AppDarkGreen
 import com.example.client_mobile.screens.shared.AppGoldColor
 import androidx.compose.material3.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.File
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 private val CameraGold = Color(0xFFC5A059)
 private val OverlayDark = Color(0x99000000)
 
 private enum class CaptureMode(val label: String) {
-    Post("POST"),
+    Post("STORY"),
     Reel("REEL"),
     Live("LIVE")
 }
@@ -79,6 +97,7 @@ private fun allPermissionsGranted(context: Context): Boolean =
 @Composable
 fun CameraCaptureScreen(
     onClose: () -> Unit,
+    onPublished: () -> Unit = onClose,
     onNavigateToLive: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -128,7 +147,7 @@ fun CameraCaptureScreen(
         return
     }
 
-    CameraContent(onClose = onClose, onNavigateToLive = onNavigateToLive)
+    CameraContent(onClose = onClose, onPublished = onPublished, onNavigateToLive = onNavigateToLive)
 }
 
 // ─── Permission Gate ──────────────────────────────────────────────────────────
@@ -184,31 +203,52 @@ private fun PermissionGate(
 
 // ─── Camera Content (Full-screen preview + overlays) ──────────────────────────
 
+@SuppressLint("MissingPermission")
 @Composable
 private fun CameraContent(
     onClose: () -> Unit,
+    onPublished: () -> Unit,
     onNavigateToLive: () -> Unit
 ) {
-    val context = LocalContext.current
+    val context        = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
 
     var useFrontCamera by remember { mutableStateOf(true) }
-    var flashEnabled by remember { mutableStateOf(false) }
-    var selectedMode by remember { mutableStateOf(CaptureMode.Reel) }
-    var isRecording by remember { mutableStateOf(false) }
+    var flashEnabled   by remember { mutableStateOf(false) }
+    var selectedMode   by remember { mutableStateOf(CaptureMode.Reel) }
+    var isRecording    by remember { mutableStateOf(false) }
+
+    // ── CameraX use cases ─────────────────────────────────────────────────────
+    val imageCapture = remember { ImageCapture.Builder().build() }
+    val recorder     = remember {
+        Recorder.Builder().setQualitySelector(QualitySelector.from(Quality.HD)).build()
+    }
+    val videoCapture    = remember(recorder) { VideoCapture.withOutput(recorder) }
+    var activeRecording by remember { mutableStateOf<Recording?>(null) }
+
+    // ── Post-capture state ────────────────────────────────────────────────────
+    var capturedUri   by remember { mutableStateOf<Uri?>(null) }
+    var capturedIsVid by remember { mutableStateOf(false) }
+    var isUploading   by remember { mutableStateOf(false) }
+    var uploadError   by remember { mutableStateOf(false) }
+    var uploadDone    by remember { mutableStateOf(false) }
 
     val modes = remember { CaptureMode.entries }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // ── Live Camera Preview ─────────────────────────────────────────────
+
+        // ── Live camera preview ───────────────────────────────────────────────
         CameraPreview(
-            context = context,
+            context        = context,
             lifecycleOwner = lifecycleOwner,
             useFrontCamera = useFrontCamera,
-            flashEnabled = flashEnabled
+            flashEnabled   = flashEnabled,
+            imageCapture   = imageCapture,
+            videoCapture   = videoCapture
         )
 
-        // ── Top Overlay ─────────────────────────────────────────────────────
+        // ── Top Overlay ───────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -218,6 +258,317 @@ private fun CameraContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Close button
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier.size(40.dp).background(OverlayDark, CircleShape)
+            ) {
+                Icon(Icons.Default.Close, "Fermer", tint = Color.White, modifier = Modifier.size(22.dp))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Flash toggle
+                IconButton(
+                    onClick = { flashEnabled = !flashEnabled },
+                    modifier = Modifier.size(40.dp).background(OverlayDark, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                        contentDescription = "Flash",
+                        tint = if (flashEnabled) CameraGold else Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                // Flip camera
+                IconButton(
+                    onClick = { useFrontCamera = !useFrontCamera },
+                    modifier = Modifier.size(40.dp).background(OverlayDark, CircleShape)
+                ) {
+                    Icon(Icons.Default.CameraFront, "Retourner", tint = Color.White, modifier = Modifier.size(22.dp))
+                }
+            }
+        }
+
+        // ── Bottom Controls ───────────────────────────────────────────────────
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f), Color.Black.copy(alpha = 0.8f))
+                    )
+                )
+                .navigationBarsPadding()
+                .padding(bottom = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // ── Capture Button ────────────────────────────────────────────────
+            CaptureButton(
+                mode = selectedMode,
+                isRecording = isRecording,
+                onClick = {
+                    when (selectedMode) {
+                        CaptureMode.Live -> onNavigateToLive()
+
+                        CaptureMode.Post -> {
+                            // ── Take photo → upload as Story ──────────────────
+                            val file = File(context.cacheDir, "story_${System.currentTimeMillis()}.jpg")
+                            val options = ImageCapture.OutputFileOptions.Builder(file).build()
+                            imageCapture.takePicture(
+                                options,
+                                ContextCompat.getMainExecutor(context),
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(result: ImageCapture.OutputFileResults) {
+                                        capturedUri   = Uri.fromFile(file)
+                                        capturedIsVid = false
+                                        uploadError   = false
+                                        uploadDone    = false
+                                    }
+                                    override fun onError(exc: ImageCaptureException) {
+                                        Log.e("CameraCapture", "Photo capture failed: ${exc.message}", exc)
+                                    }
+                                }
+                            )
+                        }
+
+                        CaptureMode.Reel -> {
+                            if (!isRecording) {
+                                // ── Start video recording ─────────────────────
+                                val file = File(context.cacheDir, "reel_${System.currentTimeMillis()}.mp4")
+                                val outputOptions = FileOutputOptions.Builder(file).build()
+                                activeRecording = videoCapture.output
+                                    .prepareRecording(context, outputOptions)
+                                    .withAudioEnabled()
+                                    .start(ContextCompat.getMainExecutor(context)) { event ->
+                                        if (event is VideoRecordEvent.Finalize) {
+                                            isRecording = false
+                                            if (!event.hasError()) {
+                                                capturedUri   = Uri.fromFile(file)
+                                                capturedIsVid = true
+                                                uploadError   = false
+                                                uploadDone    = false
+                                            } else {
+                                                Log.e("CameraCapture", "Video error: ${event.cause?.message}")
+                                            }
+                                        }
+                                    }
+                                isRecording = true
+                            } else {
+                                // ── Stop recording ────────────────────────────
+                                activeRecording?.stop()
+                                activeRecording = null
+                                // isRecording is reset in VideoRecordEvent.Finalize
+                            }
+                        }
+                    }
+                }
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── Snapping Mode Picker ──────────────────────────────────────────
+            SnapModePicker(
+                modes = modes,
+                selectedMode = selectedMode,
+                onModeChanged = { selectedMode = it }
+            )
+        }
+
+        // ── Post-capture preview + upload overlay ─────────────────────────────
+        if (capturedUri != null) {
+            CapturePreviewOverlay(
+                uri         = capturedUri!!,
+                isVideo     = capturedIsVid,
+                mode        = selectedMode,
+                isUploading = isUploading,
+                uploadError = uploadError,
+                uploadDone  = uploadDone,
+                onPublish   = { caption ->
+                    isUploading = true
+                    uploadError = false
+                    coroutineScope.launch {
+                        val success = if (selectedMode == CaptureMode.Post) {
+                            MainRepository.uploadStory(context, capturedUri!!)
+                        } else {
+                            MainRepository.uploadReel(
+                                context, capturedUri!!, caption.ifBlank { "Conseil juridique" }
+                            )
+                        }
+                        isUploading = false
+                        if (success) {
+                            uploadDone = true
+                            delay(1200)
+                            onPublished()
+                        } else {
+                            uploadError = true
+                        }
+                    }
+                },
+                onDiscard = {
+                    capturedUri   = null
+                    capturedIsVid = false
+                    uploadError   = false
+                    uploadDone    = false
+                }
+            )
+        }
+    }
+}
+
+// ─── Post-Capture Preview Overlay ────────────────────────────────────────────
+
+@Composable
+private fun CapturePreviewOverlay(
+    uri: Uri,
+    isVideo: Boolean,
+    mode: CaptureMode,
+    isUploading: Boolean,
+    uploadError: Boolean,
+    uploadDone: Boolean,
+    onPublish: (caption: String) -> Unit,
+    onDiscard: () -> Unit
+) {
+    var caption by remember { mutableStateOf("") }
+
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+
+        // ── Media preview ─────────────────────────────────────────────────────
+        if (!isVideo) {
+            AsyncImage(
+                model              = uri,
+                contentDescription = "Aperçu",
+                modifier           = Modifier.fillMaxSize(),
+                contentScale       = ContentScale.Fit
+            )
+        } else {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Default.Videocam, null,
+                    tint     = Color.White.copy(alpha = 0.4f),
+                    modifier = Modifier.size(80.dp)
+                )
+                Text(
+                    "Vidéo prête",
+                    color    = Color.White,
+                    fontSize = 16.sp,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 200.dp)
+                )
+            }
+        }
+
+        // ── Discard button (top-left) ─────────────────────────────────────────
+        if (!isUploading && !uploadDone) {
+            IconButton(
+                onClick  = onDiscard,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(16.dp)
+                    .background(OverlayDark, CircleShape)
+            ) {
+                Icon(Icons.Default.Close, "Annuler", tint = Color.White)
+            }
+        }
+
+        // ── Success overlay ───────────────────────────────────────────────────
+        if (uploadDone) {
+            Box(
+                modifier         = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.65f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.CheckCircle, null, tint = CameraGold, modifier = Modifier.size(72.dp))
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        if (mode == CaptureMode.Post) "Story publiée !" else "Reel publié !",
+                        color      = Color.White,
+                        fontSize   = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Serif
+                    )
+                }
+            }
+        }
+
+        // ── Bottom: caption + publish button ──────────────────────────────────
+        if (!uploadDone) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                        )
+                    )
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Caption field — Reels only
+                if (mode == CaptureMode.Reel && !isUploading) {
+                    OutlinedTextField(
+                        value         = caption,
+                        onValueChange = { caption = it },
+                        placeholder   = { Text("Légende du reel…", color = Color.White.copy(alpha = 0.45f)) },
+                        textStyle     = LocalTextStyle.current.copy(color = Color.White),
+                        modifier      = Modifier.fillMaxWidth(),
+                        colors        = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor   = CameraGold,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                            cursorColor          = CameraGold
+                        ),
+                        singleLine = true,
+                        shape      = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                // Error message
+                if (uploadError) {
+                    Text(
+                        "Erreur de publication. Réessayez.",
+                        color     = Color(0xFFFF6B6B),
+                        fontSize  = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier  = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Publish / loading button
+                Button(
+                    onClick  = { if (!isUploading) onPublish(caption) },
+                    enabled  = !isUploading,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    colors   = ButtonDefaults.buttonColors(
+                        containerColor         = CameraGold,
+                        contentColor           = AppDarkGreen,
+                        disabledContainerColor = CameraGold.copy(alpha = 0.6f),
+                        disabledContentColor   = AppDarkGreen.copy(alpha = 0.6f)
+                    ),
+                    shape = RoundedCornerShape(50)
+                ) {
+                    if (isUploading) {
+                        CircularProgressIndicator(
+                            modifier    = Modifier.size(20.dp),
+                            color       = AppDarkGreen,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Publication…", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    } else {
+                        Text(
+                            if (mode == CaptureMode.Post) "PUBLIER LA STORY" else "PUBLIER LE REEL",
+                            fontWeight = FontWeight.Bold,
+                            fontSize   = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
             IconButton(
                 onClick = onClose,
                 modifier = Modifier

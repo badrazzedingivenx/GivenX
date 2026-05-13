@@ -1,5 +1,8 @@
 package com.example.client_mobile.network
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import com.example.client_mobile.network.dto.LawyerSearchResultDto
 import com.example.client_mobile.network.dto.LegalPostDto
 import com.example.client_mobile.network.dto.LikeResponseDto
@@ -10,6 +13,9 @@ import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.screens.shared.Conversation
 import com.example.client_mobile.screens.shared.ConversationRepository
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
  * Unified repository that merges Reels, Search (lawyers), and Messaging.
@@ -49,11 +55,63 @@ object MainRepository {
         } catch (_: Exception) { emptyList() }
     }
 
-    suspend fun toggleLike(reelId: String): LikeResponseDto? {
-        return try {
+    suspend fun toggleLike(reelId: String): LikeResponseDto? {        return try {
             val response = RetrofitClient.haqApi.likeReel(reelId)
             if (response.isSuccessful) response.body()?.data else null
         } catch (_: Exception) { null }
+    }
+
+    // ── Content Upload ────────────────────────────────────────────────────────
+
+    /**
+     * Upload an image/video as a Story to POST /stories.
+     * Returns true on HTTP 2xx success.
+     */
+    suspend fun uploadStory(context: Context, uri: Uri): Boolean {
+        return try {
+            val part = buildFilePart(context, uri, "file") ?: return false
+            val response = RetrofitClient.haqApi.uploadStory(part)
+            if (!response.isSuccessful) {
+                Log.e("ContentUpload", "uploadStory HTTP ${response.code()} — ${response.errorBody()?.string()}")
+            }
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "uploadStory threw: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Upload an image/video as a Reel to POST /reels.
+     * Returns true on HTTP 2xx success.
+     */
+    suspend fun uploadReel(context: Context, uri: Uri, caption: String): Boolean {
+        return try {
+            val part = buildFilePart(context, uri, "file") ?: return false
+            val captionBody = caption.toRequestBody("text/plain".toMediaTypeOrNull())
+            val response = RetrofitClient.haqApi.uploadReel(part, captionBody)
+            if (!response.isSuccessful) {
+                Log.e("ContentUpload", "uploadReel HTTP ${response.code()} — ${response.errorBody()?.string()}")
+            }
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "uploadReel threw: ${e.message}", e)
+            false
+        }
+    }
+
+    /** Reads a content URI and wraps it in a [MultipartBody.Part]. Returns null if the URI can't be read. */
+    private fun buildFilePart(context: Context, uri: Uri, partName: String): MultipartBody.Part? {
+        return try {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+            val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+            val fileName = uri.lastPathSegment ?: "upload"
+            val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+            MultipartBody.Part.createFormData(partName, fileName, requestBody)
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "buildFilePart failed: ${e.message}", e)
+            null
+        }
     }
 
     // ── Search ────────────────────────────────────────────────────────────────

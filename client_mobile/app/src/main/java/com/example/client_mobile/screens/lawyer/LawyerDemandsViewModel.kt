@@ -50,7 +50,7 @@ class LawyerDemandsViewModel : ViewModel() {
         if (!isRefresh) _isLoading.value = true
         _isError.value = false
         viewModelScope.launch {
-            val all = DossierApiRepository.getDossiersForCurrentUser()
+            val all = DossierApiRepository.getDossiersForCurrentUser() ?: emptyList()
             _pending.value = all.filter { it.status in PENDING_STATUSES }
             _isLoading.value = false
             _isRefreshing.value = false

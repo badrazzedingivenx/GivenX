@@ -33,13 +33,17 @@ import com.example.client_mobile.network.dto.UserDto
 import com.example.client_mobile.network.dto.Profile
 import com.example.client_mobile.network.dto.Specialty
 import com.example.client_mobile.network.dto.Consultation
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -228,11 +232,24 @@ interface HaqApiService {
     /** GET /reels — shape: {"data":{"reels":[...],"pagination":{...}}} */
     @GET("reels")
     suspend fun getReels(): Response<ApiResponse<ReelsResponseDto>>
-
+    /** POST /reels — multipart upload of a video file with an optional caption. */
+    @Multipart
+    @POST("reels")
+    suspend fun uploadReel(
+        @Part file: MultipartBody.Part,
+        @Part("caption") caption: RequestBody
+    ): Response<ApiResponse<ReelDto>>
     // ── Stories ────────────────────────────────────────────────────
     /** GET /stories — shape: {"data":{"stories":[...]}} */
     @GET("stories")
     suspend fun getStories(): Response<ApiResponse<StoriesResponseDto>>
+
+    /** POST /stories — multipart upload of an image/video file. */
+    @Multipart
+    @POST("stories")
+    suspend fun uploadStory(
+        @Part file: MultipartBody.Part
+    ): Response<ApiResponse<StoryDto>>
 
     // ── Legal Feed ─────────────────────────────────────────────────
     /** GET /reels — returns the social legal feed posts (legal-feed renamed to reels). */

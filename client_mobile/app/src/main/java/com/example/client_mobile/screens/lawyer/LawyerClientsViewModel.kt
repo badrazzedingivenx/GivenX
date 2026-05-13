@@ -40,8 +40,13 @@ class LawyerClientsViewModel : ViewModel() {
         _isError.value = false
         viewModelScope.launch {
             val result = DossierApiRepository.getDossiersForCurrentUser()
-            _dossiers.value = result
-            _isError.value = result.isEmpty()
+            if (result == null) {
+                // Null = network/API failure
+                if (_dossiers.value.isEmpty()) _isError.value = true
+            } else {
+                // Non-null (even empty list) = successful response
+                _dossiers.value = result
+            }
             _isLoading.value = false
             _isRefreshing.value = false
         }

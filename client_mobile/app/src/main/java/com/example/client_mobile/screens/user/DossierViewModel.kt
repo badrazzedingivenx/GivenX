@@ -24,7 +24,7 @@ class DossierViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val userId = TokenManager.getUserId() ?: ""  // set after login
-                _dossiers.value = DossierApiRepository.getDossiersForCurrentUser(userId)
+                _dossiers.value = DossierApiRepository.getDossiersForCurrentUser(userId) ?: emptyList()
             } catch (e: Exception) {
                 _dossiers.value = emptyList()
             }

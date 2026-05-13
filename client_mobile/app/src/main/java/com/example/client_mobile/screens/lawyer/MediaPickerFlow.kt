@@ -1,6 +1,7 @@
 package com.example.client_mobile.screens.lawyer
 
 import com.example.client_mobile.screens.shared.*
+import com.example.client_mobile.network.MainRepository
 
 import android.Manifest
 import android.app.Activity
@@ -38,7 +39,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import coil.compose.AsyncImage
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // ─── Media Type ────────────────────────────────────────────────────────────────
 enum class MediaPostType { Story, Reel }
@@ -115,13 +118,23 @@ fun MediaPickerFlow(
                     onPublish = { step = 2 }
                 )
                 2 -> {
-                    // Start publishing simulation
+                    // Run fake visual progress + real upload in parallel
                     LaunchedEffect(Unit) {
-                        for (i in 1..100) {
-                            delay(20)
-                            publishProgress = i / 100f
+                        // Visual progress animation
+                        val progressJob = launch {
+                            for (i in 1..100) {
+                                delay(20)
+                                publishProgress = i / 100f
+                            }
                         }
-                        // Perform actual repository update
+                        // Real HTTP upload
+                        val uploaded = if (postType == MediaPostType.Story) {
+                            MainRepository.uploadStory(context, selectedUri!!)
+                        } else {
+                            MainRepository.uploadReel(context, selectedUri!!, caption.ifBlank { "Conseil juridique" })
+                        }
+                        progressJob.join()
+                        // Keep optimistic local state in sync
                         if (postType == MediaPostType.Story) {
                             CreatorRepository.postStory(lawyerName, specialty)
                         } else {

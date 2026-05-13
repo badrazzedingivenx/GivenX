@@ -30,24 +30,25 @@ object DossierApiRepository {
     // ── List fetch ────────────────────────────────────────────────────────────
 
     /**
-     * Returns the current user's dossiers via the /dossiers/me endpoint
-     * (JWT-based, no explicit userId required).
-     * Falls back to the userId-based endpoint if [userId] is provided.
+     * Returns the current user's dossiers via the /dossiers/me endpoint.
+     * Returns **null** on network/API failure (caller should show error state).
+     * Returns an **empty list** when the API succeeds but the user has no dossiers.
      */
-    suspend fun getDossiersForCurrentUser(userId: String? = null): List<DossierData> {
-        // ── Step 1: try the real API (wrapped ApiResponse) ────────────────────
-        try {
+    suspend fun getDossiersForCurrentUser(userId: String? = null): List<DossierData>? {
+        return try {
             val response = if (userId.isNullOrBlank()) {
                 RetrofitClient.haqApi.getMyDossiers()
             } else {
                 RetrofitClient.haqApi.getDossiers(userId)
             }
             if (response.isSuccessful && response.body()?.success == true) {
-                return response.body()?.data?.map { it.toDomain() } ?: emptyList()
+                response.body()?.data?.map { it.toDomain() } ?: emptyList()
+            } else {
+                null
             }
-        } catch (_: Exception) { }
-
-        return emptyList()
+        } catch (_: Exception) {
+            null
+        }
     }
 
     // ── Single fetch ──────────────────────────────────────────────────────────
