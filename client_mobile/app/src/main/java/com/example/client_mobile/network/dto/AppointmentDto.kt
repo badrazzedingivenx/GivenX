@@ -12,3 +12,15 @@ data class AppointmentDto(
     @SerializedName("time")       val time:       String = "",
     @SerializedName("status")     val status:     String = ""   // optional field
 )
+
+/**
+ * Paginated response shape returned by GET /appointments:
+ * { "success": true, "data": { "appointments": [...], "pagination": {...} } }
+ *
+ * The server uses "appointments" as the list key (not "data"),
+ * so this cannot reuse the generic PaginatedData<T> wrapper.
+ */
+data class AppointmentsPageDto(
+    @SerializedName("appointments") val appointments: List<RecentConsultationDto> = emptyList(),
+    @SerializedName("pagination")   val pagination:   PaginationMeta?             = null
+)

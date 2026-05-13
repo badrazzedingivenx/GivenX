@@ -102,13 +102,13 @@ data class HaqUpdateProfileRequest(
 
 /** Single lawyer item returned in the GET /lawyers list. */
 data class HaqLawyerPublicDto(
-    @SerializedName("id")        val id:        Int     = 0,
-    @SerializedName("full_name") val fullName:  String  = "",
-    @SerializedName("domain")    val domain:    String  = "",
-    @SerializedName("avatar")    val avatar:    String? = null,
-    @SerializedName("available") val available: Boolean = true,
-    @SerializedName("rating")    val rating:    Float   = 0f,
-    @SerializedName("bio")       val bio:       String  = ""
+    @SerializedName("id")        val id:        Int?     = null,
+    @SerializedName("full_name") val fullName:  String?  = null,
+    @SerializedName("domain")    val domain:    String?  = null,
+    @SerializedName("avatar")    val avatar:    String?  = null,
+    @SerializedName("available") val available: Boolean? = null,
+    @SerializedName("rating")    val rating:    Float?   = null,
+    @SerializedName("bio")       val bio:       String?  = null
 )
 
 /** Full public profile returned by GET /lawyers/{lawyer_id}. */
@@ -155,6 +155,16 @@ data class HaqLiveSessionDto(
     @SerializedName("lawyer")       val lawyer:      HaqUserDto? = null,
     @SerializedName("viewer_count") val viewerCount: Int         = 0,
     @SerializedName("created_at")   val createdAt:   String      = ""
+)
+
+/**
+ * Wrapper for GET /live-sessions paginated response.
+ * Shape: { "success":true, "data": { "data": [...], "pagination": { ... } } }
+ * Access items via: response.body()?.data?.sessions
+ */
+data class LiveSessionsResponseDto(
+    @SerializedName("data")       val sessions:   List<HaqLiveSessionDto>? = emptyList(),
+    @SerializedName("pagination") val pagination: PaginationMeta?          = null
 )
 
 /** POST /live-sessions/{session_id}/comments body. */

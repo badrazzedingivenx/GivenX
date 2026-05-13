@@ -2,6 +2,7 @@ package com.example.client_mobile.network
 
 import com.example.client_mobile.network.dto.HaqLawyerDetailDto
 import com.example.client_mobile.network.dto.HaqLawyerPublicDto
+import com.example.client_mobile.network.dto.PaginatedData
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -40,7 +41,7 @@ interface LawyerApi {
         @Query("domain")    domain:    String?  = null,
         @Query("available") available: Boolean? = null,
         @Query("page")      page:      Int      = 1
-    ): Response<ApiResponse<List<HaqLawyerPublicDto>>>
+    ): Response<ApiResponse<PaginatedData<HaqLawyerPublicDto>>>
 
     /**
      * GET /lawyers/{lawyer_id}

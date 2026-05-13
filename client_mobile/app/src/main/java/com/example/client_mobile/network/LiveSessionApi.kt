@@ -4,6 +4,7 @@ import com.example.client_mobile.network.dto.HaqCreateLiveSessionRequest
 import com.example.client_mobile.network.dto.HaqLiveCommentDto
 import com.example.client_mobile.network.dto.HaqLiveCommentRequest
 import com.example.client_mobile.network.dto.HaqLiveSessionDto
+import com.example.client_mobile.network.dto.LiveSessionsResponseDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -42,7 +43,7 @@ interface LiveSessionApi {
         @Query("domain")   domain:  String? = null,
         @Query("page")     page:    Int     = 1,
         @Query("per_page") perPage: Int     = 10
-    ): Response<ApiResponse<List<HaqLiveSessionDto>>>
+    ): Response<ApiResponse<LiveSessionsResponseDto>>
 
     /**
      * POST /live-sessions

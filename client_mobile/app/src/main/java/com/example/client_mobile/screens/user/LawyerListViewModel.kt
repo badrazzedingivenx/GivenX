@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.user
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.dto.LawyerDto
 import com.example.client_mobile.screens.shared.LawyerItem
@@ -63,12 +64,14 @@ class LawyerListViewModel : ViewModel() {
                     limit   = 100
                 )
                 if (response.isSuccessful && response.body()?.success == true) {
-                    _lawyers.value = response.body()?.data?.map { it.toItem() } ?: emptyList()
+                    _lawyers.value = response.body()?.data?.lawyers?.map { it.toItem() } ?: emptyList()
                 } else {
+                    Log.e("LawyerListVM", "getLawyers HTTP ${response.code()} — ${response.errorBody()?.string()}")
                     if (_lawyers.value == null) _lawyers.value = emptyList()
                     _isError.value = true
                 }
             } catch (e: Exception) {
+                Log.e("LawyerListVM", "getLawyers threw: ${e.message}", e)
                 if (_lawyers.value == null) _lawyers.value = emptyList()
                 _isError.value = true
             } finally {
@@ -78,17 +81,17 @@ class LawyerListViewModel : ViewModel() {
     }
 
     private fun LawyerDto.toItem() = LawyerItem(
-        id          = id,
-        name        = name,
-        specialty   = specialty,
-        city        = location,
-        rating      = rating,
-        reviewCount = reviewCount,
-        yearsExp    = experience,
-        bio         = bio,
-        isVerified  = isVerified,
-        domaine     = domaine.ifBlank { specialty },
-        avatarUrl   = avatarUrl
+        id          = id          ?: "",
+        name        = name        ?: "Avocat",
+        specialty   = specialty   ?: "",
+        city        = location    ?: "Non spécifiée",
+        rating      = rating      ?: 0f,
+        reviewCount = reviewCount ?: 0,
+        yearsExp    = experience  ?: 0,
+        bio         = bio         ?: "",
+        isVerified  = isVerified  ?: false,
+        domaine     = (domaine    ?: specialty ?: ""),
+        avatarUrl   = avatarUrl   ?: ""
     )
 
     /** Returns the [LawyerItem] with the given ID, or null. */

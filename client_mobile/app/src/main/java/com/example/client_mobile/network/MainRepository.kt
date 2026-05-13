@@ -22,21 +22,30 @@ object MainRepository {
     suspend fun getReels(): List<ReelDto> {
         return try {
             val response = RetrofitClient.haqApi.getReels()
-            if (response.isSuccessful) response.body()?.data ?: emptyList() else emptyList()
+            if (response.isSuccessful) response.body()?.data?.reels ?: emptyList() else emptyList()
         } catch (_: Exception) { emptyList() }
     }
 
     suspend fun getLegalFeed(): List<LegalPostDto> {
         return try {
             val response = RetrofitClient.haqApi.getLegalFeed()
-            if (response.isSuccessful) response.body()?.data ?: emptyList() else emptyList()
+            // getLegalFeed reuses the /reels endpoint; map ReelDto → LegalPostDto-compatible fields
+            if (response.isSuccessful)
+                response.body()?.data?.reels?.map { reel ->
+                    LegalPostDto(
+                        lawyerName   = reel.lawyerName,
+                        legalText    = reel.caption.ifBlank { reel.title },
+                        likesCount   = reel.likes
+                    )
+                } ?: emptyList()
+            else emptyList()
         } catch (_: Exception) { emptyList() }
     }
 
     suspend fun getStories(): List<StoryDto> {
         return try {
             val response = RetrofitClient.haqApi.getStories()
-            if (response.isSuccessful) response.body()?.data ?: emptyList() else emptyList()
+            if (response.isSuccessful) response.body()?.data?.stories ?: emptyList() else emptyList()
         } catch (_: Exception) { emptyList() }
     }
 
@@ -53,14 +62,14 @@ object MainRepository {
         return try {
             val response = RetrofitClient.haqApi.getLawyers(query = query, limit = 20)
             if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data?.map { dto ->
+                response.body()?.data?.lawyers?.map { dto ->
                     LawyerSearchResultDto(
-                        id        = dto.id,
-                        name      = dto.name,
-                        specialty = dto.specialty,
-                        avatarUrl = dto.avatarUrl,
-                        rating    = dto.rating,
-                        domaine   = dto.domaine
+                        id        = dto.id        ?: "",
+                        name      = dto.name      ?: "Avocat",
+                        specialty = dto.specialty ?: "",
+                        avatarUrl = dto.avatarUrl ?: "",
+                        rating    = dto.rating    ?: 0f,
+                        domaine   = dto.domaine   ?: ""
                     )
                 } ?: emptyList()
             } else {
@@ -74,7 +83,7 @@ object MainRepository {
     suspend fun getLives(): List<LiveDto> {
         return try {
             val response = RetrofitClient.haqApi.getLives()
-            if (response.isSuccessful) response.body()?.data ?: emptyList() else emptyList()
+            if (response.isSuccessful) response.body()?.data?.lives ?: emptyList() else emptyList()
         } catch (_: Exception) { emptyList() }
     }
 

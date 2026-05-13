@@ -12,6 +12,7 @@ data class SaveConsultationRequest(
 
 // ─── Story ────────────────────────────────────────────────────────────────────
 // Matches: GET /api/stories
+// Response shape: {"success":true,"data":{"stories":[...]}}
 // [{"id":"story_001","lawyerName":"Me. Yassine Alaoui","lawyerAvatar":"...","imageUrl":"...","expiresAt":"..."}]
 data class StoryDto(
     @SerializedName("id")             val id:             String  = "",
@@ -90,11 +91,6 @@ data class NotificationDto(
     @SerializedName("type")        val type:        String  = "CASE_UPDATE"
 )
 
-// Matches: GET /api/notifications/unread-count
-data class UnreadCountDto(
-    @SerializedName("unreadCount") val unreadCount: Int = 0
-)
-
 // ─── Live ─────────────────────────────────────────────────────────────────────
 // Matches: GET /api/lives
 // [{"id":"live_001","title":"Live: Droit de travail...","lawyerName":"...","viewersCount":124,"thumbnail":"..."}]
@@ -124,4 +120,25 @@ data class LegalPostDto(
     @SerializedName("is_liked")       val isLiked:      Boolean = false,
     @SerializedName("is_verified")    val isVerified:   Boolean = true,
     @SerializedName("comments_count") val commentsCount: Int    = 0
+)
+
+// ─── Paginated response wrappers ──────────────────────────────────────────────
+// The Hostinger API wraps lists inside a nested object within "data".
+// These wrappers match the exact server shapes so Gson can deserialise them.
+
+/** GET /stories → {"success":true,"data":{"stories":[...]}} */
+data class StoriesResponseDto(
+    @SerializedName("stories") val stories: List<StoryDto> = emptyList()
+)
+
+/** GET /reels → {"success":true,"data":{"reels":[...],"pagination":{...}}} */
+data class ReelsResponseDto(
+    @SerializedName("reels")      val reels:      List<ReelDto>     = emptyList(),
+    @SerializedName("pagination") val pagination: PaginationMeta?   = null
+)
+
+/** GET /lives → {"success":true,"data":{"lives":[...],"pagination":{...}}} */
+data class LivesResponseDto(
+    @SerializedName("lives")      val lives:      List<LiveDto>     = emptyList(),
+    @SerializedName("pagination") val pagination: PaginationMeta?   = null
 )

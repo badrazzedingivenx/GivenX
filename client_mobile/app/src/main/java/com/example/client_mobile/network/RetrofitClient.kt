@@ -43,6 +43,11 @@ object RetrofitClient {
 
     private val authInterceptor = Interceptor { chain ->
         val token = TokenManager.getToken()
+        if (token == null) {
+            Log.w("RetrofitClient", "No token — sending unauthenticated request to ${chain.request().url}")
+        } else {
+            Log.d("RetrofitClient", "Attaching Bearer token to ${chain.request().url}")
+        }
         val request = if (token != null) {
             chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer $token")
@@ -50,7 +55,11 @@ object RetrofitClient {
         } else {
             chain.request()
         }
-        chain.proceed(request)
+        val response = chain.proceed(request)
+        if (response.code == 401) {
+            Log.e("RetrofitClient", "401 Unauthorized on ${chain.request().url} — token may be expired")
+        }
+        response
     }
 
     // ── OkHttp client ─────────────────────────────────────────────────────────

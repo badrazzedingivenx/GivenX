@@ -31,25 +31,19 @@ class NotificationViewModel : ViewModel() {
         startPolling()
     }
 
-    /** Polls the server every 30 seconds for the latest unread count. */
+    /** Polls the server every 30 seconds to refresh the notification list and badge count. */
     private fun startPolling() {
         viewModelScope.launch {
             while (true) {
                 delay(30_000L)
-                fetchUnreadCount()
+                fetch()
             }
         }
     }
 
     fun fetchUnreadCount() {
-        viewModelScope.launch {
-            try {
-                val resp = RetrofitClient.haqApi.getUnreadCount()
-                if (resp.isSuccessful && resp.body()?.success == true) {
-                    _unreadCount.value = resp.body()?.data?.unreadCount ?: 0
-                }
-            } catch (_: Exception) { /* keep current value */ }
-        }
+        // Count is derived from the local notification list loaded by fetch().
+        syncUnreadCount()
     }
 
     fun fetch() {

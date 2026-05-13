@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.user
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.UpdateProfileRequest
@@ -79,9 +80,11 @@ class UserViewModel : ViewModel() {
                     syncSession(dto)
                     TokenManager.saveUserJson(Gson().toJson(dto))
                 } else {
+                    Log.e("UserViewModel", "getUserProfile HTTP ${response.code()} — ${response.errorBody()?.string()}")
                     if (_profile.value == null) _isError.value = true
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "getUserProfile threw: ${e.message}", e)
                 if (_profile.value == null) _isError.value = true
             } finally {
                 _isFetching.value = false

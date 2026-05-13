@@ -18,16 +18,17 @@ object LawyerApiRepository {
     // ── Mapping ───────────────────────────────────────────────────────────────
 
     private fun LawyerDto.toItem() = LawyerItem(
-        id          = id,
-        name        = name,
-        specialty   = specialty,
-        city        = location,
-        rating      = rating,
-        reviewCount = reviewCount,
-        yearsExp    = experience,
-        bio         = bio,
-        isVerified  = isVerified,
-        domaine     = domaine.ifBlank { specialty }
+        id          = id          ?: "",
+        name        = name        ?: "Avocat",
+        specialty   = specialty   ?: "",
+        city        = location    ?: "Non spécifiée",
+        rating      = rating      ?: 0f,
+        reviewCount = reviewCount ?: 0,
+        yearsExp    = experience  ?: 0,
+        bio         = bio         ?: "",
+        isVerified  = isVerified  ?: false,
+        domaine     = (domaine    ?: specialty ?: ""),
+        avatarUrl   = avatarUrl   ?: ""
     )
 
     // ── Polling flow (replaces Firestore real-time listener) ─────────────────
@@ -45,11 +46,11 @@ object LawyerApiRepository {
                 // Use haqApi as the primary source of truth
                 val response = RetrofitClient.haqApi.getLawyers()
                 if (response.isSuccessful) {
-                    val list = response.body()?.data?.map { it.toItem() } ?: emptyList()
+                    val list = response.body()?.data?.lawyers?.map { it.toItem() } ?: emptyList()
                     emit(list)
                 }
             } catch (e: Exception) {
-                emit(emptyList()) 
+                emit(emptyList())
             }
             delay(pollIntervalMs)
         }
@@ -61,7 +62,7 @@ object LawyerApiRepository {
     suspend fun getLawyers(): List<LawyerItem> = try {
         val response = RetrofitClient.haqApi.getLawyers()
         if (response.isSuccessful) {
-            response.body()?.data?.map { it.toItem() } ?: emptyList()
+            response.body()?.data?.lawyers?.map { it.toItem() } ?: emptyList()
         } else {
             emptyList()
         }

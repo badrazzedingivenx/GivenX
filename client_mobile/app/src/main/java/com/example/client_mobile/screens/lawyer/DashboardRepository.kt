@@ -30,9 +30,11 @@ class DashboardRepository {
             if (response.isSuccessful && response.body()?.success == true) {
                 response.body()?.data
             } else {
+                Log.e("DashboardRepo", "fetchProfile HTTP ${response.code()} — ${response.errorBody()?.string()}")
                 null
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("DashboardRepo", "fetchProfile threw: ${e.message}", e)
             null
         }
     }
@@ -55,9 +57,11 @@ class DashboardRepository {
             if (response.isSuccessful && response.body()?.success == true) {
                 response.body()?.data
             } else {
+                Log.e("DashboardRepo", "fetchStats HTTP ${response.code()} — ${response.errorBody()?.string()}")
                 null
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("DashboardRepo", "fetchStats threw: ${e.message}", e)
             null
         }
     }
@@ -82,43 +86,35 @@ class DashboardRepository {
             val response = RetrofitClient.haqApi.getLawyerRevenueMonthly()
             if (response.isSuccessful && response.body()?.success == true) {
                 response.body()?.data ?: emptyList()
-            } else emptyList()
-        } catch (_: Exception) { emptyList() }
+            } else {
+                Log.e("DashboardRepo", "fetchRevenueMonthly HTTP ${response.code()} — ${response.errorBody()?.string()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("DashboardRepo", "fetchRevenueMonthly threw: ${e.message}", e)
+            emptyList()
+        }
     }
 
     // ── Recent consultations ──────────────────────────────────────────────────
 
     /**
-     * Fetches recent consultations.
-     *
-     * Priority chain:
-     *  1. GET /api/avocat/consultations/recent      (real API, primary)
-     *  2. GET /api/lawyers/me/consultations/recent  (real API, legacy fallback)
-     *
-     * In production mode a complete failure still throws
-     * so the ViewModel surfaces the "Impossible de charger" error with Réessayer.
+     * GET /appointments
+     * Returns the most recent appointments for the authenticated lawyer.
+     * The server paginates via { "data": { "appointments": [...], "pagination": {...} } }.
      */
     suspend fun fetchRecentConsultations(): List<RecentConsultationDto> {
-        // ── 1. Primary real endpoint ──────────────────────────────────────────
-        try {
-            val primary = RetrofitClient.haqApi.getAvocatConsultationsRecent()
-            if (primary.isSuccessful && primary.body()?.success == true) {
-                return primary.body()?.data ?: emptyList()
+        return try {
+            val response = RetrofitClient.haqApi.getAppointments(limit = 10, sortBy = "date")
+            if (response.isSuccessful && response.body()?.success == true) {
+                response.body()?.data?.appointments ?: emptyList()
+            } else {
+                Log.e("DashboardRepo", "fetchConsultations HTTP ${response.code()} — ${response.errorBody()?.string()}")
+                emptyList()
             }
         } catch (e: Exception) {
-            Log.w("GivenX-API", "[Consultations] primary threw: ${e.message}")
+            Log.e("DashboardRepo", "fetchConsultations threw: ${e.message}", e)
+            emptyList()
         }
-
-        // ── 2. Legacy fallback real endpoint ──────────────────────────────────
-        try {
-            val fallback = RetrofitClient.haqApi.getRecentConsultations()
-            if (fallback.isSuccessful && fallback.body()?.success == true) {
-                return fallback.body()?.data ?: emptyList()
-            }
-        } catch (e: Exception) {
-            Log.w("GivenX-API", "[Consultations] fallback threw: ${e.message}")
-        }
-
-        return emptyList()
     }
 }

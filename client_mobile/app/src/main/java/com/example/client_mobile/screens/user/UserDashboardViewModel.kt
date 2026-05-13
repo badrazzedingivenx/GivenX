@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.user
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.AppointmentDto
@@ -90,7 +91,9 @@ class UserDashboardViewModel : ViewModel() {
                     TokenManager.saveFullName(fullName)
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("API_PARSE_ERROR", "fetchUser: ${e.message}", e)
+        }
     }
 
     private suspend fun fetchDossiers() {
@@ -101,7 +104,8 @@ class UserDashboardViewModel : ViewModel() {
             } else {
                 emptyList()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("API_PARSE_ERROR", "fetchDossiers: ${e.message}", e)
             _dossiers.value = emptyList()
         }
     }
@@ -114,7 +118,8 @@ class UserDashboardViewModel : ViewModel() {
             } else {
                 emptyList()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("API_PARSE_ERROR", "fetchAppointments: ${e.message}", e)
             _appointments.value = emptyList()
         }
     }
@@ -127,7 +132,8 @@ class UserDashboardViewModel : ViewModel() {
             } else {
                 BillingSummaryDto()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("API_PARSE_ERROR", "fetchBilling: ${e.message}", e)
             _billing.value = BillingSummaryDto()
         }
     }
@@ -136,11 +142,12 @@ class UserDashboardViewModel : ViewModel() {
         try {
             val response = RetrofitClient.haqApi.getStories()
             _stories.value = if (response.isSuccessful) {
-                response.body()?.data ?: emptyList()
+                response.body()?.data?.stories ?: emptyList()
             } else {
                 emptyList()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("API_PARSE_ERROR", "fetchStories: ${e.message}", e)
             _stories.value = emptyList()
         }
     }
@@ -167,7 +174,9 @@ class UserDashboardViewModel : ViewModel() {
                 NotificationRepository.userNotifications.clear()
                 NotificationRepository.userNotifications.addAll(items)
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("API_PARSE_ERROR", "fetchNotifications: ${e.message}", e)
+        }
     }
 
     private fun DossierDto.toDomain() = DossierData(

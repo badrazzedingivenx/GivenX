@@ -4,17 +4,21 @@ import com.example.client_mobile.network.dto.ChatMessageApiDto
 import com.example.client_mobile.network.dto.LikeResponseDto
 import com.example.client_mobile.network.dto.NotificationDto
 import com.example.client_mobile.network.dto.AppointmentDto
+import com.example.client_mobile.network.dto.AppointmentsPageDto
 import com.example.client_mobile.network.dto.BillingSummaryDto
 import com.example.client_mobile.network.dto.ConversationApiDto
 import com.example.client_mobile.network.dto.CreateDocumentRequest
 import com.example.client_mobile.network.dto.DocumentApiDto
 import com.example.client_mobile.network.dto.DossierDto
 import com.example.client_mobile.network.dto.LawyerDto
+import com.example.client_mobile.network.dto.LawyersResponseDto
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.LiveDto
+import com.example.client_mobile.network.dto.LivesResponseDto
 import com.example.client_mobile.network.dto.LegalPostDto
 import com.example.client_mobile.network.dto.ReelDto
+import com.example.client_mobile.network.dto.ReelsResponseDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.network.dto.RenameDocumentRequest
@@ -22,6 +26,7 @@ import com.example.client_mobile.network.dto.SaveConsultationRequest
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
+import com.example.client_mobile.network.dto.StoriesResponseDto
 import com.example.client_mobile.network.dto.UpdateDossierStatusRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
@@ -63,7 +68,7 @@ interface HaqApiService {
         @Query("q")       query:   String? = null,
         @Query("page")    page:    Int     = 1,
         @Query("limit")   limit:   Int     = 50
-    ): Response<ApiResponse<List<LawyerDto>>>
+    ): Response<ApiResponse<LawyersResponseDto>>
 
     /**
      * GET /lawyers/{id}
@@ -91,18 +96,21 @@ interface HaqApiService {
     @GET("lawyers/me/revenue/monthly")
     suspend fun getLawyerRevenueMonthly(): Response<ApiResponse<List<RevenueMonthDto>>>
 
-    /** GET /avocat/consultations/recent — primary endpoint for lawyer consultations. */
-    @GET("avocat/consultations/recent")
-    suspend fun getAvocatConsultationsRecent(): Response<ApiResponse<List<RecentConsultationDto>>>
-
-    /** GET /consultations — returns consultations for current user (client/lawyer). */
-    @GET("consultations")
-    suspend fun getRecentConsultations(): Response<ApiResponse<List<RecentConsultationDto>>>
+    /**
+     * GET /appointments
+     * Returns a paginated appointments list for the authenticated user/lawyer.
+     * Shape: { "data": { "appointments": [...], "pagination": {...} } }
+     */
+    @GET("appointments")
+    suspend fun getAppointments(
+        @Query("limit")   limit:  Int? = null,
+        @Query("sort_by") sortBy: String? = null
+    ): Response<ApiResponse<AppointmentsPageDto>>
 
     // ── User Profile ─────────────────────────────────────────────────────────
 
-    /** GET /auth/me — authenticated user's full profile (Client). */
-    @GET("auth/me")
+    /** GET /users/me — authenticated user's full profile (Client or Lawyer). */
+    @GET("users/me")
     suspend fun getUserProfile(): Response<ApiResponse<UserDto>>
 
     /** PUT /users/me — update authenticated user's profile. */
@@ -125,11 +133,10 @@ interface HaqApiService {
     ): Response<ApiResponse<List<DossierDto>>>
 
     /**
-     * GET /dossiers/me
-     * Convenience endpoint: returns the current user's dossiers using
-     * the JWT alone (no explicit userId needed).
+     * GET /documents
+     * Returns documents owned by the authenticated user (replaces legacy dossiers/me).
      */
-    @GET("dossiers/me")
+    @GET("documents")
     suspend fun getMyDossiers(): Response<ApiResponse<List<DossierDto>>>
 
     /**
@@ -162,20 +169,20 @@ interface HaqApiService {
 
     // ── Appointments ──────────────────────────────────────────────────────────
 
-    /** GET /appointments/me — returns all appointments for the current user. */
-    @GET("appointments/me")
+    /** GET /appointments — returns all appointments for the current user. */
+    @GET("appointments")
     suspend fun getMyAppointments(): Response<ApiResponse<List<AppointmentDto>>>
 
     // ── Billing ───────────────────────────────────────────────────────────────
 
-    /** GET /billing/me — returns billing summary + invoice list for current user. */
-    @GET("billing/me")
+    /** GET /payments — returns payment history for the current user (replaces billing/me). */
+    @GET("payments")
     suspend fun getMyBilling(): Response<ApiResponse<BillingSummaryDto>>
 
     // ── Documents ─────────────────────────────────────────────────────────────
 
-    /** GET /documents/vault — returns all documents owned by the current user. */
-    @GET("documents/vault")
+    /** GET /documents — returns all documents owned by the current user. */
+    @GET("documents")
     suspend fun getMyDocuments(): Response<ApiResponse<List<DocumentApiDto>>>
 
     /** POST /documents — upload / register a new document record. */
@@ -218,25 +225,25 @@ interface HaqApiService {
 
     // ── Reels ──────────────────────────────────────────────────────
 
-    /** GET /reels — [ { "id": "reel_001", "lawyerName": "...", "likes": 542, "caption": "..." } ] */
+    /** GET /reels — shape: {"data":{"reels":[...],"pagination":{...}}} */
     @GET("reels")
-    suspend fun getReels(): Response<ApiResponse<List<ReelDto>>>
+    suspend fun getReels(): Response<ApiResponse<ReelsResponseDto>>
 
     // ── Stories ────────────────────────────────────────────────────
-    /** GET /stories — [ { "id": "story_001", "lawyerName": "...", "imageUrl": "..." } ] */
+    /** GET /stories — shape: {"data":{"stories":[...]}} */
     @GET("stories")
-    suspend fun getStories(): Response<ApiResponse<List<StoryDto>>>
+    suspend fun getStories(): Response<ApiResponse<StoriesResponseDto>>
 
     // ── Legal Feed ─────────────────────────────────────────────────
-    /** GET /legal-feed — returns the social legal feed posts. */
-    @GET("legal-feed")
-    suspend fun getLegalFeed(): Response<ApiResponse<List<LegalPostDto>>>
+    /** GET /reels — returns the social legal feed posts (legal-feed renamed to reels). */
+    @GET("reels")
+    suspend fun getLegalFeed(): Response<ApiResponse<ReelsResponseDto>>
 
     // ── Lives ──────────────────────────────────────────────────────
 
-    /** GET /lives — [ { "id": "live_001", "title": "...", "viewersCount": 124 } ] */
+    /** GET /lives — shape: {"data":{"lives":[...],"pagination":{...}}} */
     @GET("lives")
-    suspend fun getLives(): Response<ApiResponse<List<LiveDto>>>
+    suspend fun getLives(): Response<ApiResponse<LivesResponseDto>>
 
     /** POST /reels/{id}/like — toggle like on a reel. */
     @POST("reels/{id}/like")
@@ -247,10 +254,6 @@ interface HaqApiService {
     /** GET /notifications — current user's notifications. */
     @GET("notifications")
     suspend fun getNotifications(): Response<ApiResponse<List<com.example.client_mobile.network.dto.NotificationDto>>>
-
-    /** GET /notifications/unread-count — quick unread badge count. */
-    @GET("notifications/unread-count")
-    suspend fun getUnreadCount(): Response<ApiResponse<com.example.client_mobile.network.dto.UnreadCountDto>>
 
     // ── Payments ─────────────────────────────────────────────────────────────
 

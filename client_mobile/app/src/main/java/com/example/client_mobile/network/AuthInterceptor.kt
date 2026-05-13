@@ -1,5 +1,6 @@
 package com.example.client_mobile.network
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -13,6 +14,11 @@ import okhttp3.Response
 class AuthInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val token = TokenManager.getToken()
+        if (token == null) {
+            Log.w("AuthInterceptor", "No token — sending unauthenticated request to ${chain.request().url}")
+        } else {
+            Log.d("AuthInterceptor", "Attaching Bearer token to ${chain.request().url}")
+        }
         val request = if (token != null) {
             chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer $token")
@@ -20,6 +26,10 @@ class AuthInterceptor : Interceptor {
         } else {
             chain.request()
         }
-        return chain.proceed(request)
+        val response = chain.proceed(request)
+        if (response.code == 401) {
+            Log.e("AuthInterceptor", "401 Unauthorized on ${chain.request().url} — token may be expired or invalid")
+        }
+        return response
     }
 }
