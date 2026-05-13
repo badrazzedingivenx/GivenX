@@ -142,6 +142,28 @@ data class LegalPostDto(
 // The Hostinger API wraps lists inside a nested object within "data".
 // These wrappers match the exact server shapes so Gson can deserialise them.
 
+/** Grouped stories for Instagram-style "one circle per author" UI */
+data class UserStoriesGroup(
+    val authorId: String,
+    val authorName: String,
+    val authorAvatarUrl: String,
+    val stories: List<StoryDto>
+)
+
+/** Groups a flat list of StoryDto by author identity (nested lawyer/user ids or name). */
+fun List<StoryDto>.groupByAuthor(): List<UserStoriesGroup> =
+    groupBy { story ->
+        story.lawyer?.id ?: story.user?.id?.toString() ?: story.authorName
+    }.map { (id, storiesList) ->
+        val first = storiesList.first()
+        UserStoriesGroup(
+            authorId = id,
+            authorName = first.authorName,
+            authorAvatarUrl = first.authorAvatarUrl,
+            stories = storiesList
+        )
+    }
+
 /** GET /stories → {"success":true,"data":{"stories":[...]}} */
 data class StoriesResponseDto(
     @SerializedName("stories") val stories: List<StoryDto> = emptyList()

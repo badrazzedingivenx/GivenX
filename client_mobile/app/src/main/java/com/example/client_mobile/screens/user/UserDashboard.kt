@@ -126,7 +126,7 @@ internal fun UserCasesTabContent(
     val isRefreshing  by dashboardViewModel.isRefreshing.collectAsStateWithLifecycle()
     val storiesState  by dashboardViewModel.stories.collectAsStateWithLifecycle()
 
-    var viewingStoryIndex by remember { mutableIntStateOf(-1) }
+    var viewingStories by remember { mutableStateOf<List<LegalStory>?>(null) }
     // API stories come first; lawyer-side creator stories appended
     val allStories = (storiesState?.map { dto ->
         LegalStory(
@@ -145,6 +145,9 @@ internal fun UserCasesTabContent(
             isLive      = false
         )
     }
+    // Group by author so each person appears once (Instagram-style)
+    val storiesByAuthor = allStories.groupBy { it.lawyerName }
+    val uniqueAuthors  = storiesByAuthor.map { (_, stories) -> stories.first() }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -194,10 +197,10 @@ internal fun UserCasesTabContent(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 2.dp)
         ) {
-            itemsIndexed(allStories) { index, story ->
+            itemsIndexed(uniqueAuthors) { _, story ->
                 StoriesItem(
                     story   = story,
-                    onClick = { viewingStoryIndex = index }
+                    onClick = { viewingStories = storiesByAuthor[story.lawyerName] }
                 )
             }
         }
@@ -326,11 +329,11 @@ internal fun UserCasesTabContent(
     }  // end Column
     }  // end PullToRefreshBox
 
-    if (viewingStoryIndex >= 0) {
+    if (viewingStories != null) {
         StoryViewerModal(
-            stories    = allStories,
-            startIndex = viewingStoryIndex,
-            onDismiss  = { viewingStoryIndex = -1 }
+            stories    = viewingStories!!,
+            startIndex = 0,
+            onDismiss  = { viewingStories = null }
         )
     }
 }

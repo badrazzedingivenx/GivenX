@@ -65,6 +65,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.client_mobile.R
 import com.example.client_mobile.network.dto.StoryDto
+import com.example.client_mobile.network.dto.UserStoriesGroup
+import com.example.client_mobile.network.dto.groupByAuthor
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.ui.text.buildAnnotatedString
@@ -623,7 +625,7 @@ fun LegalInputField(
 fun StoriesRow(
     stories: List<StoryDto>?,
     modifier: Modifier = Modifier,
-    onStoryClick: (Int) -> Unit = {}
+    onStoryClick: (List<StoryDto>) -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 12.dp)) {
         androidx.compose.foundation.lazy.LazyRow(
@@ -635,8 +637,9 @@ fun StoriesRow(
                     items(5) { StoryShimmerItem() }
                 }
                 stories.isNotEmpty() -> {
-                    itemsIndexed(stories, key = { _, it -> it.id }) { index, story ->
-                        StoryRingItem(story = story, onClick = { onStoryClick(index) })
+                    val groups = stories.groupByAuthor()
+                    itemsIndexed(groups, key = { _, g -> g.authorId }) { _, group ->
+                        GroupedStoryRingItem(group = group, onClick = { onStoryClick(group.stories) })
                     }
                 }
                 else -> {
@@ -748,6 +751,119 @@ private fun StoryRingItem(story: StoryDto, onClick: () -> Unit) {
             },
             modifier  = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
+            fontSize  = 12.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+            color     = AppDarkGreen,
+            maxLines  = 1,
+            overflow  = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun GroupedStoryRingItem(
+    group: UserStoriesGroup,
+    onClick: () -> Unit
+) {
+    val hasUnseen = group.stories.any { it.hasUnseenStory }
+    val isLive    = group.stories.any { it.isLive }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier            = Modifier
+            .width(72.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication        = null,
+                onClick           = onClick
+            )
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier         = Modifier.size(68.dp)
+        ) {
+            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokePx = 3.dp.toPx()
+                val brush = if (hasUnseen) {
+                    androidx.compose.ui.graphics.Brush.sweepGradient(
+                        colors = listOf(AppGoldColor, RingGold, AppGoldColor),
+                        center = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+                    )
+                } else {
+                    androidx.compose.ui.graphics.SolidColor(Color.Gray.copy(alpha = 0.3f))
+                }
+                drawArc(
+                    brush      = brush,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter  = false,
+                    topLeft    = androidx.compose.ui.geometry.Offset(strokePx / 2, strokePx / 2),
+                    size       = androidx.compose.ui.geometry.Size(size.width - strokePx, size.height - strokePx),
+                    style      = androidx.compose.ui.graphics.drawscope.Stroke(width = strokePx)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(58.dp)
+                    .clip(CircleShape)
+                    .background(AppDarkGreen.copy(alpha = 0.07f))
+            ) {
+                if (group.authorAvatarUrl.isNotBlank()) {
+                    coil.compose.AsyncImage(
+                        model             = group.authorAvatarUrl,
+                        contentDescription = group.authorName,
+                        contentScale      = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier          = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            imageVector        = Icons.Default.Person,
+                            contentDescription = null,
+                            tint               = AppGoldColor,
+                            modifier           = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+
+            if (isLive) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 4.dp, y = (-4).dp)
+                        .background(Color(0xFFFF0000), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        "LIVE",
+                        color      = Color.White,
+                        fontSize   = 7.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        val parts = group.authorName.split(" ", limit = 2)
+        val prefix = if(parts.isNotEmpty()) parts[0] else "Me."
+        val lastName = if(parts.size > 1) parts[1] else ""
+
+        Text(
+            text = buildAnnotatedString {
+                withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal)) {
+                    append("$prefix ")
+                }
+                withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)) {
+                    append(lastName)
+                }
+            },
+            modifier  = Modifier.fillMaxWidth(),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             fontSize  = 12.sp,
             fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
             color     = AppDarkGreen,

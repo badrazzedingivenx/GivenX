@@ -335,19 +335,21 @@ private fun CameraContent(
                 .padding(bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ── Gallery + Capture Row ─────────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            // ── Gallery + Capture Box ──────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.Center
             ) {
-                // Gallery button (left side)
+                // Gallery button (left)
                 IconButton(
                     onClick = {
                         mediaPickerLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
                         )
                     },
-                    modifier = Modifier.padding(start = 24.dp)
+                    modifier = Modifier.align(Alignment.CenterStart)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoLibrary,
@@ -357,71 +359,74 @@ private fun CameraContent(
                     )
                 }
 
-                Spacer(Modifier.weight(1f))
+                // ── Capture Button (center) ────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CaptureButton(
+                        mode = selectedMode,
+                        isRecording = isRecording,
+                        onClick = {
+                            when (selectedMode) {
+                                CaptureMode.Live -> onNavigateToLive()
 
-                // ── Capture Button ────────────────────────────────────────────
-                CaptureButton(
-                    mode = selectedMode,
-                    isRecording = isRecording,
-                    onClick = {
-                        when (selectedMode) {
-                            CaptureMode.Live -> onNavigateToLive()
-
-                            CaptureMode.Post -> {
-                                // ── Take photo → upload as Story ──────────────
-                                val file = File(context.cacheDir, "story_${System.currentTimeMillis()}.jpg")
-                                val options = ImageCapture.OutputFileOptions.Builder(file).build()
-                                imageCapture.takePicture(
-                                    options,
-                                    ContextCompat.getMainExecutor(context),
-                                    object : ImageCapture.OnImageSavedCallback {
-                                        override fun onImageSaved(result: ImageCapture.OutputFileResults) {
-                                            capturedFile  = file
-                                            capturedIsVid = false
-                                            uploadError   = false
-                                            uploadDone    = false
-                                        }
-                                        override fun onError(exc: ImageCaptureException) {
-                                            Log.e("CameraCapture", "Photo capture failed: ${exc.message}", exc)
-                                        }
-                                    }
-                                )
-                            }
-
-                            CaptureMode.Reel -> {
-                                if (!isRecording) {
-                                    // ── Start video recording ─────────────────
-                                    val file = File(context.cacheDir, "reel_${System.currentTimeMillis()}.mp4")
-                                    val outputOptions = FileOutputOptions.Builder(file).build()
-                                    activeRecording = videoCapture.output
-                                        .prepareRecording(context, outputOptions)
-                                        .withAudioEnabled()
-                                        .start(ContextCompat.getMainExecutor(context)) { event ->
-                                            if (event is VideoRecordEvent.Finalize) {
-                                                isRecording = false
-                                                if (!event.hasError()) {
-                                                    capturedFile  = file
-                                                    capturedIsVid = true
-                                                    uploadError   = false
-                                                    uploadDone    = false
-                                                } else {
-                                                    Log.e("CameraCapture", "Video error: ${event.cause?.message}")
-                                                }
+                                CaptureMode.Post -> {
+                                    // ── Take photo → upload as Story ──────────
+                                    val file = File(context.cacheDir, "story_${System.currentTimeMillis()}.jpg")
+                                    val options = ImageCapture.OutputFileOptions.Builder(file).build()
+                                    imageCapture.takePicture(
+                                        options,
+                                        ContextCompat.getMainExecutor(context),
+                                        object : ImageCapture.OnImageSavedCallback {
+                                            override fun onImageSaved(result: ImageCapture.OutputFileResults) {
+                                                capturedFile  = file
+                                                capturedIsVid = false
+                                                uploadError   = false
+                                                uploadDone    = false
+                                            }
+                                            override fun onError(exc: ImageCaptureException) {
+                                                Log.e("CameraCapture", "Photo capture failed: ${exc.message}", exc)
                                             }
                                         }
-                                    isRecording = true
-                                } else {
-                                    // ── Stop recording ────────────────────────
-                                    activeRecording?.stop()
-                                    activeRecording = null
-                                    // isRecording is reset in VideoRecordEvent.Finalize
+                                    )
+                                }
+
+                                CaptureMode.Reel -> {
+                                    if (!isRecording) {
+                                        // ── Start video recording ─────────────
+                                        val file = File(context.cacheDir, "reel_${System.currentTimeMillis()}.mp4")
+                                        val outputOptions = FileOutputOptions.Builder(file).build()
+                                        activeRecording = videoCapture.output
+                                            .prepareRecording(context, outputOptions)
+                                            .withAudioEnabled()
+                                            .start(ContextCompat.getMainExecutor(context)) { event ->
+                                                if (event is VideoRecordEvent.Finalize) {
+                                                    isRecording = false
+                                                    if (!event.hasError()) {
+                                                        capturedFile  = file
+                                                        capturedIsVid = true
+                                                        uploadError   = false
+                                                        uploadDone    = false
+                                                    } else {
+                                                        Log.e("CameraCapture", "Video error: ${event.cause?.message}")
+                                                    }
+                                                }
+                                            }
+                                        isRecording = true
+                                    } else {
+                                        // ── Stop recording ────────────────────
+                                        activeRecording?.stop()
+                                        activeRecording = null
+                                        // isRecording is reset in VideoRecordEvent.Finalize
+                                    }
                                 }
                             }
                         }
-                    }
-                )
-
-                Spacer(Modifier.weight(1f))
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -709,7 +714,8 @@ private fun CaptureButton(
 
     Box(
         modifier = Modifier
-            .size(80.dp)
+            .size(72.dp)
+            .aspectRatio(1f)
             .clip(CircleShape)
             .border(4.dp, outerColor, CircleShape)
             .clickable(onClick = onClick)

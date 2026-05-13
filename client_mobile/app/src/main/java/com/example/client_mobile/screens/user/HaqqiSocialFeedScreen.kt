@@ -85,12 +85,12 @@ fun HaqqiSocialFeedScreen(
     val isError      by viewModel.isError.collectAsStateWithLifecycle()
 
     var showStoryViewer by remember { mutableStateOf(false) }
-    var selectedStoryIndex by remember { mutableIntStateOf(0) }
+    var selectedStories by remember { mutableStateOf<List<StoryDto>?>(null) }
 
-    if (showStoryViewer && stories != null) {
+    if (showStoryViewer && selectedStories != null) {
         HaqqiStoryViewer(
-            stories = stories!!,
-            startIndex = selectedStoryIndex,
+            stories = selectedStories!!,
+            startIndex = 0,
             onDismiss = { showStoryViewer = false }
         )
     }
@@ -151,8 +151,8 @@ fun HaqqiSocialFeedScreen(
                         modifier      = Modifier
                             .clip(RoundedCornerShape(24.dp))
                             .background(Color.White),
-                        onStoryClick  = { index ->
-                            selectedStoryIndex = index
+                        onStoryClick  = { groupStories ->
+                            selectedStories = groupStories
                             showStoryViewer = true
                         }
                     )
