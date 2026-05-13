@@ -1,5 +1,10 @@
 package com.example.client_mobile.screens.shared
 
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -1109,4 +1114,21 @@ fun CustomLegalInputField(
             )
         }
     }
+}
+
+// --- App Navigation Tokens ---
+
+sealed class LawyerTab(val route: String, val icon: ImageVector, val label: String) {
+    object Home : LawyerTab("lawyer_home", Icons.Default.Home, "Accueil")
+    object Messages : LawyerTab("lawyer_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
+    object Clients : LawyerTab("lawyer_clients", Icons.Default.Groups, "Clients")
+    object Profile : LawyerTab("lawyer_profile", Icons.Default.Person, "Profil")
+    object Creator : LawyerTab("lawyer_creator", Icons.Default.AutoAwesome, "Createur")
+}
+
+sealed class UserTab(val route: String, val icon: ImageVector, val label: String) {
+    object Home : UserTab("user_home", Icons.Default.Home, "Accueil")
+    object Networking : UserTab("user_networking", Icons.Default.PeopleAlt, "Reseau")
+    object Messages : UserTab("user_messages", Icons.AutoMirrored.Filled.Chat, "Messages")
+    object Profile : UserTab("user_profile", Icons.Default.Person, "Profil")
 }

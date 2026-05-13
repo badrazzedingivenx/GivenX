@@ -5,78 +5,78 @@ import com.example.client_mobile.network.dto.*
 import com.google.gson.Gson
 
 /**
- * Lead Developer Refactor: 
- * Role-based authentication using json-server relation mapping.
+ * Authentication repository wired to the production HAQ API.
+ *
+ * All auth requests go through [NetworkModule.authApi] which points to:
+ *   https://lavender-spoonbill-389199.hostingersite.com/api/v1/
  */
 object AuthRepository {
 
     suspend fun login(email: String, password: String) {
-        // 1. Authenticate (Custom POST /auth/login)
-        val response = RetrofitClient.authApi.login(LoginRequest(email.lowercase().trim(), password))
+        val response = NetworkModule.authApi.login(
+            HaqLoginRequest(email.lowercase().trim(), password)
+        )
+
+        Log.d("AuthRepository", "HTTP ${response.code()} — isSuccessful=${response.isSuccessful}")
+
         val apiResponse = response.body()
-        
-        if (!response.isSuccessful || apiResponse?.success != true || apiResponse.data?.user == null) {
-            throw Exception("Email ou mot de passe incorrect")
+        Log.d("AuthRepository", "body.success=${apiResponse?.success} body.message=${apiResponse?.message}")
+        Log.d("AuthRepository", "body.data=${apiResponse?.data}")
+
+        if (!response.isSuccessful) {
+            val errBody = response.errorBody()?.string()
+            Log.e("AuthRepository", "Error body: $errBody")
+            val msg = apiResponse?.message?.ifBlank { null }
+                ?: errBody?.take(200)
+                ?: "Email ou mot de passe incorrect (${response.code()})"
+            throw Exception(msg)
         }
 
-        val authData = apiResponse.data!!
-        val user = authData.user ?: throw Exception("Données utilisateur manquantes")
-        val role = user.effectiveRole()
-        
-        // Save initial identity
-        val userIdStr = user.effectiveId()
-        val userIdInt = userIdStr.toDoubleOrNull()?.toInt() ?: -1
+        // Some servers return success=false even on 200 — be lenient and just check the data
+        val authData = apiResponse?.data
+        Log.d("AuthRepository", "authData=$authData")
 
-        TokenManager.saveToken(authData.token ?: "mock-jwt-token-for-$userIdStr")
-        TokenManager.saveUserId(userIdInt)
-        TokenManager.saveEmail(user.effectiveEmail())
+        val token = authData?.accessToken?.ifBlank { null }
+        if (token == null) {
+            // Log the raw JSON for diagnosis
+            Log.e("AuthRepository", "Token not found in data. Full body: $apiResponse")
+            throw Exception("Token d'accès manquant — vérifiez les logs pour la réponse brute du serveur")
+        }
 
-        // 2. Fetch Profile (The bridge between User and Role Data)
-        val profileResp = RetrofitClient.authApi.getProfileByUserId(userIdInt)
-        val profile = profileResp.body()?.data?.firstOrNull() ?: throw Exception("Profil manquant")
-        
-        TokenManager.saveFullName(profile.fullName ?: "Utilisateur")
-        TokenManager.saveAvatarUrl(profile.avatarUrl ?: "")
+        val user = authData.user
+            ?: run {
+                Log.w("AuthRepository", "user field null — proceeding with minimal session")
+                null
+            }
 
-        // 3. Resolve Role-Specific Data (Lawyer ID or Client ID)
-        if (role == "LAWYER") {
-            val lawyerResp = RetrofitClient.authApi.getLawyerByProfileId(profile.id)
-            val lawyer = lawyerResp.body()?.data?.firstOrNull() ?: throw Exception("Détails avocat manquants")
-            
-            TokenManager.saveUserType("lawyer")
-            TokenManager.saveLawyerId(lawyer.effectiveId())
-            
-            // Create a combined UserDto for legacy UI compatibility
-            val legacyUser = UserDto(
-                id = user.effectiveId(),
-                email = user.effectiveEmail(),
-                role = "lawyer",
-                fullName = profile.fullName ?: "",
-                avatarUrl = profile.avatarUrl ?: "",
-                phone = profile.phone ?: "",
-                address = profile.address ?: "",
-                specialty = lawyer.effectiveSpeciality(),
-                barNumber = lawyer.effectiveBarNumber()
-            )
+        // Persist session
+        TokenManager.saveToken(token)
+        TokenManager.saveUserId(user?.id ?: 0)
+        TokenManager.saveEmail(user?.email ?: email)
+        TokenManager.saveFullName(user?.fullName ?: "")
+        TokenManager.saveAvatarUrl(user?.avatar ?: "")
+
+        val userType = if (user?.role?.uppercase() == "LAWYER") "lawyer" else "user"
+        TokenManager.saveUserType(userType)
+
+        // Build legacy UserDto so older screens that read JSON from prefs keep working
+        val legacyUser = UserDto(
+            id        = (user?.id ?: 0).toString(),
+            email     = user?.email ?: email,
+            role      = userType,
+            fullName  = user?.fullName ?: "",
+            avatarUrl = user?.avatar ?: ""
+        )
+
+        if (userType == "lawyer") {
+            TokenManager.saveLawyerId(user?.id ?: 0)
             TokenManager.saveLawyerJson(Gson().toJson(legacyUser))
         } else {
-            val clientResp = RetrofitClient.authApi.getClientByProfileId(profile.id)
-            val client = clientResp.body()?.data?.firstOrNull() ?: throw Exception("Détails client manquants")
-            
-            TokenManager.saveUserType("user")
-            TokenManager.saveClientId(client.id)
-            
-            val legacyUser = UserDto(
-                id = user.effectiveId(),
-                email = user.effectiveEmail(),
-                role = "user",
-                fullName = profile.fullName ?: "",
-                avatarUrl = profile.avatarUrl ?: "",
-                phone = profile.phone ?: "",
-                address = profile.address ?: ""
-            )
+            TokenManager.saveClientId(user?.id ?: 0)
             TokenManager.saveUserJson(Gson().toJson(legacyUser))
         }
+
+        Log.d("AuthRepository", "Login OK — role=$userType id=${user?.id}")
     }
 
     suspend fun autoLogin(): String? {
@@ -85,42 +85,51 @@ object AuthRepository {
     }
 
     suspend fun register(
-        fullName: String,
-        email: String,
-        password: String,
-        phone: String = "",
-        role: String = "CLIENT",
-        speciality: String = ""
+        fullName:   String,
+        email:      String,
+        password:   String,
+        phone:      String = "",
+        role:       String = "CLIENT",
+        speciality: String = ""   // accepted for call-site compat; not sent to server
     ) {
-        try {
-            // 1. Create User
-            val user = UserDto(
-                id = (1000..9999).random().toString(), // Mock ID for json-server
-                email = email,
-                role = role.uppercase()
+        val response = NetworkModule.authApi.register(
+            HaqRegisterRequest(
+                fullName             = fullName,
+                email                = email,
+                password             = password,
+                passwordConfirmation = password,
+                role                 = role.uppercase(),
+                phone                = phone.ifBlank { null }
             )
-            // In a real app with json-server, we'd POST to /users
-            // RetrofitClient.authApi.createUser(user)
+        )
+        val apiResponse = response.body()
 
-            // 2. Create Profile
-            // (Mock POSTing to profiles table for json-server)
-            // RetrofitClient.authApi.createProfile(ProfileDto(...))
-
-            // 3. Save to Session
-            TokenManager.saveToken("mock-token-" + user.effectiveId())
-            TokenManager.saveUserId(user.effectiveId().toIntOrNull() ?: -1)
-            TokenManager.saveEmail(user.effectiveEmail())
-            TokenManager.saveUserType(user.effectiveRole())
-            TokenManager.saveFullName(fullName)
-
-            if (user.effectiveRole() == "LAWYER") {
-                TokenManager.saveLawyerId(user.effectiveId().toIntOrNull() ?: -1)
-            } else {
-                TokenManager.saveClientId(user.effectiveId().toIntOrNull() ?: -1)
-            }
-        } catch (e: Exception) {
-            throw e
+        if (!response.isSuccessful || apiResponse?.success != true) {
+            val msg = apiResponse?.message ?: "Erreur lors de l'inscription (${response.code()})"
+            throw Exception(msg)
         }
+
+        val authData = apiResponse.data ?: throw Exception("Réponse du serveur invalide")
+        if (authData.accessToken.isBlank()) throw Exception("Token d'accès manquant")
+
+        val user = authData.user ?: throw Exception("Données utilisateur manquantes")
+
+        TokenManager.saveToken(authData.accessToken)
+        TokenManager.saveUserId(user.id)
+        TokenManager.saveEmail(user.email)
+        TokenManager.saveFullName(user.fullName)
+        TokenManager.saveAvatarUrl(user.avatar ?: "")
+
+        val userType = if (user.role.uppercase() == "LAWYER") "lawyer" else "user"
+        TokenManager.saveUserType(userType)
+
+        if (userType == "lawyer") {
+            TokenManager.saveLawyerId(user.id)
+        } else {
+            TokenManager.saveClientId(user.id)
+        }
+
+        Log.d("AuthRepository", "Register OK — role=$userType id=${user.id}")
     }
 
     fun logout() {
@@ -129,3 +138,4 @@ object AuthRepository {
 
     fun isLoggedIn(): Boolean = TokenManager.isLoggedIn()
 }
+

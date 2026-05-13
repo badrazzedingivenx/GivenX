@@ -23,14 +23,20 @@ import com.google.gson.annotations.SerializedName
  *   }
  */
 data class ApiResponse<T>(
-    @SerializedName("success") val success: Boolean   = false,
-    @SerializedName("data")    val data:    T?         = null,
-    @SerializedName("message") val message: String     = "",
-    @SerializedName("error")   val error:   String     = "",
-    @SerializedName("total")   val total:   Int        = 0
+    @SerializedName("success") val success: Boolean                       = false,
+    @SerializedName("data")    val data:    T?                            = null,
+    @SerializedName("message") val message: String                        = "",
+    @SerializedName("error")   val error:   String                        = "",
+    // 422 Unprocessable Entity — map of field → list of validation messages
+    @SerializedName("errors")  val errors:  Map<String, List<String>>?    = null,
+    @SerializedName("total")   val total:   Int                           = 0
 ) {
     /** Returns a human-readable error string, falling back through available fields. */
     fun errorMessage(): String = message.ifBlank { error }.ifBlank { "Erreur inconnue" }
+
+    /** Flattens validation errors into a single string for display. */
+    fun validationMessage(): String =
+        errors?.values?.flatten()?.joinToString("\n") ?: errorMessage()
 
     /** True only when the HTTP call succeeded AND the payload signals success. */
     val isSuccess: Boolean get() = success && data != null

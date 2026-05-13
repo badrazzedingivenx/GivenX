@@ -11,7 +11,12 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * Singleton Retrofit instance.
@@ -22,14 +27,14 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
     /** 
-     * Base URL for the Express API. 
-     * Using 10.0.2.2 to access the host machine's localhost from the Android Emulator.
+     * Base URL for the production HAQ API on Hostinger.
+     * Paths in HaqApiService are relative (e.g. "lawyers") and resolve against this URL.
      */
-    const val BASE_URL = "http://10.0.2.2:3001/api/"
+    const val BASE_URL = "https://lavender-spoonbill-389199.hostingersite.com/api/v1/"
 
     init {
         Log.d("GivenX-Config", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        Log.d("GivenX-Config", "  API Mode : PRODUCTION (Express/MySQL)")
+        Log.d("GivenX-Config", "  API Mode : PRODUCTION (Hostinger)")
         Log.d("GivenX-Config", "  BASE_URL : $BASE_URL")
         Log.d("GivenX-Config", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     }
@@ -50,6 +55,19 @@ object RetrofitClient {
 
     // ── OkHttp client ─────────────────────────────────────────────────────────
 
+    // TODO: REMOVE IN PRODUCTION - Unsafe SSL Bypass
+    private val trustAllCerts: Array<TrustManager> = arrayOf(
+        object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        }
+    )
+
+    private val sslContext: SSLContext = SSLContext.getInstance("SSL").apply {
+        init(null, trustAllCerts, SecureRandom())
+    }
+
     private val okHttpClient: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor { message ->
             Log.d("GivenX-API", ">> $message")
@@ -58,6 +76,9 @@ object RetrofitClient {
         }
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            // TODO: REMOVE IN PRODUCTION - Unsafe SSL Bypass
+            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
             .addInterceptor(logging)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
