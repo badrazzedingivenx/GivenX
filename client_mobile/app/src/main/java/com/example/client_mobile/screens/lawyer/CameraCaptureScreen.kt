@@ -247,20 +247,16 @@ private fun CameraContent(
         onResult = { uri: Uri? ->
             if (uri != null) {
                 coroutineScope.launch {
-                    try {
+                    val file = MainRepository.uriToFile(context, uri)
+                    if (file != null) {
                         val mimeType = context.contentResolver.getType(uri) ?: "image/*"
-                        val isVideo = mimeType.startsWith("video/")
-                        val ext = if (isVideo) ".mp4" else ".jpg"
-                        val file = File(context.cacheDir, "gallery_${System.currentTimeMillis()}$ext")
-                        context.contentResolver.openInputStream(uri)?.use { input ->
-                            file.outputStream().use { output -> input.copyTo(output) }
-                        }
                         capturedFile  = file
-                        capturedIsVid = isVideo
+                        capturedIsVid = mimeType.startsWith("video/")
                         uploadError   = false
                         uploadDone    = false
-                    } catch (e: Exception) {
-                        Log.e("CameraCapture", "Gallery pick error: ${e.message}", e)
+                        Log.d("CameraCapture", "Gallery pick: ${file.name} (${file.length()} bytes, isVideo=$capturedIsVid)")
+                    } else {
+                        Log.e("CameraCapture", "Gallery pick failed: uriToFile returned null for $uri")
                     }
                 }
             }
@@ -452,11 +448,19 @@ private fun CameraContent(
                     isUploading = true
                     uploadError = false
                     coroutineScope.launch {
-                        val success = if (selectedMode == CaptureMode.Post) {
-                            MainRepository.uploadStory(capturedFile!!)
-                        } else {
+                        val file = capturedFile!!
+                        val success = if (capturedIsVid) {
                             MainRepository.uploadReel(
-                                capturedFile!!, title.ifBlank { "Conseil juridique" }
+                                file, title.ifBlank { "Conseil juridique" }
+                            )
+                        } else {
+                            MainRepository.uploadStory(file)
+                        }
+                        if (!success) {
+                            Log.e(
+                                "CameraCapture",
+                                "Upload failed — type=${if (capturedIsVid) "reel" else "story"}, " +
+                                "file=${file.name}, size=${file.length()}, exists=${file.exists()}"
                             )
                         }
                         isUploading = false
@@ -570,8 +574,8 @@ private fun CapturePreviewOverlay(
                     .padding(horizontal = 24.dp, vertical = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Caption field — Reels only
-                if (mode == CaptureMode.Reel && !isUploading) {
+                // Caption field — videos only
+                if (isVideo && !isUploading) {
                     OutlinedTextField(
                         value         = caption,
                         onValueChange = { caption = it },

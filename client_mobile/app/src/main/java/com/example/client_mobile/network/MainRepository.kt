@@ -150,6 +150,33 @@ object MainRepository {
         }
     }
 
+    /**
+     * Copies a content [Uri] into a temp cache file. Returns the file or null on failure.
+     * The caller should NOT rely on the file persisting beyond the current app session.
+     */
+    fun uriToFile(context: Context, uri: Uri): File? {
+        return try {
+            val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+            val ext = if (mimeType.startsWith("video/")) ".mp4" else ".jpg"
+            val file = File(context.cacheDir, "upload_${System.currentTimeMillis()}$ext")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output -> input.copyTo(output) }
+            } ?: run {
+                Log.e("ContentUpload", "uriToFile: openInputStream returned null for $uri")
+                return null
+            }
+            if (file.length() == 0L) {
+                Log.e("ContentUpload", "uriToFile: copied 0 bytes from $uri")
+                file.delete()
+                return null
+            }
+            file
+        } catch (e: Exception) {
+            Log.e("ContentUpload", "uriToFile failed: ${e.message}", e)
+            null
+        }
+    }
+
     /** Wraps a local [File] directly into a [MultipartBody.Part] (no ContentResolver needed). */
     private fun buildFilePart(file: File, partName: String): MultipartBody.Part? {
         return try {
