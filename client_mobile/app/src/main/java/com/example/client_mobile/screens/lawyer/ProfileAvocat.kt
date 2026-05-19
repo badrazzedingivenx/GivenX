@@ -36,94 +36,128 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.client_mobile.network.TokenManager
 
 // ─── Lawyer Profile Screen ────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvocatProfile(
-    fullName: String = "Maître Yassine El Amrani",
-    title: String = "Avocat au Barreau de Casablanca",
-    email: String = "y.elamrani@cabinetyassine.ma",
-    phone: String = "+212 6 61 23 45 67",
-    address: String = "34, Bd Zerktouni, Casablanca",
-    bio: String = "Maître El Amrani est spécialisé en droit pénal avec plus de 12 ans d'expérience. Il intervient devant les tribunaux de grande instance, cours d'appel et la Cour de cassation. Reconnu pour son engagement envers ses clients et ses résultats probants.",
+    fullName: String = "",
+    title: String = "",
+    email: String = "",
+    phone: String = "",
+    address: String = "",
+    bio: String = "",
     profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
-    onNavigateToEdit: () -> Unit = {}
+    onNavigateToEdit: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
-    val specializations = listOf(
-        "Droit Pénal", "Droit Civil", "Droit des Affaires",
-        "Droit Fiscal", "Contentieux Commercial"
-    )
+    val lawyerProfile  by dashboardViewModel.profile.collectAsStateWithLifecycle()
+    val lawyerStats    by dashboardViewModel.stats.collectAsStateWithLifecycle()
+    val isRefreshing   by dashboardViewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isError        by dashboardViewModel.isError.collectAsStateWithLifecycle()
+
+    // API fields override the passed-in fallback params, then fall back to
+    // LawyerSession (populated at login) so the contact card is never empty.
+    val displayName    = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }      ?: fullName.takeIf { it.isNotBlank() } ?: LawyerSession.fullName
+    val displayTitle   = lawyerProfile?.let {
+        buildString {
+            if (it.speciality.isNotBlank())     append(it.speciality)
+            if (it.barAssociation.isNotBlank()) append(" — Barreau de ${it.barAssociation}")
+        }.takeIf { s -> s.isNotBlank() }
+    } ?: title.takeIf { it.isNotBlank() } ?: LawyerSession.title
+    val displayEmail   = lawyerProfile?.email?.takeIf { it.isNotBlank() }
+        ?: email.takeIf { it.isNotBlank() }
+        ?: LawyerSession.email
+    val displayPhone   = lawyerProfile?.phone?.takeIf { it.isNotBlank() }
+        ?: phone.takeIf { it.isNotBlank() }
+        ?: LawyerSession.phone
+    val displayAddress = lawyerProfile?.address?.takeIf { it.isNotBlank() }
+        ?: address.takeIf { it.isNotBlank() }
+        ?: LawyerSession.address
+    val displayBio     = lawyerProfile?.bio?.takeIf { it.isNotBlank() }           ?: bio.takeIf { it.isNotBlank() } ?: LawyerSession.bio
+    val specializations = lawyerProfile?.specializations?.takeIf { it.isNotEmpty() }
+        ?: emptyList()
+
+    val yearsExp  = lawyerProfile?.yearsExperience ?: 0
+    // Prefer stats.dossiers_gagnes from /api/lawyers/me/stats, fall back to profile.client_count
+    val casesWon  = lawyerStats?.effectiveDossiersGagnes()
+        ?: lawyerStats?.closedCases
+        ?: lawyerProfile?.clientCount
+        ?: 0
+    val rating    = lawyerStats?.averageRating?.takeIf { it > 0f }
+        ?: lawyerProfile?.rating
+        ?: 0f
 
     var showLogOutDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Profil Avocat",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
+            StandardTopBar(
+                title = "Profil Avocat",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = {}) {
                         Icon(
                             Icons.Default.Share,
                             contentDescription = "Partager",
-                            tint = AppDarkGreen
+                            tint = AppGoldColor
                         )
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                }
             )
-        },
-        containerColor = Color.Transparent
+        }
     ) { paddingValues ->
-        DashBoardBackground {
+        // ── Initial loading state ─────────────────────────────────────────────
+        if (isRefreshing && lawyerProfile == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator(color = AppGoldColor) }
+        } else if (isError && lawyerProfile == null) {
+            // ── No-connection state ─────────────────────────────────────────
+            NoConnectionScreen(
+                onRetry  = { dashboardViewModel.fetch() },
+                modifier = Modifier.padding(paddingValues)
+            )
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
 
                 // ── Header Card ───────────────────────────────────────────────
                 item {
                     LawyerHeaderCard(
-                        fullName = fullName,
-                        title = title,
+                        fullName = displayName,
+                        title = displayTitle,
+                        avatarUrl = lawyerProfile?.avatarUrl ?: "",
                         profileImageUri = profileImageUri,
-                        yearsExp = 12,
-                        casesWon = 340,
-                        rating = 4.9f
+                        yearsExp = yearsExp,
+                        casesWon = casesWon,
+                        rating = rating
                     )
                 }
 
-                // ── Specializations ───────────────────────────────────────────
-                item { SectionHeader(title = "Domaines d'Expertise") }
-                item { SpecializationChipsRow(specializations = specializations) }
+                // ── Specializations ───────────────────────────────────────────────
+                if (specializations.isNotEmpty()) {
+                    item { SectionHeader(title = "Domaines d'Expertise") }
+                    item { SpecializationChipsRow(specializations = specializations) }
+                }
 
-                // ── Bio ───────────────────────────────────────────────────────
-                item { SectionHeader(title = "À Propos") }
-                item { LawyerBioCard(bio = bio) }
+                // ── Bio ──────────────────────────────────────────────────────────
+                if (displayBio.isNotBlank()) {
+                    item { SectionHeader(title = "À Propos") }
+                    item { LawyerBioCard(bio = displayBio) }
+                }
 
                 // ── Cabinet Links ─────────────────────────────────────────────
                 item { SectionHeader(title = "Mon Cabinet") }
@@ -132,7 +166,7 @@ fun AvocatProfile(
                         LawyerActionRow(
                             icon = Icons.Default.Business,
                             label = "Mon Cabinet",
-                            subtitle = address,
+                            subtitle = displayAddress,
                             onClick = {}
                         )
                         LawyerDivider()
@@ -164,11 +198,11 @@ fun AvocatProfile(
                 item { SectionHeader(title = "Contact") }
                 item {
                     DashCard {
-                        LawyerInfoRow(Icons.Default.Email, "E-mail", email)
+                        LawyerInfoRow(Icons.Default.Email, "E-mail", displayEmail, isLoading = isRefreshing && displayEmail.isBlank())
                         LawyerDivider()
-                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", phone)
+                        LawyerInfoRow(Icons.Default.Phone, "Téléphone", displayPhone, isLoading = isRefreshing && displayPhone.isBlank())
                         LawyerDivider()
-                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", address, isLast = true)
+                        LawyerInfoRow(Icons.Default.LocationOn, "Adresse", displayAddress, isLast = true, isLoading = isRefreshing && displayAddress.isBlank())
                     }
                 }
 
@@ -294,7 +328,7 @@ fun AvocatProfile(
             },
             confirmButton = {
                 Button(
-                    onClick = { showLogOutDialog = false; onBack() },
+                    onClick = { showLogOutDialog = false; onLogout() },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
                 ) {
@@ -315,11 +349,14 @@ fun AvocatProfile(
 private fun LawyerHeaderCard(
     fullName: String,
     title: String,
+    avatarUrl: String = "",
     profileImageUri: Uri?,
     yearsExp: Int,
     casesWon: Int,
     rating: Float
 ) {
+    val hasActiveStory = CreatorRepository.stories.any { it.lawyerName == fullName }
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
@@ -351,45 +388,75 @@ private fun LawyerHeaderCard(
             ) {
                 // Avatar + verified badge
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    if (profileImageUri != null) {
-                        AsyncImage(
-                            model = profileImageUri,
-                            contentDescription = "Photo de profil",
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, AppGoldColor, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        val initials = fullName
-                            .removePrefix("Maître ")
-                            .split(" ")
-                            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-                            .take(2)
-                            .joinToString("")
-                        // Initials avatar
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            AppGoldColor.copy(alpha = 0.22f),
-                                            AppGoldColor.copy(alpha = 0.06f)
+                    Box(contentAlignment = Alignment.Center) {
+                        // Story ring drawn first (behind avatar in z-order)
+                        if (hasActiveStory) {
+                            Box(
+                                modifier = Modifier
+                                    .size(104.dp)
+                                    .border(3.dp, AppGoldColor, CircleShape)
+                            )
+                        }
+                        // Avatar — API CDN URL > local URI > initials
+                        if (avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Photo de profil",
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .padding(if (hasActiveStory) 6.dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .then(if (!hasActiveStory) Modifier.border(2.dp, AppGoldColor, CircleShape) else Modifier),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else if (profileImageUri != null) {
+                            AsyncImage(
+                                model = profileImageUri,
+                                contentDescription = "Photo de profil",
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .padding(if (hasActiveStory) 6.dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .then(if (!hasActiveStory) Modifier.border(2.dp, AppGoldColor, CircleShape) else Modifier),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            val initials = fullName
+                                .removePrefix("Maître ")
+                                .split(" ")
+                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                .take(2)
+                                .joinToString("")
+                            Box(
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .padding(if (hasActiveStory) 6.dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                AppGoldColor.copy(alpha = 0.22f),
+                                                AppGoldColor.copy(alpha = 0.06f)
+                                            )
                                         )
                                     )
+                                    .then(if (!hasActiveStory) Modifier.border(2.dp, AppGoldColor, CircleShape) else Modifier),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = initials,
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 34.sp,
+                                    color = AppGoldColor
                                 )
-                                .border(2.dp, AppGoldColor, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = initials,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 34.sp,
-                                color = AppGoldColor
+                            }
+                        }
+                        if (hasActiveStory) {
+                            Box(
+                                modifier = Modifier
+                                    .size(104.dp)
+                                    .border(3.dp, AppGoldColor, CircleShape)
                             )
                         }
                     }
@@ -565,15 +632,15 @@ private fun LawyerBioCard(bio: String) {
                     text = "Bio professionnelle",
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     color = AppDarkGreen
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = bio,
                 fontFamily = FontFamily.Serif,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 color = AppDarkGreen.copy(alpha = 0.72f),
                 lineHeight = 20.sp
             )
@@ -647,7 +714,8 @@ private fun LawyerInfoRow(
     icon: ImageVector,
     label: String,
     value: String,
-    isLast: Boolean = false
+    isLast: Boolean = false,
+    isLoading: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -677,15 +745,24 @@ private fun LawyerInfoRow(
                 fontSize = 11.sp,
                 color = AppDarkGreen.copy(alpha = 0.50f)
             )
-            Text(
-                text = value,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                color = AppDarkGreen,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (isLoading) {
+                Text(
+                    text = "Chargement...",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 13.sp,
+                    color = AppDarkGreen.copy(alpha = 0.35f)
+                )
+            } else {
+                Text(
+                    text = value.ifBlank { "—" },
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    color = if (value.isBlank()) AppDarkGreen.copy(alpha = 0.35f) else AppDarkGreen,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

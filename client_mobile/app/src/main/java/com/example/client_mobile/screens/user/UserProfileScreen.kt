@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,47 +31,46 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.client_mobile.screens.shared.AppDarkGreen
 
 // ─── User Profile Screen ──────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileScreen(
-    userName: String = "Karim Bennani",
-    userEmail: String = "karim.bennani@email.com",
-    userPhone: String = "+212 6 12 34 56 78",
-    userAddress: String = "12, Rue Hassan II, Casablanca",
-    profileImageUri: Uri? = null,
     onBack: () -> Unit = {},
     onLogOut: () -> Unit = {},
     onNavigateToEdit: () -> Unit = {},
-    onNavigateToDocuments: () -> Unit = {}
+    onNavigateToDocuments: () -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
 ) {
-    var biometricEnabled by remember { mutableStateOf(false) }
-    var showLogOutDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    val profile      by userViewModel.profile.collectAsStateWithLifecycle()
+    val isFetching   by userViewModel.isFetching.collectAsStateWithLifecycle()
+    val isError      by userViewModel.isError.collectAsStateWithLifecycle()
 
-    Scaffold(
+    // Derived display values – fall back to UserSession while the VM is loading
+    val userName    = profile?.effectiveFullName()?.takeIf { it.isNotBlank() } ?: UserSession.name
+    val userEmail   = profile?.email?.takeIf { it.isNotBlank() }   ?: UserSession.email
+    val userPhone   = profile?.phone?.takeIf { it.isNotBlank() }   ?: UserSession.phone
+    val userAddress = profile?.address?.takeIf { it.isNotBlank() } ?: UserSession.address
+    val photoUrl    = profile?.effectiveAvatarUrl()?.takeIf { it.isNotBlank() }
+
+    // Role-specific fields (populated when role == "lawyer")
+    val isLawyerRole = profile?.role?.lowercase() == "lawyer"
+    val barNumber    = profile?.effectiveBarNumber()?.takeIf { it.isNotBlank() }
+    val specialty    = profile?.specialty?.takeIf { it.isNotBlank() }
+
+    var biometricEnabled by remember { mutableStateOf(false) }
+    var showLogOutDialog  by remember { mutableStateOf(false) }
+    var showDeleteDialog  by remember { mutableStateOf(false) }
+
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Mon Profil",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
+            StandardTopBar(
+                title = "Mon Profil",
+                onBack = onBack,
                 actions = {
                     IconButton(onClick = onNavigateToEdit) {
                         Icon(
@@ -79,179 +79,210 @@ fun UserProfileScreen(
                             tint = AppGoldColor
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                }
             )
-        },
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
-
-                // ── Profile Header Card ───────────────────────────────────────
-                item {
-                    ProfileHeaderCard(userName = userName, profileImageUri = profileImageUri)
-                }
-
-                // ── Account Information ───────────────────────────────────────
-                item {
-                    SectionHeader(title = "Informations Personnelles")
-                }
-                item {
-                    DashCard {
-                        ProfileInfoRow(Icons.Default.Person, "Nom complet", userName)
-                        ProfileDivider()
-                        ProfileInfoRow(Icons.Default.Email, "Adresse e-mail", userEmail)
-                        ProfileDivider()
-                        ProfileInfoRow(Icons.Default.Phone, "Téléphone", userPhone)
-                        ProfileDivider()
-                        ProfileInfoRow(Icons.Default.LocationOn, "Adresse", userAddress, isLast = true)
-                    }
-                }
-
-                // ── Security & Settings ───────────────────────────────────────
-                item {
-                    SectionHeader(title = "Sécurité & Paramètres")
-                }
-                item {
-                    DashCard {
-                        BiometricToggleRow(
-                            enabled = biometricEnabled,
-                            onToggle = { biometricEnabled = it }
-                        )
-                        ProfileDivider()
-                        ProfileActionRow(
-                            icon = Icons.Default.Lock,
-                            label = "Changer le mot de passe",
-                            onClick = {}
-                        )
-                        ProfileDivider()
-                        ProfileActionRow(
-                            icon = Icons.Default.Notifications,
-                            label = "Notifications",
-                            onClick = {},
-                            isLast = true
-                        )
-                    }
-                }
-
-                // ── Legal Tech Features ───────────────────────────────────────
-                item {
-                    SectionHeader(title = "Espace Juridique")
-                }
-                item {
-                    DashCard {
-                        LegalFeatureRow(
-                            icon = Icons.Default.Folder,
-                            title = "Coffre-fort Numérique",
-                            subtitle = "Mes documents & pièces",
-                            onClick = onNavigateToDocuments
-                        )
-                        ProfileDivider()
-                        LegalFeatureRow(
-                            icon = Icons.Default.CreditCard,
-                            title = "Moyens de Paiement",
-                            subtitle = "Cartes & historique",
-                            onClick = {},
-                            isLast = true
-                        )
-                    }
-                }
-
-                // ── Membership Badge ──────────────────────────────────────────
-                item {
-                    MembershipBanner()
-                }
-
-                // ── Footer Actions ────────────────────────────────────────────
-                item {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Button(
-                        onClick = { showLogOutDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFFF1F1)
-                        ),
-                        border = BorderStroke(1.dp, Color(0xFFE53935).copy(alpha = 0.35f))
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
-                            tint = Color(0xFFE53935),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Se Déconnecter",
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Color(0xFFE53935)
-                        )
-                    }
-                }
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Supprimer mon compte",
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 13.sp,
-                            color = Color.Gray.copy(alpha = 0.60f),
-                            modifier = Modifier
-                                .clickable { showDeleteDialog = true }
-                                .padding(vertical = 8.dp, horizontal = 12.dp)
-                        )
-                    }
-                }
-                item { Spacer(modifier = Modifier.height(20.dp)) }
-            }
         }
-    }
+    ) { paddingValues ->
+        // ── Initial loading state ─────────────────────────────────────────
+        if (isFetching && profile == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = AppGoldColor)
+            }
+        } else if (isError && profile == null) {
+            // ── No-connection state ───────────────────────────────────────────
+            NoConnectionScreen(
+                onRetry  = { userViewModel.refresh() },
+                modifier = Modifier.padding(paddingValues)
+            )
+        } else {
+            // ── Pull-to-refresh wrapping the scrollable content ───────────────
+            PullToRefreshBox(
+                isRefreshing = isFetching,
+                onRefresh    = { userViewModel.refresh() },
+                modifier     = Modifier.fillMaxSize().padding(paddingValues)
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(4.dp)) }
 
-    // ── Log Out Confirmation Dialog ───────────────────────────────────────────
-    if (showLogOutDialog) {
-        ProfileConfirmDialog(
-            title = "Se déconnecter ?",
-            message = "Vous serez redirigé vers l'écran de connexion.",
-            confirmLabel = "Déconnecter",
-            confirmColor = Color(0xFFE53935),
-            onConfirm = {
-                showLogOutDialog = false
-                onLogOut()
-            },
-            onDismiss = { showLogOutDialog = false }
-        )
-    }
+                    // ── Profile Header Card ───────────────────────────────────
+                    item {
+                        ProfileHeaderCard(userName = userName, photoUrl = photoUrl)
+                    }
 
-    // ── Delete Account Dialog ─────────────────────────────────────────────────
-    if (showDeleteDialog) {
-        ProfileConfirmDialog(
-            title = "Supprimer le compte ?",
-            message = "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
-            confirmLabel = "Supprimer",
-            confirmColor = Color(0xFFE53935),
-            onConfirm = { showDeleteDialog = false },
-            onDismiss = { showDeleteDialog = false }
-        )
+                    // ── Personal Information ──────────────────────────────────
+                    item { SectionHeader(title = "Informations Personnelles") }
+                    item {
+                        DashCard {
+                            ProfileInfoRow(Icons.Default.Person, "Nom complet", userName)
+                            ProfileDivider()
+                            ProfileInfoRow(Icons.Default.Email, "Adresse e-mail", userEmail)
+                            ProfileDivider()
+                            ProfileInfoRow(Icons.Default.Phone, "Téléphone", userPhone)
+                            ProfileDivider()
+                            ProfileInfoRow(Icons.Default.LocationOn, "Adresse", userAddress, isLast = true)
+                        }
+                    }
+
+                    // ── Lawyer-specific section (only when role == LAWYER) ─────
+                    if (isLawyerRole) {
+                        item { SectionHeader(title = "Profil Avocat") }
+                        item {
+                            DashCard {
+                                if (!specialty.isNullOrBlank()) {
+                                    ProfileInfoRow(
+                                        icon  = Icons.Default.Work,
+                                        label = "Spécialité",
+                                        value = specialty
+                                    )
+                                    ProfileDivider()
+                                }
+                                ProfileInfoRow(
+                                    icon    = Icons.Default.Badge,
+                                    label   = "Numéro de Barreau",
+                                    value   = barNumber ?: "—",
+                                    isLast  = true
+                                )
+                            }
+                        }
+                    }
+
+                    // ── Security & Settings ───────────────────────────────────
+                    item { SectionHeader(title = "Sécurité & Paramètres") }
+                    item {
+                        DashCard {
+                            BiometricToggleRow(
+                                enabled  = biometricEnabled,
+                                onToggle = { biometricEnabled = it }
+                            )
+                            ProfileDivider()
+                            ProfileActionRow(
+                                icon    = Icons.Default.Lock,
+                                label   = "Changer le mot de passe",
+                                onClick = {}
+                            )
+                            ProfileDivider()
+                            ProfileActionRow(
+                                icon    = Icons.Default.Notifications,
+                                label   = "Notifications",
+                                onClick = {},
+                                isLast  = true
+                            )
+                        }
+                    }
+
+                    // ── Legal Tech Features ───────────────────────────────────
+                    item { SectionHeader(title = "Espace Juridique") }
+                    item {
+                        DashCard {
+                            LegalFeatureRow(
+                                icon     = Icons.Default.Folder,
+                                title    = "Coffre-fort Numérique",
+                                subtitle = "Mes documents & pièces",
+                                onClick  = onNavigateToDocuments
+                            )
+                            ProfileDivider()
+                            LegalFeatureRow(
+                                icon     = Icons.Default.CreditCard,
+                                title    = "Moyens de Paiement",
+                                subtitle = "Cartes & historique",
+                                onClick  = {},
+                                isLast   = true
+                            )
+                        }
+                    }
+
+
+                    // ── Footer Actions ────────────────────────────────────────
+                    item {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(
+                            onClick = { showLogOutDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFFF1F1)
+                            ),
+                            border = BorderStroke(1.dp, Color(0xFFE53935).copy(alpha = 0.35f))
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = null,
+                                tint = Color(0xFFE53935),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Se Déconnecter",
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color(0xFFE53935)
+                            )
+                        }
+                    }
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Supprimer mon compte",
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 13.sp,
+                                color = Color.Gray.copy(alpha = 0.60f),
+                                modifier = Modifier
+                                    .clickable { showDeleteDialog = true }
+                                    .padding(vertical = 8.dp, horizontal = 12.dp)
+                            )
+                        }
+                    }
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                } // end LazyColumn
+            } // end PullToRefreshBox
+        }
+
+        // ── Log Out Confirmation Dialog ───────────────────────────────────────────
+        if (showLogOutDialog) {
+            ProfileConfirmDialog(
+                title = "Se déconnecter ?",
+                message = "Vous serez redirigé vers l'écran de connexion.",
+                confirmLabel = "Déconnecter",
+                confirmColor = Color(0xFFE53935),
+                onConfirm = {
+                    showLogOutDialog = false
+                    onLogOut()
+                },
+                onDismiss = { showLogOutDialog = false }
+            )
+        }
+
+        // ── Delete Account Dialog ─────────────────────────────────────────────────
+        if (showDeleteDialog) {
+            ProfileConfirmDialog(
+                title = "Supprimer le compte ?",
+                message = "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
+                confirmLabel = "Supprimer",
+                confirmColor = Color(0xFFE53935),
+                onConfirm = { showDeleteDialog = false },
+                onDismiss = { showDeleteDialog = false }
+            )
+        }
     }
 }
 
 // ─── Profile Header Card ──────────────────────────────────────────────────────
 @Composable
-private fun ProfileHeaderCard(userName: String, profileImageUri: Uri? = null) {
+private fun ProfileHeaderCard(userName: String, photoUrl: String? = null) {
     val initials = userName
         .split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
@@ -289,9 +320,9 @@ private fun ProfileHeaderCard(userName: String, profileImageUri: Uri? = null) {
             ) {
                 // Avatar with edit overlay
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    if (profileImageUri != null) {
+                    if (!photoUrl.isNullOrBlank()) {
                         AsyncImage(
-                            model = profileImageUri,
+                            model = photoUrl,
                             contentDescription = "Photo de profil",
                             modifier = Modifier
                                 .size(90.dp)
@@ -354,31 +385,6 @@ private fun ProfileHeaderCard(userName: String, profileImageUri: Uri? = null) {
                         fontSize = 22.sp,
                         color = Color.White
                     )
-                    Surface(
-                        shape = RoundedCornerShape(50.dp),
-                        color = AppGoldColor.copy(alpha = 0.18f),
-                        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.60f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(5.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = null,
-                                tint = AppGoldColor,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Text(
-                                text = "Client Premium",
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = AppGoldColor
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -592,61 +598,6 @@ private fun LegalFeatureRow(
     }
 }
 
-// ─── Membership Banner ────────────────────────────────────────────────────────
-@Composable
-private fun MembershipBanner() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = AppDarkGreen,
-        border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.45f)),
-        shadowElevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.WorkspacePremium,
-                contentDescription = null,
-                tint = AppGoldColor,
-                modifier = Modifier.size(36.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Abonnement Premium",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color.White
-                )
-                Text(
-                    text = "Valide jusqu'au 31 Déc 2026",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    color = AppGoldColor.copy(alpha = 0.80f)
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = AppGoldColor.copy(alpha = 0.18f),
-                border = BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.60f))
-            ) {
-                Text(
-                    text = "Actif",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    color = AppGoldColor,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                )
-            }
-        }
-    }
-}
 
 // ─── Row Divider ─────────────────────────────────────────────────────────────
 @Composable

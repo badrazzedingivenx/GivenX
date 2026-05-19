@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "109755839508",
-    "project_id": "app-haq",
-    "storage_bucket": "app-haq.firebasestorage.app"
+    "project_number": "978265131756",
+    "project_id": "haq-legal-app",
+    "storage_bucket": "haq-legal-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:109755839508:android:f520b0b59d7a420028e301",
+        "mobilesdk_app_id": "1:978265131756:android:de3f34ed2841cce34233c9",
         "android_client_info": {
-          "package_name": "com.example.myt"
+          "package_name": "com.example.client_mobile"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBKzGuYkznRSN83Cvq6RCuLYvd-wTZkVTU"
+          "current_key": "AIzaSyDNGpnKojYwKxYamkmo8O6EZGwra4sGiV4"
         }
       ],
       "services": {

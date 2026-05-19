@@ -2,6 +2,7 @@ package com.example.client_mobile.screens.shared
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +10,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 
 // --- Chat Screen (bidirectional) ----------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,17 +33,22 @@ import androidx.compose.ui.unit.sp
 fun ChatScreen(
     conversationId: String,
     isLawyer: Boolean = false,
-    currentUserName: String = if (isLawyer) "Avocat" else "Karim Bennani",
+    currentUserName: String = if (isLawyer) "Avocat" else UserSession.name.ifBlank { "" },
     onBack: () -> Unit = {}
 ) {
+    // Fetch messages from API on first composition
+    val chatViewModel: ChatViewModel = viewModel(
+        key = conversationId,
+        factory = ChatViewModel.Factory(conversationId)
+    )
     val conversation = ConversationRepository.conversations.find { it.id == conversationId }
     val messages = ConversationRepository.getMessages(conversationId)
 
-    val otherName = if (isLawyer) conversation?.clientName ?: "" else conversation?.lawyerName ?: ""
-    val otherSubtitle = if (isLawyer) "Client" else conversation?.lawyerSpecialty ?: ""
+    val otherName = conversation?.otherPartyName ?: ""
+    val otherSubtitle = ""
 
     val initials = otherName
-        .removePrefix("Ma�tre ")
+        .removePrefix("Maître ")
         .split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
         .take(2)
@@ -48,46 +56,65 @@ fun ChatScreen(
 
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage by chatViewModel.errorMessage.collectAsStateWithLifecycle()
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            chatViewModel.clearError()
+        }
+    }
 
     LaunchedEffect(conversationId) {
-        if (isLawyer) ConversationRepository.markReadByLawyer(conversationId)
-        else ConversationRepository.markReadByUser(conversationId)
+        if (isLawyer) ConversationRepository.markRead(conversationId)
+        else ConversationRepository.markRead(conversationId)
     }
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
+            StandardTopBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // Avatar with gold border
                         Box(
                             modifier = Modifier
-                                .size(38.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
-                                .background(AppDarkGreen),
+                                .background(Color.White.copy(alpha = 0.1f))
+                                .border(1.5.dp, AppGoldColor, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                initials,
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = AppGoldColor
-                            )
+                            if (conversation?.avatarUrl?.isNotBlank() == true) {
+                                AsyncImage(
+                                    model = conversation.avatarUrl,
+                                    contentDescription = otherName,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
+                                Text(
+                                    initials,
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = AppGoldColor
+                                )
+                            }
                         }
                         Column {
                             Text(
                                 otherName,
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = AppDarkGreen,
+                                fontSize = 16.sp,
+                                color = Color.White, // White for visibility on dark green
                                 maxLines = 1
                             )
                             Row(
@@ -96,185 +123,167 @@ fun ChatScreen(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(7.dp)
+                                        .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(Color(0xFF34A853))
+                                        .background(Color(0xFF4CAF50)) // Modern green
                                 )
                                 Text(
                                     otherSubtitle.ifEmpty { "En ligne" },
                                     fontFamily = FontFamily.Serif,
                                     fontSize = 11.sp,
-                                    color = AppGoldColor,
+                                    color = AppGoldColor.copy(alpha = 0.9f),
                                     maxLines = 1
                                 )
                             }
                         }
                     }
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint = AppDarkGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                onBack = onBack
             )
         },
-        containerColor = Color.Transparent
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        DashBoardBackground {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            LazyColumn(
+                state = listState,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
 
-                    if (messages.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillParentMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.padding(vertical = 60.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.ChatBubbleOutline,
-                                        contentDescription = null,
-                                        tint = AppDarkGreen.copy(alpha = 0.28f),
-                                        modifier = Modifier.size(52.dp)
-                                    )
-                                    Text(
-                                        "Aucun message pour le moment",
-                                        fontFamily = FontFamily.Serif,
-                                        fontSize = 14.sp,
-                                        color = AppDarkGreen.copy(alpha = 0.45f),
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(
-                                        "�crivez � $otherName pour commencer.",
-                                        fontFamily = FontFamily.Serif,
-                                        fontSize = 12.sp,
-                                        color = AppDarkGreen.copy(alpha = 0.35f),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        items(messages, key = { it.id }) { msg ->
-                            val fromMe = if (isLawyer) !msg.isFromUser else msg.isFromUser
-                            ChatMessageBubble(message = msg, fromMe = fromMe)
-                        }
-                    }
-
-                    item { Spacer(modifier = Modifier.height(8.dp)) }
-                }
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.White.copy(alpha = 0.97f),
-                    border = BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.12f)),
-                    shadowElevation = 6.dp
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IconButton(
-                            onClick = { /* attach document � future feature */ },
-                            modifier = Modifier.size(40.dp)
+                if (messages.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillParentMaxWidth(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.Default.AttachFile,
-                                contentDescription = "Joindre un fichier",
-                                tint = AppDarkGreen.copy(alpha = 0.55f),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        OutlinedTextField(
-                            value = messageText,
-                            onValueChange = { messageText = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = {
-                                Text(
-                                    "�crivez votre message�",
-                                    fontFamily = FontFamily.Serif,
-                                    fontSize = 13.sp,
-                                    color = AppDarkGreen.copy(alpha = 0.40f)
-                                )
-                            },
-                            shape = RoundedCornerShape(14.dp),
-                            minLines = 1,
-                            maxLines = 4,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AppDarkGreen,
-                                unfocusedBorderColor = AppDarkGreen.copy(alpha = 0.22f),
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White.copy(alpha = 0.88f),
-                                cursorColor = AppDarkGreen
-                            )
-                        )
-
-                        Surface(
-                            modifier = Modifier.size(46.dp),
-                            shape = CircleShape,
-                            color = if (messageText.isNotBlank()) AppDarkGreen else AppDarkGreen.copy(alpha = 0.25f),
-                            border = BorderStroke(
-                                0.5.dp,
-                                AppGoldColor.copy(alpha = if (messageText.isNotBlank()) 0.55f else 0.20f)
-                            )
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    val trimmed = messageText.trim()
-                                    if (trimmed.isNotEmpty()) {
-                                        if (isLawyer) {
-                                            ConversationRepository.sendLawyerMessage(
-                                                conversationId = conversationId,
-                                                content = trimmed,
-                                                senderName = currentUserName
-                                            )
-                                        } else {
-                                            ConversationRepository.sendUserMessage(
-                                                conversationId = conversationId,
-                                                content = trimmed,
-                                                senderName = currentUserName
-                                            )
-                                        }
-                                        messageText = ""
-                                    }
-                                },
-                                enabled = messageText.isNotBlank()
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.padding(vertical = 60.dp)
                             ) {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.Send,
-                                    contentDescription = "Envoyer",
-                                    tint = if (messageText.isNotBlank()) AppGoldColor else Color.White.copy(alpha = 0.40f),
-                                    modifier = Modifier.size(20.dp)
+                                    Icons.Default.ChatBubbleOutline,
+                                    contentDescription = null,
+                                    tint = AppDarkGreen.copy(alpha = 0.28f),
+                                    modifier = Modifier.size(52.dp)
+                                )
+                                Text(
+                                    "Aucun message pour le moment",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 14.sp,
+                                    color = AppDarkGreen.copy(alpha = 0.45f),
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    "Écrivez à $otherName pour commencer.",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 12.sp,
+                                    color = AppDarkGreen.copy(alpha = 0.35f),
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
+                    }
+                } else {
+                    items(messages, key = { it.id }) { msg ->
+                        val fromMe = if (isLawyer) !msg.isFromUser else msg.isFromUser
+                        ChatMessageBubble(message = msg, fromMe = fromMe)
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+            }
+
+            // --- Input Area (Modern & Clean) ---
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                color = Color.White,
+                shape = RoundedCornerShape(28.dp),
+                shadowElevation = 8.dp,
+                border = BorderStroke(1.dp, AppDarkGreen.copy(alpha = 0.05f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = { /* attach */ },
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Ajouter",
+                            tint = AppDarkGreen.copy(alpha = 0.6f),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    TextField(
+                        value = messageText,
+                        onValueChange = { messageText = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = {
+                            Text(
+                                "Écrivez votre message…",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color.Gray.copy(alpha = 0.7f),
+                                    fontSize = 14.sp
+                                )
+                            )
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = AppDarkGreen
+                        ),
+                        maxLines = 4
+                    )
+
+                    val isNotEmpty = messageText.trim().isNotEmpty()
+                    
+                    IconButton(
+                        onClick = {
+                            val trimmed = messageText.trim()
+                            if (trimmed.isNotEmpty()) {
+                                chatViewModel.send(
+                                    text       = trimmed,
+                                    senderName = currentUserName,
+                                    isFromUser = !isLawyer
+                                )
+                                messageText = ""
+                            }
+                        },
+                        enabled = isNotEmpty,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(if (isNotEmpty) AppDarkGreen else Color.Transparent)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Envoyer",
+                            tint = if (isNotEmpty) AppGoldColor else Color.Gray.copy(alpha = 0.4f),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -283,43 +292,57 @@ fun ChatScreen(
 @Composable
 private fun ChatMessageBubble(message: ChatMessage, fromMe: Boolean) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalArrangement = if (fromMe) Arrangement.End else Arrangement.Start
     ) {
         Column(
             horizontalAlignment = if (fromMe) Alignment.End else Alignment.Start,
-            modifier = Modifier.widthIn(max = 280.dp)
+            modifier = Modifier.widthIn(max = 300.dp)
         ) {
             Surface(
                 shape = if (fromMe)
-                    RoundedCornerShape(topStart = 18.dp, topEnd = 4.dp, bottomStart = 18.dp, bottomEnd = 18.dp)
+                    RoundedCornerShape(topStart = 20.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
                 else
-                    RoundedCornerShape(topStart = 4.dp, topEnd = 18.dp, bottomStart = 18.dp, bottomEnd = 18.dp),
+                    RoundedCornerShape(topStart = 4.dp, topEnd = 20.dp, bottomStart = 20.dp, bottomEnd = 20.dp),
                 color = if (fromMe) AppDarkGreen else Color.White,
                 border = if (fromMe)
-                    BorderStroke(0.5.dp, AppGoldColor.copy(alpha = 0.30f))
+                    BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.2f))
                 else
-                    BorderStroke(0.5.dp, AppDarkGreen.copy(alpha = 0.12f)),
-                shadowElevation = 1.dp
+                    BorderStroke(1.dp, AppDarkGreen.copy(alpha = 0.08f)),
+                shadowElevation = 2.dp
             ) {
                 Text(
                     message.content,
                     fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp,
-                    color = if (fromMe) Color.White else AppDarkGreen,
-                    lineHeight = 19.sp,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                    fontSize = 15.sp,
+                    color = if (fromMe) Color.White else AppDarkGreen.copy(alpha = 0.9f),
+                    lineHeight = 22.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                message.timestamp,
-                fontFamily = FontFamily.Serif,
-                fontSize = 10.sp,
-                color = AppDarkGreen.copy(alpha = 0.40f)
-            )
+            
+            Row(
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp, end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    message.timestamp,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 11.sp,
+                    color = AppDarkGreen.copy(alpha = 0.5f)
+                )
+                if (fromMe) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        Icons.Default.DoneAll,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = AppGoldColor
+                    )
+                }
+            }
         }
     }
 }
-
-

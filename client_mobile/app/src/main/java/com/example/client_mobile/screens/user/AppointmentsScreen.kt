@@ -22,56 +22,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppointmentsScreen(onBack: () -> Unit = {}) {
-    val appointments = listOf(
-        Triple("Maitre Yassine El Amrani", "Droit Penal",         "Mardi 7 Avril -- 10:30"),
-        Triple("Maitre Sara Benali",       "Droit de la Famille", "Jeudi 9 Avril -- 14:00")
-    )
+fun AppointmentsScreen(
+    onBack: () -> Unit = {},
+    viewModel: AppointmentViewModel = viewModel()
+) {
+    val appointments by viewModel.appointments.collectAsStateWithLifecycle()
+    val isLoading = appointments == null
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Mes Rendez-vous",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = AppDarkGreen
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = AppDarkGreen)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
-        containerColor = Color.Transparent
+    BaseScreen(
+        title = "Mes Rendez-vous",
+        onBack = onBack
     ) { paddingValues ->
-        DashBoardBackground {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
                 item { Spacer(modifier = Modifier.height(4.dp)) }
-                item { SectionHeader(title = "A venir (${appointments.size})") }
-                items(appointments.size) { idx ->
-                    val (name, specialty, datetime) = appointments[idx]
-                    AppointmentCard(lawyerName = name, specialty = specialty, datetime = datetime)
+                if (isLoading) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = AppDarkGreen)
+                        }
+                    }
+                } else {
+                    val list = appointments ?: emptyList()
+                    item { SectionHeader(title = "A venir (${list.size})") }
+                    items(list.size) { idx ->
+                        val appt = list[idx]
+                        AppointmentCard(
+                            lawyerName = appt.lawyerName,
+                            specialty  = appt.specialty,
+                            datetime   = "${appt.date} ${appt.time}"
+                        )
+                    }
                 }
                 item {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.80f),
+                        color = Color.White,
                         border = BorderStroke(1.dp, AppGoldColor.copy(alpha = 0.45f)),
                         shadowElevation = 2.dp
                     ) {
@@ -106,7 +103,6 @@ fun AppointmentsScreen(onBack: () -> Unit = {}) {
                 }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
             }
-        }
     }
 }
 

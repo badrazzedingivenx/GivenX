@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAQ Live Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        h1 { color: #4CAF50; }
+        video {
+            width: 100%;
+            max-width: 900px;
+            background: #000;
+            border-radius: 8px;
+        }
+        .info {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .url {
+            background: #222;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 HAQ Live Session</h1>
+    
+    <div class="info">
+        <h3>Instructions:</h3>
+        <p>1. Remplacer YOUR_STREAM_KEY par votre clé</p>
+        <p>2. Ouvrir ce fichier dans Chrome/Firefox</p>
+    </div>
+
+    <h3>Stream Player:</h3>
+    <video id="video" controls autoplay></video>
+
+    <div class="info">
+        <h3>URL du stream:</h3>
+        <div class="url" id="streamUrl"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // ⚠️ REMPLACER PAR VOTRE STREAM KEY
+        const STREAM_KEY = 'emT65tH8DVZRojbZfGJcEnQyYtmKy70H';
+        
+        const streamUrl = `http://127.0.0.1:8888/${STREAM_KEY}/index.m3u8`;
+        document.getElementById('streamUrl').textContent = streamUrl;
+
+        const video = document.getElementById('video');
+
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                console.log('✅ Stream loaded!');
+                video.play();
+            });
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                console.error('❌ HLS Error:', data);
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.addEventListener('loadedmetadata', function() {
+                video.play();
+            });
+        } else {
+            alert('Your browser does not support HLS. Use Chrome or Firefox.');
+        }
+    </script>
+</body>
+</html>

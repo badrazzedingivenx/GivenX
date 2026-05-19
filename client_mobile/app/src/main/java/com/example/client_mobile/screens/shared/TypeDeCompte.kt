@@ -23,43 +23,44 @@ import com.example.client_mobile.R
 @Composable
 fun TypeCompteScreen(
     showBackground: Boolean = true,
-    onNavigateToLogin: (String) -> Unit
+    onNavigateToRegister: (String) -> Unit
 ) {
     val darkGreen = Color(0xFF1B3124)
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (showBackground) {
-            Image(
-                painter = painterResource(id = R.drawable.background_app),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
+    AppScaffold(
+        showBackground = showBackground
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(65.dp))
+            // Adaptive top spacer: smaller weight shifts the entire block upwards
+            Spacer(modifier = Modifier.weight(0.5f))
+            
             Image(
                 painter = painterResource(id = R.drawable.logo_app),
                 contentDescription = "HAQ Logo",
                 modifier = Modifier.size(235.dp),
                 contentScale = ContentScale.Fit
             )
-            Spacer(modifier = Modifier.height(5.dp))
+            
+            // Spacing optimization: reduced top margin between Logo and Bienvenue
+            Spacer(modifier = Modifier.height(0.dp))
+            
             Text(
-                text = "Bienvenue sur HAQ",
+                text = "Bienvenue sur HAQQI",
                 fontSize = 32.sp,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 color = darkGreen, // Color updated to Gold for consistency
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Spacing optimization: tightened space between Title and Subtitle
+            Spacer(modifier = Modifier.height(4.dp))
+            
             Text(
                 text = "Choisissez votre espace pour commencer",
                 fontSize = 15.sp,
@@ -68,7 +69,9 @@ fun TypeCompteScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
-            Spacer(modifier = Modifier.weight(1f))
+            
+            // Spacing optimization: brought cards closer to the text block
+            Spacer(modifier = Modifier.weight(0.6f))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -80,17 +83,18 @@ fun TypeCompteScreen(
                     iconRes = R.drawable.logo_user,
                     title = "Utilisateur",
                     description = "Je cherche un conseil juridique",
-                    onClick = { onNavigateToLogin("user") }
+                    onClick = { onNavigateToRegister("user") }
                 )
                 AccountOptionCard(
                     modifier = Modifier.weight(1f),
                     iconRes = R.drawable.logo_avocat,
                     title = "Avocat",
                     description = "Je souhaite offrir mes services",
-                    onClick = { onNavigateToLogin("lawyer") }
+                    onClick = { onNavigateToRegister("lawyer") }
                 )
             }
-            Spacer(modifier = Modifier.weight(1.8f))
+            // Adaptive bottom spacer: larger weight firmly pushes content upwards
+            Spacer(modifier = Modifier.weight(2f))
         }
     }
 }
@@ -106,7 +110,7 @@ fun AccountOptionCard(
     Surface(
         modifier = modifier.height(350.dp),
         shape = RoundedCornerShape(35.dp),
-        color = Color.White.copy(alpha = 0.9f),
+        color = Color.White,
         shadowElevation = 2.dp,
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD4AF37).copy(alpha = 0.3f))
     ) {
@@ -121,7 +125,7 @@ fun AccountOptionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp)
-                    .background(Color(0xFFF2F2F2).copy(alpha = 0.9f), RoundedCornerShape(25.dp)),
+                    .background(Color(0xFFF2F2F2), RoundedCornerShape(25.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -182,4 +186,4 @@ fun AccountOptionCard(
             }
         }
     }
-}
+}            
