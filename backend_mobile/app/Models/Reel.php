@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 #[Fillable([
     'id',
@@ -36,6 +37,20 @@ class Reel extends Model
         'views_count' => 'integer',
         'duration_sec' => 'integer',
     ];
+
+    protected function videoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => empty($value) ? null : (filter_var($value, FILTER_VALIDATE_URL) ? $value : asset($value)),
+        );
+    }
+
+    protected function thumbnailUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => empty($value) ? null : (filter_var($value, FILTER_VALIDATE_URL) ? $value : asset($value)),
+        );
+    }
 
     public function lawyer(): BelongsTo
     {

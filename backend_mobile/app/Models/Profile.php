@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 #[Fillable([
     'user_id',
@@ -19,6 +20,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Profile extends Model
 {
     use HasFactory;
+
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => empty($value) ? null : (filter_var($value, FILTER_VALIDATE_URL) ? $value : asset($value)),
+        );
+    }
 
     public function user(): BelongsTo
     {

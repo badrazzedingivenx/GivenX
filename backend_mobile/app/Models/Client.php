@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'profile_id',
+    'user_id',
     'company_name',
 ])]
 class Client extends Model
@@ -21,9 +22,9 @@ class Client extends Model
         return $this->belongsTo(Profile::class);
     }
 
-    public function user(): User
+    public function user(): BelongsTo
     {
-        return $this->profile->user;
+        return $this->belongsTo(User::class);
     }
 
     public function appointments(): HasMany

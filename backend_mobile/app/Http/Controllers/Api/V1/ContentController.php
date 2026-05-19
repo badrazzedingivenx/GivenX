@@ -33,7 +33,9 @@ class ContentController extends ApiController
             return [
                 'id' => $story->id,
                 'lawyer' => [
-                    'full_name' => $story->lawyer_name ?? $story->lawyer->profile?->full_name,
+                    'id' => $story->lawyer?->id,
+                    'full_name' => $story->lawyer_name ?? $story->lawyer?->full_name ?? $story->lawyer?->profile?->full_name,
+                    'avatar_url' => $story->lawyer?->avatar_url ?? $story->lawyer?->profile?->avatar_url,
                 ],
                 'media_url' => $story->media_url,
                 'caption' => $story->caption,
@@ -168,16 +170,17 @@ class ContentController extends ApiController
             return [
                 'id' => $reel->id,
                 'lawyer' => [
-                    'id' => $reel->lawyer->id,
-                    'full_name' => $reel->lawyer_name ?? $reel->lawyer->profile?->full_name,
-                    'avatar_url' => $reel->lawyer->profile?->avatar_url,
+                    'id' => $reel->lawyer?->id,
+                    'full_name' => $reel->lawyer_name ?? $reel->lawyer?->full_name ?? $reel->lawyer?->profile?->full_name,
+                    'avatar_url' => $reel->lawyer?->avatar_url ?? $reel->lawyer?->profile?->avatar_url,
                 ],
                 'title' => $reel->title,
                 'video_url' => $reel->video_url,
+                'thumbnail_url' => $reel->thumbnail_url,
                 'likes_count' => $reel->likes_count,
                 'views_count' => $reel->views_count,
                 'is_liked' => $user ? $reel->isLikedBy($user) : false,
-                'duration_sec' => $reel->duration,
+                'duration_sec' => $reel->duration_sec ?? $reel->duration,
             ];
         });
 
