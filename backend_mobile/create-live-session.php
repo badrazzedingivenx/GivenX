@@ -33,3 +33,4 @@ if ($data['success']) {
     echo "Playback URL: {$data['data']['playback_url']}\n";
 } else {
     echo "❌ Erreur: " . ($data['message'] ?? 'Unknown') . "\n";
+}
