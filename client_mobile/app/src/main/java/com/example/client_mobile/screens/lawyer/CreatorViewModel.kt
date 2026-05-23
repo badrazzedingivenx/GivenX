@@ -99,10 +99,10 @@ class CreatorViewModel : ViewModel() {
             _lives.value   = livesResult
 
             // Compute KPIs
-            val totalViews  = reelsResult.sumOf { it.views.takeIf { v -> v > 0 } ?: (it.likes * 12) }
-            val totalLikes  = reelsResult.sumOf { it.likes }
+            val totalViews  = reelsResult.sumOf { it.viewsCount.takeIf { v -> v > 0 } ?: (it.likesCount * 12) }
+            val totalLikes  = reelsResult.sumOf { it.likesCount }
             val engagement  = if (totalViews > 0) (totalLikes.toFloat() / totalViews * 100f).coerceAtMost(100f) else 0f
-            val livesActive = livesResult.count { it.status.equals("LIVE", ignoreCase = true) || it.viewersCount > 0 }
+            val livesActive = livesResult.count { it.status.equals("LIVE", ignoreCase = true) || it.viewerCount > 0 }
 
             _totalViews.value    = totalViews
             _totalLikes.value    = totalLikes

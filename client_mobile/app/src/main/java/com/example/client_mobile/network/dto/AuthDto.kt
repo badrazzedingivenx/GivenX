@@ -10,24 +10,54 @@ data class LoginRequest(
 )
 
 data class UserDto(
-    @SerializedName("id")       val id:       Any? = null,
-    @SerializedName("email")    val email:    String? = "",
-    @SerializedName("role")     val role:     String? = "", // "LAWYER" or "CLIENT"
-    
-    // Flattened fields for UI compatibility (populated from profiles table)
-    @SerializedName("fullName")   val fullName:    String? = "",
-    @SerializedName("avatarUrl")  val avatarUrl:   String? = "",
-    @SerializedName("phone")      val phone:       String? = "",
-    @SerializedName("address")    val address:     String? = "",
-    @SerializedName("specialty")  val specialty:   String? = "",
-    @SerializedName("barNumber")  val barNumber:   String? = "",
-    
-    // Legacy fields for backward compatibility with older UI code
-    @SerializedName("firstName")  val firstName:   String? = "",
-    @SerializedName("lastName")   val lastName:    String? = "",
-    @SerializedName("photoUrl")   val photoUrl:    String? = ""
+    @SerializedName("id")
+    val id: Any? = null,
+
+    @SerializedName("email")
+    val email: String? = null,
+
+    // DB columns: `role` on both `users` and `profiles` tables
+    @SerializedName("role")
+    val role: String? = null,
+
+    // DB column: `full_name` on `users` table — alternate keeps camelCase responses working
+    @SerializedName(value = "full_name", alternate = ["fullName"])
+    val fullName: String? = null,
+
+    // DB column: `avatar_url` on `users` table — now an absolute URL
+    @SerializedName(value = "avatar_url", alternate = ["avatarUrl"])
+    val avatarUrl: String? = null,
+
+    @SerializedName("phone")
+    val phone: String? = null,
+
+    @SerializedName("address")
+    val address: String? = null,
+
+    @SerializedName("specialty")
+    val specialty: String? = null,
+
+    @SerializedName(value = "bar_number", alternate = ["barNumber"])
+    val barNumber: String? = null,
+
+    // DB column: `status` on `users` table ("active" | "inactive" | "suspended")
+    @SerializedName("status")
+    val status: String? = null,
+
+    // Legacy fields kept for backward compatibility with older UI code
+    @SerializedName("firstName")
+    val firstName: String? = null,
+
+    @SerializedName("lastName")
+    val lastName: String? = null,
+
+    @SerializedName("photoUrl")
+    val photoUrl: String? = null
 ) {
-    fun effectiveFullName(): String = (fullName ?: "").ifBlank { "${firstName ?: ""} ${lastName ?: ""}".trim().ifBlank { email ?: "" } }
+    fun effectiveFullName(): String = (fullName ?: "").ifBlank {
+        "${firstName ?: ""} ${lastName ?: ""}".trim().ifBlank { email ?: "" }
+    }
+    // avatarUrl is now an absolute URL — no base-URL prefix needed
     fun effectiveAvatarUrl(): String = (avatarUrl ?: "").ifBlank { photoUrl ?: "" }
     fun effectiveBarNumber(): String = barNumber ?: ""
     fun effectiveId(): String = id?.toString() ?: ""

@@ -5,25 +5,72 @@ import com.google.gson.annotations.SerializedName
 // ─── Lawyer ───────────────────────────────────────────────────────────────────
 
 /**
- * JSON shape for a single lawyer.
- * Supports both camelCase keys and snake_case keys (production MySQL server)
- * via Gson @SerializedName alternate values.
+ * Maps the `lawyers` table returned by the API.
+ *
+ * Breaking changes vs. old schema:
+ *  - `speciality`  is now the primary key (DB column name); `specialty` kept as alternate.
+ *  - `city` and `location` are now **separate** fields (both exist as DB columns).
+ *  - `years_experience` is the primary key for experience.
+ *  - `review_count` is the primary key for reviewCount.
+ *  - `avatar_url` now carries an **absolute URL** — pass directly to Coil, no base-URL prefix.
+ *  - `is_verified` / `is_available` are primary keys (tinyint → Boolean via Gson).
+ *  - Added `barNumber` (`bar_number`), `userId` (`user_id`), `profileId` (`profile_id`).
  */
 data class LawyerDto(
-    @SerializedName(value = "id")                                                     val id:            String?  = null,
-    @SerializedName(value = "name",        alternate = ["full_name"])                 val name:          String?  = null,
-    @SerializedName(value = "specialty",   alternate = ["speciality"])               val specialty:     String?  = null,
-    @SerializedName(value = "location",    alternate = ["city"])                     val location:      String?  = null,
-    @SerializedName(value = "experience",  alternate = ["years_experience"])         val experience:    Int?     = null,
-    @SerializedName(value = "rating")                                                 val rating:        Float?   = null,
-    @SerializedName(value = "compatibility")                                          val compatibility: Int?     = null,
-    @SerializedName(value = "reviewCount",  alternate = ["review_count"])            val reviewCount:   Int?     = null,
-    @SerializedName(value = "bio")                                                    val bio:           String?  = null,
-    @SerializedName(value = "isVerified",   alternate = ["is_verified"])             val isVerified:    Boolean? = null,
-    @SerializedName(value = "isAvailable",  alternate = ["is_available"])            val isAvailable:   Boolean? = null,
-    @SerializedName(value = "domaine")                                                val domaine:       String?  = null,
-    @SerializedName(value = "avatarUrl",    alternate = ["avatar_url"])              val avatarUrl:     String?  = null,
-    @SerializedName(value = "status")                                                 val status:        String?  = null
+    @SerializedName("id")
+    val id: String? = null,
+
+    @SerializedName("name")
+    val name: String? = null,
+
+    // DB column: `speciality` — alternate keeps old camelCase responses working
+    @SerializedName(value = "speciality", alternate = ["specialty"])
+    val speciality: String? = null,
+
+    // Separate columns in the `lawyers` table
+    @SerializedName("location")
+    val location: String? = null,
+
+    @SerializedName("city")
+    val city: String? = null,
+
+    @SerializedName(value = "years_experience", alternate = ["yearsExperience", "experience"])
+    val yearsExperience: Int? = null,
+
+    @SerializedName("rating")
+    val rating: Float? = null,
+
+    @SerializedName(value = "review_count", alternate = ["reviewCount"])
+    val reviewCount: Int? = null,
+
+    @SerializedName("bio")
+    val bio: String? = null,
+
+    @SerializedName(value = "is_verified", alternate = ["isVerified"])
+    val isVerified: Boolean? = null,
+
+    @SerializedName(value = "is_available", alternate = ["isAvailable"])
+    val isAvailable: Boolean? = null,
+
+    // DB column: `domaine`
+    @SerializedName("domaine")
+    val domaine: String? = null,
+
+    // Absolute URL — use directly with Coil, no base-URL construction needed
+    @SerializedName(value = "avatar_url", alternate = ["avatarUrl"])
+    val avatarUrl: String? = null,
+
+    @SerializedName("status")
+    val status: String? = null,
+
+    @SerializedName(value = "bar_number", alternate = ["barNumber"])
+    val barNumber: String? = null,
+
+    @SerializedName(value = "user_id", alternate = ["userId"])
+    val userId: String? = null,
+
+    @SerializedName(value = "profile_id", alternate = ["profileId"])
+    val profileId: String? = null
 )
 
 /** Standard list envelope: { "data": [...], "total": 42 } */

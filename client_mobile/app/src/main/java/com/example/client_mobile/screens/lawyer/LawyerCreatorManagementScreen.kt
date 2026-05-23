@@ -69,14 +69,14 @@ fun LawyerCreatorManagementScreen(
     // Combine API stories with locally-posted ones (from MediaPickerFlow)
     val localStories = CreatorRepository.stories
     val allStories: List<StoryUiModel> = remember(stories, localStories) {
-        val api = stories.map { StoryUiModel(it.id, it.lawyerName, it.views, it.timeLeft, it.isLive) }
+        val api = stories.map { StoryUiModel(it.id, it.authorName, it.views, it.timeLeft, it.isLive) }
         val local = localStories.map { StoryUiModel(it.id.toString(), it.lawyerName, 0, "", false) }
         (local + api).distinctBy { it.id }
     }
     // Combine API reels with locally-uploaded ones
     val localReels = CreatorRepository.reels
     val allReels: List<ReelUiModel> = remember(reels, localReels) {
-        val api = reels.map { ReelUiModel(it.id, it.title.ifBlank { it.caption.take(32) }, it.views, it.likes, it.duration, it.trend) }
+        val api = reels.map { ReelUiModel(it.id, it.title.ifBlank { it.caption.take(32) }, it.viewsCount, it.likesCount, it.duration, it.trend ?: "") }
         val local = localReels.map { ReelUiModel(it.id.toString(), it.title, it.views, it.likes, "", "") }
         (local + api).distinctBy { it.id }
     }
@@ -84,8 +84,8 @@ fun LawyerCreatorManagementScreen(
     val activeLives: List<LiveDto> = remember(lives, CreatorRepository.liveSessions) {
         val apiLives = lives
         val repoLives = CreatorRepository.liveSessions.map { cl ->
-            LiveDto(id = cl.id.toString(), title = cl.topic, lawyerName = cl.lawyerName,
-                viewersCount = cl.viewers, status = if (cl.isLive) "LIVE" else "Ended")
+            LiveDto(id = cl.id.toString(), topic = cl.topic, lawyerNameFlat = cl.lawyerName,
+                viewerCount = cl.viewers, status = if (cl.isLive) "LIVE" else "Ended")
         }
         (repoLives + apiLives).distinctBy { it.id }
     }
@@ -423,7 +423,7 @@ private fun AiInsightCard(insight: String) {
 
 @Composable
 private fun LiveBannerCard(live: LiveDto) {
-    val isLive   = live.status.equals("LIVE", ignoreCase = true) || live.viewersCount > 0
+    val isLive   = live.status.equals("LIVE", ignoreCase = true) || live.viewerCount > 0
     val pulseAnim = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by pulseAnim.animateFloat(
         initialValue   = 0.4f,
@@ -461,16 +461,16 @@ private fun LiveBannerCard(live: LiveDto) {
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    live.title.ifBlank { "Direct sans titre" },
+                    live.topic.ifBlank { "Direct sans titre" },
                     fontWeight = FontWeight.Bold,
                     fontSize   = 14.sp,
                     color      = AppDarkGreen,
                     maxLines   = 2,
                     overflow   = TextOverflow.Ellipsis
                 )
-                if (live.lawyerName.isNotBlank()) {
+                if (live.authorName.isNotBlank()) {
                     Text(
-                        live.lawyerName,
+                        live.authorName,
                         fontSize = 12.sp,
                         color    = Color.Gray
                     )
@@ -483,10 +483,10 @@ private fun LiveBannerCard(live: LiveDto) {
                     containerColor = if (isLive) Color.Red.copy(pulseAlpha * 0.9f) else AppGoldColor,
                     textColor = Color.White
                 )
-                if (live.viewersCount > 0) {
+                if (live.viewerCount > 0) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "${live.viewersCount} 👁",
+                        "${live.viewerCount} 👁",
                         fontSize = 10.sp,
                         color    = Color.Gray
                     )

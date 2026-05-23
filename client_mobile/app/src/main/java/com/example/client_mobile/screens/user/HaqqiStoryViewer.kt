@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
@@ -34,6 +35,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.ImageRequest
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.screens.shared.AppGoldColor
 import com.example.client_mobile.screens.shared.AppDarkGreen
@@ -48,6 +53,7 @@ fun HaqqiStoryViewer(
 ) {
     if (stories.isEmpty()) return
 
+    val context = LocalContext.current
     var currentIndex by remember { mutableIntStateOf(startIndex.coerceIn(stories.indices)) }
     val story = stories[currentIndex]
 
@@ -114,12 +120,41 @@ fun HaqqiStoryViewer(
                 }
         ) {
             // Main Story Content (Photo)
-            AsyncImage(
-                model = story.imageUrl,
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(story.mediaUrl.takeIf { it.isNotBlank() })
+                    .crossfade(300)
+                    // Hardware bitmaps cannot be drawn inside a Dialog / Canvas layer
+                    // and produce a solid black frame — software rendering fixes this.
+                    .allowHardware(false)
+                    .build(),
                 contentDescription = "Story of ${story.authorName}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
-            )
+            ) {
+                when (painter.state) {
+                    is AsyncImagePainter.State.Loading ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0xFF1A1A1A))
+                        )
+                    is AsyncImagePainter.State.Error ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0xFF1A1A1A)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Image non disponible",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 13.sp
+                            )
+                        }
+                    else -> SubcomposeAsyncImageContent()
+                }
+            }
 
             // Dark gradient overlay at the top purely for text visibility
             Box(
@@ -189,7 +224,11 @@ fun HaqqiStoryViewer(
                     ) {
                         if (story.authorAvatarUrl.isNotBlank()) {
                             AsyncImage(
-                                model = story.authorAvatarUrl,
+                                model = ImageRequest.Builder(context)
+                                    .data(story.authorAvatarUrl)
+                                    .crossfade(true)
+                                    .allowHardware(false)
+                                    .build(),
                                 contentDescription = story.authorName,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()

@@ -20,14 +20,14 @@ object LawyerApiRepository {
     private fun LawyerDto.toItem() = LawyerItem(
         id          = id          ?: "",
         name        = name        ?: "Avocat",
-        specialty   = specialty   ?: "",
-        city        = location    ?: "Non spécifiée",
+        specialty   = speciality  ?: "",
+        city        = city        ?: location ?: "Non spécifiée",
         rating      = rating      ?: 0f,
         reviewCount = reviewCount ?: 0,
-        yearsExp    = experience  ?: 0,
+        yearsExp    = yearsExperience ?: 0,
         bio         = bio         ?: "",
         isVerified  = isVerified  ?: false,
-        domaine     = (domaine    ?: specialty ?: ""),
+        domaine     = domaine     ?: speciality ?: "",
         avatarUrl   = avatarUrl   ?: ""
     )
 

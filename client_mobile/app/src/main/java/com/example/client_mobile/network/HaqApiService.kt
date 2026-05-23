@@ -25,6 +25,9 @@ import com.example.client_mobile.network.dto.RenameDocumentRequest
 import com.example.client_mobile.network.dto.SaveConsultationRequest
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
+import com.example.client_mobile.network.dto.CreatePostRequest
+import com.example.client_mobile.network.dto.PostDto
+import com.example.client_mobile.network.dto.PostsResponseDto
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.network.dto.StoriesResponseDto
 import com.example.client_mobile.network.dto.UpdateDossierStatusRequest
@@ -307,4 +310,31 @@ interface HaqApiService {
         @Path("id") id: Int,
         @Body consultation: Consultation
     ): Response<ApiResponse<Consultation>>
+
+    // ── Posts ─────────────────────────────────────────────────────────────────
+
+    /** GET /posts — paginated feed of all published posts. */
+    @GET("posts")
+    suspend fun getPosts(): Response<ApiResponse<PostsResponseDto>>
+
+    /** POST /posts — create a text-only post (JSON body). */
+    @POST("posts")
+    suspend fun createPost(
+        @Body request: CreatePostRequest
+    ): Response<ApiResponse<PostDto>>
+
+    /** POST /posts — create a post with an image attachment (multipart). */
+    @Multipart
+    @POST("posts")
+    suspend fun createPostWithMedia(
+        @Part("content") content: RequestBody,
+        @Part media: MultipartBody.Part,
+        @Part("hashtags") hashtags: RequestBody?
+    ): Response<ApiResponse<PostDto>>
+
+    /** POST /posts/{id}/like — toggle like on a post. */
+    @POST("posts/{id}/like")
+    suspend fun likePost(
+        @Path("id") postId: String
+    ): Response<ApiResponse<LikeResponseDto>>
 }

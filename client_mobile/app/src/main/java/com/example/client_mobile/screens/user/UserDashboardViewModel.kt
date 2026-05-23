@@ -181,13 +181,13 @@ class UserDashboardViewModel : ViewModel() {
 
     private fun DossierDto.toDomain() = DossierData(
         id              = id,
-        caseNumber      = caseNumber.ifBlank { id },
-        category        = category,
-        status          = status,
-        openingDate     = openingDate,
-        lawyerId        = lawyerId,
-        lawyerName      = lawyerName,
-        lawyerSpecialty = lawyerSpecialty,
+        caseNumber      = caseNumber?.ifBlank { id } ?: id,
+        category        = category        ?: "",
+        status          = status          ?: "",
+        openingDate     = openingDate     ?: "",
+        lawyerId        = effectiveLawyerId(),
+        lawyerName      = effectiveLawyerName(),
+        lawyerSpecialty = effectiveLawyerSpecialty(),
         progress        = progress
     )
 }

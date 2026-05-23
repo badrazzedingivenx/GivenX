@@ -4,9 +4,11 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.example.client_mobile.network.dto.LawyerSearchResultDto
+import com.example.client_mobile.network.dto.CreatePostRequest
 import com.example.client_mobile.network.dto.LegalPostDto
 import com.example.client_mobile.network.dto.LikeResponseDto
 import com.example.client_mobile.network.dto.LiveDto
+import com.example.client_mobile.network.dto.PostDto
 import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
@@ -17,6 +19,9 @@ import java.io.File
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+
+// ── extra import for posts multipart
+private const val MEDIA_PLAIN_TEXT = "text/plain"
 
 /**
  * Unified repository that merges Reels, Search (lawyers), and Messaging.
@@ -40,9 +45,9 @@ object MainRepository {
             if (response.isSuccessful)
                 response.body()?.data?.reels?.map { reel ->
                     LegalPostDto(
-                        lawyerName   = reel.lawyerName,
+                        lawyerName   = reel.authorName,
                         legalText    = reel.caption.ifBlank { reel.title },
-                        likesCount   = reel.likes
+                        likesCount   = reel.likesCount
                     )
                 } ?: emptyList()
             else emptyList()
@@ -204,12 +209,12 @@ object MainRepository {
             if (response.isSuccessful && response.body()?.success == true) {
                 response.body()?.data?.lawyers?.map { dto ->
                     LawyerSearchResultDto(
-                        id        = dto.id        ?: "",
-                        name      = dto.name      ?: "Avocat",
-                        specialty = dto.specialty ?: "",
-                        avatarUrl = dto.avatarUrl ?: "",
-                        rating    = dto.rating    ?: 0f,
-                        domaine   = dto.domaine   ?: ""
+                        id        = dto.id          ?: "",
+                        name      = dto.name        ?: "Avocat",
+                        specialty = dto.speciality  ?: "",
+                        avatarUrl = dto.avatarUrl   ?: "",
+                        rating    = dto.rating      ?: 0f,
+                        domaine   = dto.domaine     ?: ""
                     )
                 } ?: emptyList()
             } else {
@@ -254,4 +259,47 @@ object MainRepository {
         lawyerName: String,
         clientName: String
     ): Conversation = ConversationRepository.getOrCreate(lawyerId, lawyerName, clientName)
+
+    // ── Posts ───────────────────────────────────────────────────────────────
+
+    suspend fun getPosts(): List<PostDto> {
+        return try {
+            val response = RetrofitClient.haqApi.getPosts()
+            if (response.isSuccessful) response.body()?.data?.posts ?: emptyList() else emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    suspend fun createPost(
+        context:  Context,
+        content:  String,
+        mediaUri: Uri?,
+        hashtags: String?,
+        mentions: List<Long>?
+    ): Boolean {
+        return try {
+            if (mediaUri != null) {
+                val mediaPart = buildFilePart(context, mediaUri, "media") ?: return false
+                val contentBody  = content.toRequestBody(MEDIA_PLAIN_TEXT.toMediaTypeOrNull())
+                val hashtagsBody = hashtags?.toRequestBody(MEDIA_PLAIN_TEXT.toMediaTypeOrNull())
+                val response = RetrofitClient.haqApi.createPostWithMedia(contentBody, mediaPart, hashtagsBody)
+                response.isSuccessful
+            } else {
+                val response = RetrofitClient.haqApi.createPost(
+                    CreatePostRequest(
+                        content  = content,
+                        hashtags = hashtags,
+                        mentions = mentions
+                    )
+                )
+                response.isSuccessful
+            }
+        } catch (_: Exception) { false }
+    }
+
+    suspend fun likePost(postId: String): LikeResponseDto? {
+        return try {
+            val response = RetrofitClient.haqApi.likePost(postId)
+            if (response.isSuccessful) response.body()?.data else null
+        } catch (_: Exception) { null }
+    }
 }

@@ -16,14 +16,14 @@ object DossierApiRepository {
 
     private fun DossierDto.toDomain() = DossierData(
         id              = id,
-        caseNumber      = caseNumber.ifBlank { id },
-        category        = category,
-        status          = status,
-        openingDate     = openingDate,
-        lawyerId        = lawyerId,
-        lawyerName      = lawyerName,
-        lawyerSpecialty = lawyerSpecialty,
-        clientName      = clientName,
+        caseNumber      = caseNumber?.ifBlank { id } ?: id,
+        category        = category        ?: "",
+        status          = status          ?: "",
+        openingDate     = openingDate     ?: "",
+        lawyerId        = effectiveLawyerId(),
+        lawyerName      = effectiveLawyerName(),
+        lawyerSpecialty = effectiveLawyerSpecialty(),
+        clientName      = clientName      ?: "",
         progress        = progress
     )
 

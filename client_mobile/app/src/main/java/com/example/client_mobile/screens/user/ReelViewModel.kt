@@ -49,10 +49,10 @@ class ReelViewModel : ViewModel() {
                         lawyerAvatar = dto.authorAvatarUrl,
                         specialty    = dto.title,
                         title        = dto.caption,
-                        likes      = dto.likes,
-                        comments   = (dto.likes * 0.07).toInt(),
-                        shares     = (dto.likes * 0.035).toInt(),
-                        views      = if (dto.views > 0) "${dto.views}" else "",
+                        likes      = dto.likesCount,
+                        comments   = (dto.likesCount * 0.07).toInt(),
+                        shares     = (dto.likesCount * 0.035).toInt(),
+                        views      = if (dto.viewsCount > 0) "${dto.viewsCount}" else "",
                         videoUrl   = dto.videoUrl
                     )
                 }

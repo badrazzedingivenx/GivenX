@@ -11,53 +11,134 @@ data class SaveConsultationRequest(
 )
 
 // ─── Story ────────────────────────────────────────────────────────────────────
-// Matches: GET /api/stories
-// Response shape: {"success":true,"data":{"stories":[...]}}
-// [{"id":"story_001","lawyerName":"Me. Yassine Alaoui","lawyerAvatar":"...","imageUrl":"...","expiresAt":"..."}]
+// Matches: GET /api/stories  → {"success":true,"data":{"stories":[...]}}
+//
+// Breaking changes vs. old DTO:
+//  - `media_url`   replaces `imageUrl`  (DB column name; absolute URL)
+//  - `is_live`     replaces `isLive`    (DB column name)
+//  - `time_left`   replaces `timeLeft`  (DB column name)
+//  - `expires_at`  replaces `expiresAt` (DB column name)
+//  - `lawyer_name` replaces `lawyerName` (DB column name; also resolved from nested `lawyer`)
+//  - `lawyer` nested object carries the absolute `avatar_url`
 data class StoryDto(
-    @SerializedName("id")             val id:             String     = "",
-    @SerializedName("lawyerName")     val lawyerName:     String     = "",
-    @SerializedName("lawyerAvatar")   val lawyerAvatar:   String     = "",
-    @SerializedName("imageUrl")       val imageUrl:       String     = "",
-    @SerializedName("expiresAt")      val expiresAt:      String     = "",
-    @SerializedName("isLive")         val isLive:         Boolean    = false,
-    @SerializedName("hasUnseenStory") val hasUnseenStory: Boolean    = false,
-    // Analytics fields (defaults apply if absent)
-    @SerializedName("views")          val views:          Int        = 0,
-    @SerializedName("timeLeft")       val timeLeft:       String     = "",
-    // Nested author objects (backend may return these instead of flat fields)
-    @SerializedName("lawyer")         val lawyer:         LawyerDto? = null,
-    @SerializedName("user")           val user:           HaqUserDto? = null
+    @SerializedName("id")
+    val id: String = "",
+
+    // DB column: `lawyer_name` — also resolved from nested lawyer object
+    @SerializedName(value = "lawyer_name", alternate = ["lawyerName"])
+    val lawyerNameFlat: String = "",
+
+    // DB column: `media_url` — absolute URL, pass directly to Coil
+    @SerializedName(value = "media_url", alternate = ["mediaUrl", "imageUrl"])
+    val mediaUrl: String = "",
+
+    @SerializedName("caption")
+    val caption: String? = null,
+
+    // DB column: `expires_at`
+    @SerializedName(value = "expires_at", alternate = ["expiresAt"])
+    val expiresAt: String? = null,
+
+    // DB column: `is_live` (tinyint → Boolean)
+    @SerializedName(value = "is_live", alternate = ["isLive"])
+    val isLive: Boolean = false,
+
+    @SerializedName("hasUnseenStory")
+    val hasUnseenStory: Boolean = false,
+
+    @SerializedName("views")
+    val views: Int = 0,
+
+    // DB column: `time_left`
+    @SerializedName(value = "time_left", alternate = ["timeLeft"])
+    val timeLeft: String = "",
+
+    // Nested lawyer object — avatar_url inside is an absolute URL
+    @SerializedName("lawyer")
+    val lawyer: LawyerDto? = null,
+
+    @SerializedName("user")
+    val user: HaqUserDto? = null
 ) {
-    /** Resolved author name: flat field → nested lawyer → nested user → fallback */
-    val authorName: String get() = lawyerName.ifBlank { lawyer?.name ?: user?.fullName ?: "Avocat" }
-    /** Resolved author avatar URL: flat field → nested lawyer → nested user → empty */
-    val authorAvatarUrl: String get() = lawyerAvatar.ifBlank { lawyer?.avatarUrl ?: user?.avatar ?: "" }
+    /** Resolved display name: nested lawyer → flat field → nested user → fallback */
+    val authorName: String get() = lawyer?.name?.takeIf { it.isNotBlank() }
+        ?: lawyerNameFlat.ifBlank { user?.fullName ?: "Avocat" }
+
+    /** Resolved avatar URL (absolute): nested lawyer → nested user → empty */
+    val authorAvatarUrl: String get() = lawyer?.avatarUrl?.takeIf { it.isNotBlank() }
+        ?: user?.avatar ?: ""
 }
 
 // ─── Reel ─────────────────────────────────────────────────────────────────────
-// Matches: GET /api/reels
-// [{"id":"reel_001","videoUrl":"...","lawyerName":"Me. Karim Bennani","likes":542,"caption":"..."}]
+// Matches: GET /api/reels  → {"success":true,"data":{"reels":[...],"pagination":{...}}}
+//
+// Breaking changes vs. old DTO:
+//  - `video_url`     replaces `videoUrl`   (DB column; absolute URL)
+//  - `thumbnail_url` is now a first-class field (DB column; absolute URL)
+//  - `likes_count`   replaces `likes`      (DB column)
+//  - `views_count`   replaces `views`      (DB column)
+//  - `lawyer_name`   replaces `lawyerName` (DB column; also resolved from nested `lawyer`)
+//  - `domain`        added                 (DB column)
 data class ReelDto(
-    @SerializedName("id")         val id:         String     = "",
-    @SerializedName("videoUrl")   val videoUrl:   String     = "",
-    @SerializedName("lawyerName") val lawyerName: String     = "",
-    @SerializedName("likes")      val likes:      Int        = 0,
-    @SerializedName("caption")    val caption:    String     = "",
-    // Analytics fields (defaults apply if absent)
-    @SerializedName("title")      val title:      String     = "",
-    @SerializedName("views")      val views:      Int        = 0,
-    @SerializedName("duration")   val duration:   String     = "",
-    /** "up" | "down" | "" */
-    @SerializedName("trend")      val trend:      String     = "",
-    // Nested author objects (backend may return these instead of flat fields)
-    @SerializedName("lawyer")     val lawyer:     LawyerDto? = null,
-    @SerializedName("user")       val user:       HaqUserDto? = null
+    @SerializedName("id")
+    val id: String = "",
+
+    // DB column: `video_url` — absolute URL, pass directly to ExoPlayer
+    @SerializedName(value = "video_url", alternate = ["videoUrl"])
+    val videoUrl: String = "",
+
+    // DB column: `thumbnail_url` — absolute URL, pass directly to Coil
+    @SerializedName(value = "thumbnail_url", alternate = ["thumbnailUrl"])
+    val thumbnailUrl: String? = null,
+
+    // DB column: `lawyer_name`
+    @SerializedName(value = "lawyer_name", alternate = ["lawyerName"])
+    val lawyerNameFlat: String = "",
+
+    // DB column: `likes_count`
+    @SerializedName(value = "likes_count", alternate = ["likes", "likesCount"])
+    val likesCount: Int = 0,
+
+    @SerializedName("caption")
+    val caption: String = "",
+
+    @SerializedName("title")
+    val title: String = "",
+
+    // DB column: `views_count`
+    @SerializedName(value = "views_count", alternate = ["views", "viewsCount"])
+    val viewsCount: Int = 0,
+
+    @SerializedName("duration")
+    val duration: String = "",
+
+    @SerializedName(value = "duration_sec", alternate = ["durationSec"])
+    val durationSec: Int? = null,
+
+    /** "up" | "down" | null */
+    @SerializedName("trend")
+    val trend: String? = null,
+
+    @SerializedName("domain")
+    val domain: String? = null,
+
+    @SerializedName("status")
+    val status: String? = null,
+
+    // Nested lawyer object — avatar_url inside is an absolute URL
+    @SerializedName("lawyer")
+    val lawyer: LawyerDto? = null,
+
+    @SerializedName("user")
+    val user: HaqUserDto? = null
 ) {
-    /** Resolved author name: flat field → nested lawyer → nested user → fallback */
-    val authorName: String get() = lawyerName.ifBlank { lawyer?.name ?: user?.fullName ?: "Avocat" }
-    /** Resolved author avatar: nested lawyer → nested user → empty */
-    val authorAvatarUrl: String get() = lawyer?.avatarUrl ?: user?.avatar ?: ""
+    /** Resolved display name: nested lawyer → flat field → nested user → fallback */
+    val authorName: String get() = lawyer?.name?.takeIf { it.isNotBlank() }
+        ?: lawyerNameFlat.ifBlank { user?.fullName ?: "Avocat" }
+
+    /** Resolved avatar URL (absolute): nested lawyer → nested user → empty */
+    val authorAvatarUrl: String get() = lawyer?.avatarUrl?.takeIf { it.isNotBlank() }
+        ?: user?.avatar ?: ""
 }
 
 // ─── Like response ────────────────────────────────────────────────────────────
@@ -108,19 +189,81 @@ data class NotificationDto(
 )
 
 // ─── Live ─────────────────────────────────────────────────────────────────────
-// Matches: GET /api/lives
-// [{"id":"live_001","title":"Live: Droit de travail...","lawyerName":"...","viewersCount":124,"thumbnail":"..."}]
+// Matches: GET /api/lives  → live_sessions table
+//
+// Breaking changes vs. old DTO:
+//  - `topic`          replaces `title`        (DB column)
+//  - `viewer_count`   replaces `viewersCount`  (DB column)
+//  - `thumbnail_url`  replaces `thumbnail`     (DB column; absolute URL)
+//  - `lawyer_name`    replaces `lawyerName`    (DB column)
+//  - Added: `description`, `domain`, `playback_url`, `stream_key`, `rtmp_url`,
+//           `started_at`, `scheduled_at`, `duration_sec`, nested `lawyer`
 data class LiveDto(
-    @SerializedName("id")           val id:           String = "",
-    @SerializedName("title")        val title:        String = "",
-    @SerializedName("lawyerName")   val lawyerName:   String = "",
-    @SerializedName("viewersCount") val viewersCount: Int    = 0,
-    @SerializedName("thumbnail")    val thumbnail:    String = "",
-    // Analytics fields (defaults apply if absent)
-    @SerializedName("participants") val participants: Int    = 0,
-    /** "LIVE" | "Scheduled" | "" */
-    @SerializedName("status")       val status:       String = ""
-)
+    @SerializedName("id")
+    val id: String = "",
+
+    // DB column: `topic`
+    @SerializedName(value = "topic", alternate = ["title"])
+    val topic: String = "",
+
+    @SerializedName("description")
+    val description: String? = null,
+
+    // DB column: `lawyer_name`
+    @SerializedName(value = "lawyer_name", alternate = ["lawyerName"])
+    val lawyerNameFlat: String = "",
+
+    // DB column: `viewer_count`
+    @SerializedName(value = "viewer_count", alternate = ["viewersCount", "viewerCount"])
+    val viewerCount: Int = 0,
+
+    // DB column: `thumbnail_url` — absolute URL
+    @SerializedName(value = "thumbnail_url", alternate = ["thumbnail", "thumbnailUrl"])
+    val thumbnailUrl: String? = null,
+
+    @SerializedName("participants")
+    val participants: Int = 0,
+
+    /** "live" | "scheduled" | "ended" */
+    @SerializedName("status")
+    val status: String = "",
+
+    @SerializedName("domain")
+    val domain: String? = null,
+
+    // Streaming fields
+    @SerializedName(value = "playback_url", alternate = ["playbackUrl"])
+    val playbackUrl: String? = null,
+
+    @SerializedName(value = "stream_url", alternate = ["streamUrl"])
+    val streamUrl: String? = null,
+
+    @SerializedName(value = "stream_key", alternate = ["streamKey"])
+    val streamKey: String? = null,
+
+    @SerializedName(value = "rtmp_url", alternate = ["rtmpUrl"])
+    val rtmpUrl: String? = null,
+
+    @SerializedName(value = "started_at", alternate = ["startedAt"])
+    val startedAt: String? = null,
+
+    @SerializedName(value = "scheduled_at", alternate = ["scheduledAt"])
+    val scheduledAt: String? = null,
+
+    @SerializedName(value = "duration_sec", alternate = ["durationSec"])
+    val durationSec: Int? = null,
+
+    // Nested lawyer object — avatar_url inside is an absolute URL
+    @SerializedName("lawyer")
+    val lawyer: LawyerDto? = null
+) {
+    /** Resolved display name: nested lawyer → flat field → fallback */
+    val authorName: String get() = lawyer?.name?.takeIf { it.isNotBlank() }
+        ?: lawyerNameFlat.ifBlank { "Avocat" }
+
+    /** Resolved avatar URL (absolute): nested lawyer → empty */
+    val authorAvatarUrl: String get() = lawyer?.avatarUrl ?: ""
+}
 
 // ─── Legal Feed Post ─────────────────────────────────────────────────────────
 // Matches: GET /api/legal-feed

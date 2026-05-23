@@ -149,7 +149,7 @@ fun MainDashboardHost(
                     unreadCount   = unreadCount,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onCreatePost  = {
-                        innerNav.navigate("LawyerCreatorStudio") {
+                        innerNav.navigate("CreatePost") {
                             launchSingleTop = true
                         }
                     }
@@ -237,7 +237,27 @@ fun MainDashboardHost(
                         innerNav.popBackStack()
                     }
                 )
-            }        }
+            }
+
+            // ── Create Post (text + optional image) ─────────────────────
+            composable("CreatePost") {
+                CreatePostScreen(
+                    onPublished = { innerNav.popBackStack() },
+                    onCancel    = { innerNav.popBackStack() }
+                )
+            }
+
+            // ── Post Feed ──────────────────────────────────────────
+            composable("PostFeed") {
+                PostFeedScreen(
+                    paddingValues = padding,
+                    isLawyer      = isLawyer,
+                    onCreatePost  = {
+                        innerNav.navigate("CreatePost") { launchSingleTop = true }
+                    }
+                )
+            }
+        }
     }
 }
 
