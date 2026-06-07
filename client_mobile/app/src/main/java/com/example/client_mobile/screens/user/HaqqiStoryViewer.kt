@@ -1,4 +1,4 @@
-package com.example.client_mobile.screens.user
+﻿package com.example.client_mobile.screens.user
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,9 +42,11 @@ import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
+import com.example.client_mobile.network.MainRepository
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.screens.shared.AppGoldColor
 import com.example.client_mobile.screens.shared.AppDarkGreen
+import kotlinx.coroutines.launch
 
 private const val STORY_DURATION_MS = 5000
 
@@ -49,7 +54,8 @@ private const val STORY_DURATION_MS = 5000
 fun HaqqiStoryViewer(
     stories: List<StoryDto>,
     startIndex: Int,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onNavigateToChat: (conversationId: String) -> Unit = {}
 ) {
     if (stories.isEmpty()) return
 
@@ -57,9 +63,17 @@ fun HaqqiStoryViewer(
     var currentIndex by remember { mutableIntStateOf(startIndex.coerceIn(stories.indices)) }
     val story = stories[currentIndex]
 
+    // Like state (optimistic)
+    var isLiked by remember(currentIndex) { mutableStateOf(story.isLiked) }
+    var likesCount by remember(currentIndex) { mutableIntStateOf(story.likesCount) }
+    var showReplySheet by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+
     // Auto-advance progress animation
     val progress = remember { Animatable(0f) }
-    LaunchedEffect(currentIndex) {
+    LaunchedEffect(currentIndex, showReplySheet) {
+        if (showReplySheet) return@LaunchedEffect   // Pause while sheet is open
         progress.snapTo(0f)
         progress.animateTo(
             targetValue = 1f,
@@ -76,6 +90,10 @@ fun HaqqiStoryViewer(
     val parts = story.authorName.split(" ", limit = 2)
     val prefix = if(parts.isNotEmpty()) parts[0] else "Me."
     val lastName = if(parts.size > 1) parts[1] else ""
+
+    // Resolve lawyerId for reply sheet
+    val lawyerId = story.lawyer?.id ?: story.id
+    val lawyerName = story.authorName
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -108,6 +126,7 @@ fun HaqqiStoryViewer(
                 // Tap left = Previous, Tap right = Next
                 .pointerInput(currentIndex, stories.size) {
                     detectTapGestures(onTap = { offset ->
+                        if (showReplySheet) return@detectTapGestures
                         dragOffsetY = 0f
                         if (offset.x < size.width / 2f) {
                             if (currentIndex > 0) currentIndex--
@@ -125,7 +144,7 @@ fun HaqqiStoryViewer(
                     .data(story.mediaUrl.takeIf { it.isNotBlank() })
                     .crossfade(300)
                     // Hardware bitmaps cannot be drawn inside a Dialog / Canvas layer
-                    // and produce a solid black frame — software rendering fixes this.
+                    // and produce a solid black frame â€” software rendering fixes this.
                     .allowHardware(false)
                     .build(),
                 contentDescription = "Story of ${story.authorName}",
@@ -272,6 +291,86 @@ fun HaqqiStoryViewer(
                     }
                 }
             }
+
+            // Bottom gradient + interaction buttons
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f))
+                        )
+                    )
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Heart (Like) button
+                IconButton(
+                    onClick = {
+                        val wasLiked = isLiked
+                        isLiked = !wasLiked
+                        likesCount += if (!wasLiked) 1 else -1
+                        scope.launch {
+                            if (!wasLiked) MainRepository.likeStory(story.id)
+                            else MainRepository.unlikeStory(story.id)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isLiked) "Je n'aime plus" else "J'aime",
+                        tint = if (isLiked) Color(0xFFE53935) else Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                // Likes count
+                Text(
+                    text = "$likesCount",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                // Reply button
+                IconButton(
+                    onClick = { showReplySheet = true }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "RÃ©pondre",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        }
+
+        // Story Reply Bottom Sheet
+        if (showReplySheet) {
+            StoryReplyBottomSheet(
+                storyId          = story.id,
+                lawyerId         = lawyerId,
+                lawyerName       = lawyerName,
+                onDismiss        = { showReplySheet = false },
+                onNavigateToChat = { conversationId ->
+                    showReplySheet = false
+                    onDismiss()
+                    onNavigateToChat(conversationId)
+                }
+            )
         }
     }
 }

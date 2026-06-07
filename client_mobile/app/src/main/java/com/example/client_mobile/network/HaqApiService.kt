@@ -30,6 +30,9 @@ import com.example.client_mobile.network.dto.PostDto
 import com.example.client_mobile.network.dto.PostsResponseDto
 import com.example.client_mobile.network.dto.StoryDto
 import com.example.client_mobile.network.dto.StoriesResponseDto
+import com.example.client_mobile.network.dto.StoryInteractorDto
+import com.example.client_mobile.network.dto.StoryReplyRequest
+import com.example.client_mobile.network.dto.StoryReplyResponseDto
 import com.example.client_mobile.network.dto.UpdateDossierStatusRequest
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
@@ -253,6 +256,37 @@ interface HaqApiService {
     suspend fun uploadStory(
         @Part media: MultipartBody.Part
     ): Response<ApiResponse<StoryDto>>
+
+    /** POST /stories/{id}/like — like a story. */
+    @POST("stories/{id}/like")
+    suspend fun likeStory(
+        @Path("id") storyId: String
+    ): Response<ApiResponse<LikeResponseDto>>
+
+    /** DELETE /stories/{id}/like — unlike a story. */
+    @DELETE("stories/{id}/like")
+    suspend fun unlikeStory(
+        @Path("id") storyId: String
+    ): Response<ApiResponse<LikeResponseDto>>
+
+    /** POST /stories/{id}/reply — reply to a story via DM. */
+    @POST("stories/{id}/reply")
+    suspend fun replyToStory(
+        @Path("id") storyId: String,
+        @Body body: StoryReplyRequest
+    ): Response<ApiResponse<StoryReplyResponseDto>>
+
+    /** GET /stories/{id}/likes — list of clients who liked this story. */
+    @GET("stories/{id}/likes")
+    suspend fun getStoryLikes(
+        @Path("id") storyId: String
+    ): Response<ApiResponse<List<StoryInteractorDto>>>
+
+    /** GET /stories/{id}/replies — list of clients who replied to this story. */
+    @GET("stories/{id}/replies")
+    suspend fun getStoryReplies(
+        @Path("id") storyId: String
+    ): Response<ApiResponse<List<StoryInteractorDto>>>
 
     // ── Legal Feed ─────────────────────────────────────────────────
     /** GET /reels — returns the social legal feed posts (legal-feed renamed to reels). */

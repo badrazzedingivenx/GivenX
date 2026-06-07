@@ -148,6 +148,7 @@ fun MainDashboardHost(
                     isLawyer      = isLawyer,
                     unreadCount   = unreadCount,
                     onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToChat = onNavigateToChat,
                     onCreatePost  = {
                         innerNav.navigate("CreatePost") {
                             launchSingleTop = true
@@ -223,7 +224,8 @@ fun MainDashboardHost(
             // ── Creator Studio (inside shell so bottom bar stays visible) ────
             composable("LawyerCreatorStudio") {
                 LawyerCreatorManagementScreen(
-                    onBack = { innerNav.popBackStack() }
+                    onBack           = { innerNav.popBackStack() },
+                    onNavigateToChat = onNavigateToChat
                 )
             }
 

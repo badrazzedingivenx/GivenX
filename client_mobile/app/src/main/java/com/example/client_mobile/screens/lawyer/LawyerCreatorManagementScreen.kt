@@ -54,23 +54,26 @@ private val GoldGradient = Brush.linearGradient(
 @Composable
 fun LawyerCreatorManagementScreen(
     onBack: () -> Unit,
+    onNavigateToChat: (String) -> Unit = {},
     viewModel: CreatorViewModel = viewModel()
 ) {
-    val reels        by viewModel.reels.collectAsStateWithLifecycle()
-    val stories      by viewModel.stories.collectAsStateWithLifecycle()
-    val lives        by viewModel.lives.collectAsStateWithLifecycle()
-    val totalViews   by viewModel.totalViews.collectAsStateWithLifecycle()
-    val totalLikes   by viewModel.totalLikes.collectAsStateWithLifecycle()
-    val engPct       by viewModel.engagementPct.collectAsStateWithLifecycle()
-    val aiInsight    by viewModel.aiInsight.collectAsStateWithLifecycle()
-    val isLoading    by viewModel.isLoading.collectAsStateWithLifecycle()
-    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val reels             by viewModel.reels.collectAsStateWithLifecycle()
+    val stories           by viewModel.stories.collectAsStateWithLifecycle()
+    val lives             by viewModel.lives.collectAsStateWithLifecycle()
+    val totalViews        by viewModel.totalViews.collectAsStateWithLifecycle()
+    val totalLikes        by viewModel.totalLikes.collectAsStateWithLifecycle()
+    val engPct            by viewModel.engagementPct.collectAsStateWithLifecycle()
+    val aiInsight         by viewModel.aiInsight.collectAsStateWithLifecycle()
+    val isLoading         by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isRefreshing      by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val totalStoryLikes   by viewModel.totalStoryLikes.collectAsStateWithLifecycle()
+    val totalStoryReplies by viewModel.totalStoryReplies.collectAsStateWithLifecycle()
 
     // Combine API stories with locally-posted ones (from MediaPickerFlow)
     val localStories = CreatorRepository.stories
     val allStories: List<StoryUiModel> = remember(stories, localStories) {
-        val api = stories.map { StoryUiModel(it.id, it.authorName, it.views, it.timeLeft, it.isLive) }
-        val local = localStories.map { StoryUiModel(it.id.toString(), it.lawyerName, 0, "", false) }
+        val api = stories.map { StoryUiModel(it.id, it.authorName, it.views, it.timeLeft, it.isLive, it.likesCount, it.repliesCount) }
+        val local = localStories.map { StoryUiModel(it.id.toString(), it.lawyerName, 0, "", false, 0, 0) }
         (local + api).distinctBy { it.id }
     }
     // Combine API reels with locally-uploaded ones
@@ -94,6 +97,9 @@ fun LawyerCreatorManagementScreen(
     val viewsLabel    = formatNumber(totalViews)
     val likesLabel    = formatNumber(totalLikes)
     val engLabel      = String.format("%.1f", engPct) + "%"
+
+    var storyForLikes   by remember { mutableStateOf<StoryUiModel?>(null) }
+    var storyForReplies by remember { mutableStateOf<StoryUiModel?>(null) }
 
     var showMediaPicker by remember { mutableStateOf(false) }
     var pickerType      by remember { mutableStateOf(MediaPostType.Story) }
@@ -151,9 +157,45 @@ fun LawyerCreatorManagementScreen(
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             items(allStories, key = { it.id }) { story ->
-                                StoryCircle(story)
+                                StoryCircle(
+                                    story         = story,
+                                    onShowLikes   = { storyForLikes   = story },
+                                    onShowReplies = { storyForReplies = story }
+                                )
                             }
                         }
+                    }
+                }
+
+                // ── Story interaction stats ───────────────────────────────────
+                item {
+                    Row(
+                        modifier              = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        KpiCard(
+                            modifier     = Modifier.weight(1f),
+                            icon         = Icons.Default.AutoStories,
+                            value        = allStories.size.toString(),
+                            label        = "Stories actives",
+                            accentColor  = AppGoldColor
+                        )
+                        KpiCard(
+                            modifier     = Modifier.weight(1f),
+                            icon         = Icons.Default.Favorite,
+                            value        = formatNumber(totalStoryLikes),
+                            label        = "J'aimes stories",
+                            accentColor  = Color(0xFFE91E63)
+                        )
+                        KpiCard(
+                            modifier     = Modifier.weight(1f),
+                            icon         = Icons.Default.ChatBubbleOutline,
+                            value        = formatNumber(totalStoryReplies),
+                            label        = "Réponses stories",
+                            accentColor  = Color(0xFF1976D2)
+                        )
                     }
                 }
 
@@ -227,16 +269,38 @@ fun LawyerCreatorManagementScreen(
             }
         }
     }
+
+    // ── Story interaction bottom sheets ───────────────────────────────────────
+    storyForLikes?.let { story ->
+        StoryInteractionSheet(
+            storyId   = story.id,
+            mode      = StoryInteractionMode.Likes,
+            onDismiss = { storyForLikes = null }
+        )
+    }
+    storyForReplies?.let { story ->
+        StoryInteractionSheet(
+            storyId          = story.id,
+            mode             = StoryInteractionMode.Replies,
+            onDismiss        = { storyForReplies = null },
+            onNavigateToChat = { convId ->
+                storyForReplies = null
+                onNavigateToChat(convId)
+            }
+        )
+    }
 }
 
 // ── UI Data Models (flattened for the UI layer) ────────────────────────────────
 
 private data class StoryUiModel(
-    val id:         String,
-    val authorName: String,
-    val views:      Int,
-    val timeLeft:   String,
-    val isLive:     Boolean
+    val id:           String,
+    val authorName:   String,
+    val views:        Int,
+    val timeLeft:     String,
+    val isLive:       Boolean,
+    val likesCount:   Int = 0,
+    val repliesCount: Int = 0
 )
 
 private data class ReelUiModel(
@@ -251,7 +315,11 @@ private data class ReelUiModel(
 // ── Stories circle ─────────────────────────────────────────────────────────────
 
 @Composable
-private fun StoryCircle(story: StoryUiModel) {
+private fun StoryCircle(
+    story: StoryUiModel,
+    onShowLikes:   () -> Unit = {},
+    onShowReplies: () -> Unit = {}
+) {
     val ringBrush = if (story.isLive) {
         Brush.linearGradient(listOf(Color.Red, Color(0xFFFF6B6B)))
     } else {
@@ -317,6 +385,52 @@ private fun StoryCircle(story: StoryUiModel) {
                 fontSize = 9.sp,
                 color    = AppGoldColor
             )
+        }
+        // Likes and replies row — each stat is tappable
+        if (story.likesCount > 0 || story.repliesCount > 0) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
+                if (story.likesCount > 0) {
+                    Row(
+                        modifier              = Modifier.clickable(onClick = onShowLikes),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = "Voir j'aimes",
+                            tint     = Color(0xFFE91E63),
+                            modifier = Modifier.size(9.dp)
+                        )
+                        Text(
+                            formatNumber(story.likesCount),
+                            fontSize = 9.sp,
+                            color    = Color(0xFFE91E63)
+                        )
+                    }
+                }
+                if (story.repliesCount > 0) {
+                    Row(
+                        modifier              = Modifier.clickable(onClick = onShowReplies),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment     = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.ChatBubbleOutline,
+                            contentDescription = "Voir réponses",
+                            tint     = Color(0xFF1976D2),
+                            modifier = Modifier.size(9.dp)
+                        )
+                        Text(
+                            formatNumber(story.repliesCount),
+                            fontSize = 9.sp,
+                            color    = Color(0xFF1976D2)
+                        )
+                    }
+                }
+            }
         }
     }
 }

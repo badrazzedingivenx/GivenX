@@ -53,6 +53,15 @@ data class StoryDto(
     @SerializedName(value = "time_left", alternate = ["timeLeft"])
     val timeLeft: String = "",
 
+    @SerializedName(value = "is_liked", alternate = ["isLiked"])
+    val isLiked: Boolean = false,
+
+    @SerializedName(value = "likes_count", alternate = ["likesCount"])
+    val likesCount: Int = 0,
+
+    @SerializedName(value = "replies_count", alternate = ["repliesCount"])
+    val repliesCount: Int = 0,
+
     // Nested lawyer object — avatar_url inside is an absolute URL
     @SerializedName("lawyer")
     val lawyer: LawyerDto? = null,
@@ -68,6 +77,27 @@ data class StoryDto(
     val authorAvatarUrl: String get() = lawyer?.avatarUrl?.takeIf { it.isNotBlank() }
         ?: user?.avatar ?: ""
 }
+
+// Body for POST /stories/{id}/reply
+data class StoryReplyRequest(
+    @SerializedName("message") val message: String
+)
+
+// Response from POST /stories/{id}/reply
+data class StoryReplyResponseDto(
+    @SerializedName(value = "conversation_id", alternate = ["conversationId"]) val conversationId: String = "",
+    @SerializedName(value = "message_id",      alternate = ["messageId"])      val messageId:      String = ""
+)
+
+// A client who liked or replied to a story — returned by GET /stories/{id}/likes and /replies
+data class StoryInteractorDto(
+    @SerializedName("id")
+    val id: String = "",
+    @SerializedName(value = "full_name", alternate = ["fullName", "name"])
+    val fullName: String = "",
+    @SerializedName(value = "avatar_url", alternate = ["avatarUrl"])
+    val avatarUrl: String? = null
+)
 
 // ─── Reel ─────────────────────────────────────────────────────────────────────
 // Matches: GET /api/reels  → {"success":true,"data":{"reels":[...],"pagination":{...}}}

@@ -74,6 +74,7 @@ fun HaqqiSocialFeedScreen(
     isLawyer: Boolean = TokenManager.getUserType() == "lawyer",
     unreadCount: Int = 0,
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {},
     onCreatePost: () -> Unit = {},
     viewModel: SocialFeedViewModel = viewModel()
 ) {
@@ -89,9 +90,10 @@ fun HaqqiSocialFeedScreen(
 
     if (showStoryViewer && selectedStories != null) {
         HaqqiStoryViewer(
-            stories = selectedStories!!,
+            stories  = selectedStories!!,
             startIndex = 0,
-            onDismiss = { showStoryViewer = false }
+            onDismiss = { showStoryViewer = false },
+            onNavigateToChat = onNavigateToChat
         )
     }
 

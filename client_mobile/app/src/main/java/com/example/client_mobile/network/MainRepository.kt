@@ -13,6 +13,8 @@ import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.SendMessageRequest
 import com.example.client_mobile.network.dto.SendMessageResponseDto
 import com.example.client_mobile.network.dto.StoryDto
+import com.example.client_mobile.network.dto.StoryInteractorDto
+import com.example.client_mobile.network.dto.StoryReplyRequest
 import com.example.client_mobile.screens.shared.Conversation
 import com.example.client_mobile.screens.shared.ConversationRepository
 import java.io.File
@@ -301,5 +303,58 @@ object MainRepository {
             val response = RetrofitClient.haqApi.likePost(postId)
             if (response.isSuccessful) response.body()?.data else null
         } catch (_: Exception) { null }
+    }
+
+    suspend fun likeStory(storyId: String): LikeResponseDto? {
+        return try {
+            val response = RetrofitClient.haqApi.likeStory(storyId)
+            if (response.isSuccessful) response.body()?.data else null
+        } catch (_: Exception) { null }
+    }
+
+    suspend fun unlikeStory(storyId: String): LikeResponseDto? {
+        return try {
+            val response = RetrofitClient.haqApi.unlikeStory(storyId)
+            if (response.isSuccessful) response.body()?.data else null
+        } catch (_: Exception) { null }
+    }
+
+    suspend fun replyToStory(
+        storyId: String,
+        message: String,
+        lawyerId: String,
+        lawyerName: String
+    ): String? {
+        return try {
+            val clientName = TokenManager.getFullName()
+            val conversation = getOrCreateConversation(lawyerId, lawyerName, clientName)
+            // Optimistic local insert
+            ConversationRepository.sendUserMessage(conversation.id, message, clientName)
+            // Notify story reply endpoint (non-critical)
+            try { RetrofitClient.haqApi.replyToStory(storyId, StoryReplyRequest(message)) }
+            catch (_: Exception) { /* ignore */ }
+            // Sync message via messaging API
+            try {
+                RetrofitClient.haqApi.sendMessage(
+                    conversation.id,
+                    SendMessageRequest(conversationId = conversation.id, content = message)
+                )
+            } catch (_: Exception) { /* already saved locally */ }
+            conversation.id
+        } catch (_: Exception) { null }
+    }
+
+    suspend fun getStoryLikes(storyId: String): List<StoryInteractorDto> {
+        return try {
+            val response = RetrofitClient.haqApi.getStoryLikes(storyId)
+            if (response.isSuccessful) response.body()?.data.orEmpty() else emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    suspend fun getStoryReplies(storyId: String): List<StoryInteractorDto> {
+        return try {
+            val response = RetrofitClient.haqApi.getStoryReplies(storyId)
+            if (response.isSuccessful) response.body()?.data.orEmpty() else emptyList()
+        } catch (_: Exception) { emptyList() }
     }
 }

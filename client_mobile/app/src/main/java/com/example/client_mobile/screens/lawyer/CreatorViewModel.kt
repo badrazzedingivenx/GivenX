@@ -44,6 +44,14 @@ class CreatorViewModel : ViewModel() {
     private val _totalLikes = MutableStateFlow(0)
     val totalLikes: StateFlow<Int> = _totalLikes
 
+    /** Total likes across all stories posted by this lawyer. */
+    private val _totalStoryLikes = MutableStateFlow(0)
+    val totalStoryLikes: StateFlow<Int> = _totalStoryLikes
+
+    /** Total replies/DMs sent from all stories posted by this lawyer. */
+    private val _totalStoryReplies = MutableStateFlow(0)
+    val totalStoryReplies: StateFlow<Int> = _totalStoryReplies
+
     /** Simple engagement rate: (likes / max(views, 1)) * 100, capped at 100. */
     private val _engagementPct = MutableStateFlow(0f)
     val engagementPct: StateFlow<Float> = _engagementPct
@@ -108,6 +116,8 @@ class CreatorViewModel : ViewModel() {
             _totalLikes.value    = totalLikes
             _engagementPct.value = engagement
             _activeLiveCount.value = livesActive
+            _totalStoryLikes.value   = storiesResult.sumOf { it.likesCount }
+            _totalStoryReplies.value = storiesResult.sumOf { it.repliesCount }
 
             _aiInsight.value = buildInsight(totalViews, totalLikes, engagement, reelsResult.size)
             _isLoading.value    = false
