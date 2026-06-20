@@ -1,7 +1,7 @@
 package com.example.client_mobile.screens.user
 
 import com.example.client_mobile.screens.shared.*
-
+import com.example.client_mobile.screens.shared.ReservationSheet
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -262,52 +262,23 @@ fun LawyerDetailScreen(
             }
         } // end else (lawyer found)
 
-        // ── Booking Dialog ────────────────────────────────────────────────────────
+        // ── Reservation Sheet (replaces the old booking dialog) ────────────────
         if (showBookingDialog) {
-            AlertDialog(
-                onDismissRequest = { showBookingDialog = false },
-                shape = RoundedCornerShape(22.dp),
-                containerColor = Color.White,
-                icon = {
-                    Icon(
-                        Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = AppGoldColor,
-                        modifier = Modifier.size(32.dp)
+            ReservationSheet(
+                lawyerId = lawyerId,
+                lawyerName = lawyer?.name ?: "",
+                prefillNom = UserSession.name,
+                onDismiss = { showBookingDialog = false },
+                onPaymentValidated = { reservationData ->
+                    showBookingDialog = false
+                    // Parent handles: grant messaging access, send to API, etc.
+                    // reservationData contains all form + payment info.
+                    val conv = ConversationRepository.getOrCreate(
+                        lawyerId   = lawyerId,
+                        lawyerName = reservationData.lawyerName,
+                        clientName = reservationData.nom
                     )
-                },
-                title = {
-                    Text(
-                        "Prendre Rendez-vous",
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        color = AppDarkGreen,
-                        fontSize = 17.sp,
-                        textAlign = TextAlign.Center
-                    )
-                },
-                text = {
-                    Text(
-                "Votre demande de rendez-vous avec ${lawyer?.name ?: ""} sera envoyée. Vous recevrez une confirmation sous 24h.",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 13.sp,
-                        color = AppDarkGreen.copy(alpha = 0.65f),
-                        textAlign = TextAlign.Center
-                    )
-                },
-                dismissButton = {
-                    TextButton(onClick = { showBookingDialog = false }) {
-                        Text("Annuler", fontFamily = FontFamily.Serif, color = AppDarkGreen.copy(alpha = 0.55f))
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = { showBookingDialog = false },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)
-                    ) {
-                        Text("Confirmer", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = Color.White)
-                    }
+                    onNavigateToChat(conv.id)
                 }
             )
         }

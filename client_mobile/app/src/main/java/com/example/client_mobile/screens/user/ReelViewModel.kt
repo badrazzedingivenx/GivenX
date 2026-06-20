@@ -40,9 +40,13 @@ class ReelViewModel : ViewModel() {
             try {
                 val dtos = MainRepository.getReels()
                 reelApiIds.clear()
+                val baseUrl = com.example.client_mobile.network.RetrofitClient.BASE_URL.replace("/api/", "/public/")
                 _reels.value = dtos.map { dto ->
                     val uiId = dto.id.hashCode()
                     reelApiIds[uiId] = dto.id
+                    
+                    val finalVideoUrl = if (dto.videoUrl.startsWith("http")) dto.videoUrl else baseUrl + dto.videoUrl.removePrefix("/")
+                    
                     LegalReel(
                         id         = uiId,
                         lawyerName = dto.lawyerName,
@@ -52,7 +56,7 @@ class ReelViewModel : ViewModel() {
                         comments   = (dto.likes * 0.07).toInt(),
                         shares     = (dto.likes * 0.035).toInt(),
                         views      = if (dto.views > 0) "${dto.views}" else "",
-                        videoUrl   = dto.videoUrl
+                        videoUrl   = finalVideoUrl
                     )
                 }
                 if (dtos.isEmpty() && !isRefresh) _isError.value = true

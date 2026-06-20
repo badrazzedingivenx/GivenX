@@ -94,6 +94,9 @@ fun MainDashboardHost(
 
     val onProfile = if (isLawyer) onNavigateToLawyerProfile else onNavigateToUserProfile
 
+    var reservationLawyerId by remember { mutableStateOf<String?>(null) }
+    var reservationLawyerName by remember { mutableStateOf("") }
+
     AppScaffold(
         showBackground = false,
         topBar = {}, // Empty to allow per-screen detailed headers
@@ -177,6 +180,10 @@ fun MainDashboardHost(
                                 launchSingleTop = true
                             }
                         }
+                    },
+                    onReserveClicked = { lawyerId, lawyerName ->
+                        reservationLawyerId = lawyerId
+                        reservationLawyerName = lawyerName
                     }
                 )
             }
@@ -238,6 +245,24 @@ fun MainDashboardHost(
                     }
                 )
             }        }
+    }
+
+    if (reservationLawyerId != null) {
+        ReservationSheet(
+            lawyerId = reservationLawyerId!!,
+            lawyerName = reservationLawyerName,
+            prefillNom = UserSession.name,
+            onDismiss = { reservationLawyerId = null },
+            onPaymentValidated = { reservationData ->
+                reservationLawyerId = null
+                val conv = ConversationRepository.getOrCreate(
+                    lawyerId   = reservationLawyerId!!,
+                    lawyerName = reservationData.lawyerName,
+                    clientName = reservationData.nom
+                )
+                onNavigateToChat(conv.id)
+            }
+        )
     }
 }
 

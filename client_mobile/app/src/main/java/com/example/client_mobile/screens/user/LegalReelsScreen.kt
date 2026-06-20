@@ -76,6 +76,7 @@ data class LegalReel(
 fun LegalReelsScreen(
     paddingValues: PaddingValues = PaddingValues(),
     onBack: () -> Unit = {},
+    onReserveClicked: (lawyerId: String, lawyerName: String) -> Unit = { _, _ -> },
     viewModel: ReelViewModel = viewModel()
 ) {
     val apiReels     by viewModel.reels.collectAsStateWithLifecycle()
@@ -133,21 +134,7 @@ fun LegalReelsScreen(
     val pagerState = rememberPagerState { allReels.size }
     var isMuted by remember { mutableStateOf(false) }
 
-    // ── Consultation Bottom Sheet state ────────────────────────────────────────
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    var sheetReel by remember { mutableStateOf<LegalReel?>(null) }
-
-    // Show sheet when a reel is selected for booking
-    if (sheetReel != null) {
-        ConsultationBottomSheet(
-            reel         = sheetReel!!,
-            sheetState   = sheetState,
-            onDismiss    = {
-                scope.launch { sheetState.hide() }.invokeOnCompletion { sheetReel = null }
-            }
-        )
-    }
+    // (Internal ReservationSheet has been hoisted out to MainDashboardHost)
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         PullToRefreshBox(
@@ -167,8 +154,7 @@ fun LegalReelsScreen(
                     isActive = isActive,
                     isMuted  = isMuted,
                     onBookConsultation = {
-                        sheetReel = reel
-                        scope.launch { sheetState.show() }
+                        onReserveClicked(reel.id.toString(), reel.lawyerName)
                     },
                     onLike   = {
                         val apiIdx = (apiReels ?: emptyList()).indexOfFirst { it.id == reel.id }
@@ -657,213 +643,4 @@ private fun formatCount(count: Int): String {
     }
 }
 
-// ─── Consultation Booking Bottom Sheet ────────────────────────────────────────
-
-private val SheetGreen      = Color(0xFF1A3C34)
-private val SheetGreenLight = Color(0xFF22503F)
-private val SheetGold       = Color(0xFFC5A059)
-
-private data class ConsultationOption(
-    val icon: ImageVector,
-    val title: String,
-    val subtitle: String,
-    val price: String
-)
-
-private val consultationOptions = listOf(
-    ConsultationOption(Icons.Default.Videocam,      "Consultation Vidéo",      "30 min",       "350 MAD"),
-    ConsultationOption(Icons.Default.AccountBalance, "Consultation en Cabinet", "1h",           "700 MAD"),
-    ConsultationOption(Icons.AutoMirrored.Filled.Chat, "Message Prioritaire",     "24h réponse",  "150 MAD")
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ConsultationBottomSheet(
-    reel: LegalReel,
-    sheetState: SheetState,
-    onDismiss: () -> Unit
-) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState       = sheetState,
-        shape            = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        containerColor   = SheetGreen,
-        dragHandle       = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 14.dp, bottom = 8.dp)
-                    .width(40.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White.copy(alpha = 0.25f))
-            )
-        },
-        contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ── Header: Avatar + name + specialty ─────────────────────────
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Avatar
-                Surface(
-                    modifier = Modifier.size(50.dp),
-                    shape    = CircleShape,
-                    color    = SheetGreenLight,
-                    border   = androidx.compose.foundation.BorderStroke(2.dp, SheetGold)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            tint     = SheetGold,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                }
-
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text       = "Maître ${reel.lawyerName}",
-                            color      = Color.White,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 16.sp,
-                            maxLines   = 1,
-                            overflow   = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Surface(
-                            modifier = Modifier.size(16.dp),
-                            shape    = CircleShape,
-                            color    = SheetGold
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = "Vérifié",
-                                    tint     = Color.White,
-                                    modifier = Modifier.size(10.dp)
-                                )
-                            }
-                        }
-                    }
-                    if (reel.specialty.isNotBlank()) {
-                        Text(
-                            text       = "${reel.specialty} · Casablanca",
-                            color      = SheetGold,
-                            fontFamily = FontFamily.Serif,
-                            fontSize   = 13.sp
-                        )
-                    }
-                }
-            }
-
-            // ── Instruction text ──────────────────────────────────────────
-            Text(
-                text       = "Choisissez un type de consultation pour commencer",
-                color      = Color.White.copy(alpha = 0.80f),
-                fontFamily = FontFamily.SansSerif,
-                fontSize   = 14.sp,
-                modifier   = Modifier.fillMaxWidth()
-            )
-
-            // ── Service option cards ──────────────────────────────────────
-            consultationOptions.forEach { option ->
-                ConsultationOptionCard(option = option, onClick = { onDismiss() })
-            }
-
-            // ── Cancel button ─────────────────────────────────────────────
-            TextButton(
-                onClick  = onDismiss,
-                modifier = Modifier.padding(top = 4.dp)
-            ) {
-                Text(
-                    "Annuler",
-                    color      = Color.White.copy(alpha = 0.60f),
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.Medium,
-                    fontSize   = 15.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ConsultationOptionCard(
-    option: ConsultationOption,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape   = RoundedCornerShape(16.dp),
-        color   = SheetGreenLight.copy(alpha = 0.6f),
-        border  = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Icon with subtle background
-                Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape    = RoundedCornerShape(10.dp),
-                    color    = SheetGold.copy(alpha = 0.12f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            option.icon,
-                            contentDescription = null,
-                            tint     = SheetGold,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-
-                Column {
-                    Text(
-                        text       = option.title,
-                        color      = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize   = 14.sp,
-                        fontFamily = FontFamily.SansSerif
-                    )
-                    Text(
-                        text       = option.subtitle,
-                        color      = Color.White.copy(alpha = 0.50f),
-                        fontSize   = 12.sp,
-                        fontFamily = FontFamily.SansSerif
-                    )
-                }
-            }
-
-            Text(
-                text       = option.price,
-                color      = SheetGold,
-                fontWeight = FontWeight.Bold,
-                fontSize   = 15.sp,
-                fontFamily = FontFamily.SansSerif
-            )
-        }
-    }
-}
 
