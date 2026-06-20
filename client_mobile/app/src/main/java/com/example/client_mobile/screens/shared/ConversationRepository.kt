@@ -12,7 +12,8 @@ data class ChatMessage(
     val content: String,
     val senderName: String,
     val timestamp: String,
-    val isFromUser: Boolean
+    val isFromUser: Boolean,
+    val document: VaultDocument? = null
 )
 
 data class Conversation(
@@ -40,20 +41,22 @@ object ConversationRepository {
     fun getOrCreate(
         lawyerId: String,
         lawyerName: String,
-        clientName: String
+        clientName: String,
+        avatarUrl: String = ""
     ): Conversation {
         val id = "${clientName.replace(" ", "_")}_$lawyerId"
         return conversations.find { it.id == id } ?: Conversation(
             id = id,
-            otherPartyName = lawyerName
+            otherPartyName = lawyerName,
+            avatarUrl = avatarUrl
         ).also { conversations.add(it) }
     }
 
-    fun sendUserMessage(conversationId: String, content: String, senderName: String) {
+    fun sendUserMessage(conversationId: String, content: String, senderName: String, tempId: String? = null) {
         val time = currentTime()
         getMessages(conversationId).add(
             ChatMessage(
-                id = System.currentTimeMillis().toString(),
+                id = tempId ?: System.currentTimeMillis().toString(),
                 content = content,
                 senderName = senderName,
                 timestamp = time,
@@ -63,11 +66,11 @@ object ConversationRepository {
         updateMeta(conversationId, content, time)
     }
 
-    fun sendLawyerMessage(conversationId: String, content: String, senderName: String) {
+    fun sendLawyerMessage(conversationId: String, content: String, senderName: String, tempId: String? = null) {
         val time = currentTime()
         getMessages(conversationId).add(
             ChatMessage(
-                id = System.currentTimeMillis().toString(),
+                id = tempId ?: System.currentTimeMillis().toString(),
                 content = content,
                 senderName = senderName,
                 timestamp = time,

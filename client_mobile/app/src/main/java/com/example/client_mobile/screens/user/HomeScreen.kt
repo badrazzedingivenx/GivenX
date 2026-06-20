@@ -96,6 +96,7 @@ fun MainDashboardHost(
 
     var reservationLawyerId by remember { mutableStateOf<String?>(null) }
     var reservationLawyerName by remember { mutableStateOf("") }
+    var reservationLawyerAvatar by remember { mutableStateOf("") }
 
     AppScaffold(
         showBackground = false,
@@ -251,16 +252,41 @@ fun MainDashboardHost(
         ReservationSheet(
             lawyerId = reservationLawyerId!!,
             lawyerName = reservationLawyerName,
+            lawyerAvatarUrl = reservationLawyerAvatar,
             prefillNom = UserSession.name,
             onDismiss = { reservationLawyerId = null },
             onPaymentValidated = { reservationData ->
+                // Dismiss the reservation sheet to seamlessly reveal the origin screen (Reels/Profile)
                 reservationLawyerId = null
-                val conv = ConversationRepository.getOrCreate(
-                    lawyerId   = reservationLawyerId!!,
-                    lawyerName = reservationData.lawyerName,
-                    clientName = reservationData.nom
+                
+                // Safe data extraction (fixes the NullPointerException crash)
+                val safeLawyerId = reservationData.lawyerId
+                val clientId = TokenManager.getUserIdInt().toString()
+                
+                // 1. Persist the paid consultation
+                ConsultationRepository.addConsultation(
+                    Consultation(
+                        id = "${clientId}_${safeLawyerId}_${System.currentTimeMillis()}",
+                        clientId = clientId,
+                        lawyerId = safeLawyerId,
+                        lawyerName = reservationData.lawyerName,
+                        avatarUrl = reservationData.lawyerAvatarUrl,
+                        isPaid = true,
+                        status = ConsultationStatus.ACTIVE
+                    )
                 )
-                onNavigateToChat(conv.id)
+                
+                // 2. Initialize the conversation
+                val conv = ConversationRepository.getOrCreate(
+                    lawyerId   = safeLawyerId,
+                    lawyerName = reservationData.lawyerName,
+                    clientName = reservationData.nom,
+                    avatarUrl  = reservationData.lawyerAvatarUrl
+                )
+                
+                // If you prefer to stay on the Reels screen, simply remove the line below.
+                // Otherwise, this navigates to the chat successfully now that the crash is fixed.
+                // onNavigateToChat(conv.id) 
             }
         )
     }

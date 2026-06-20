@@ -82,13 +82,14 @@ object MainRepository {
         conversationId: String,
         content: String,
         senderName: String,
-        isFromUser: Boolean
+        isFromUser: Boolean,
+        tempId: String? = null
     ): SendMessageResponseDto? {
         // Optimistic local insert
         if (isFromUser) {
-            ConversationRepository.sendUserMessage(conversationId, content, senderName)
+            ConversationRepository.sendUserMessage(conversationId, content, senderName, tempId)
         } else {
-            ConversationRepository.sendLawyerMessage(conversationId, content, senderName)
+            ConversationRepository.sendLawyerMessage(conversationId, content, senderName, tempId)
         }
 
         return try {

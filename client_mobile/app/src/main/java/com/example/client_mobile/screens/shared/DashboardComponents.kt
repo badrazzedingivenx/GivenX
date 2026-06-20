@@ -341,7 +341,7 @@ fun StandardTopBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val containerHeight = 44.dp + statusBarTop
+    val containerHeight = 74.dp + statusBarTop
 
     Box(
         modifier = Modifier
@@ -427,11 +427,9 @@ fun StandardTopBar(
     StandardTopBar(
         title = {
             Image(
-                painter = painterResource(id = R.drawable.simple_app),
-                contentDescription = "GivenX Logo",
-                modifier = Modifier
-                    .fillMaxHeight(0.85f)
-                    .wrapContentWidth(),
+                painter = painterResource(id = R.drawable.logo_simple_v2),
+                contentDescription = "HAQQI Logo",
+                modifier = Modifier.height(64.dp),
                 contentScale = ContentScale.Fit
             )
         },
@@ -490,11 +488,9 @@ fun StandardTopBar(
         title = {
             if (showLogo) {
                 Image(
-                    painter = painterResource(id = R.drawable.simple_app),
-                    contentDescription = "GivenX Logo",
-                    modifier = Modifier
-                        .fillMaxHeight(0.85f)
-                        .wrapContentWidth(),
+                    painter = painterResource(id = R.drawable.logo_simple_v2),
+                    contentDescription = "HAQQI Logo",
+                    modifier = Modifier.height(64.dp),
                     contentScale = ContentScale.Fit
                 )
             } else {

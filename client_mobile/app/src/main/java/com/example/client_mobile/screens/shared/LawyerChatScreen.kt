@@ -55,9 +55,27 @@ fun ChatScreen(
         .joinToString("")
 
     var messageText by remember { mutableStateOf("") }
+    var showClearConfirm by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage by chatViewModel.errorMessage.collectAsStateWithLifecycle()
+
+    if (showClearConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirm = false },
+            title = { Text("Vider la conversation") },
+            text = { Text("Êtes-vous sûr de vouloir supprimer tous les messages de cette conversation ? Cette action est irréversible.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    chatViewModel.clearChat()
+                    showClearConfirm = false
+                }) { Text("Supprimer", color = Color.Red) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirm = false }) { Text("Annuler") }
+            }
+        )
+    }
 
     LaunchedEffect(errorMessage) {
         if (!errorMessage.isNullOrBlank()) {
@@ -136,6 +154,16 @@ fun ChatScreen(
                                 )
                             }
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showClearConfirm = true }) {
+                        Icon(
+                            Icons.Default.DeleteSweep,
+                            contentDescription = "Vider le chat",
+                            tint = Color.White.copy(alpha = 0.85f),
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                 },
                 onBack = onBack
@@ -254,14 +282,13 @@ fun ChatScreen(
                         maxLines = 4
                     )
 
-                    val isNotEmpty = messageText.trim().isNotEmpty()
+                    val isNotEmpty = messageText.isNotBlank()
                     
                     IconButton(
                         onClick = {
-                            val trimmed = messageText.trim()
-                            if (trimmed.isNotEmpty()) {
+                            if (messageText.isNotBlank()) {
                                 chatViewModel.send(
-                                    text       = trimmed,
+                                    text       = messageText,
                                     senderName = currentUserName,
                                     isFromUser = !isLawyer
                                 )

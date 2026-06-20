@@ -1,5 +1,7 @@
 package com.example.client_mobile.screens.shared
 
+import android.net.Uri
+
 /**
  * Consultation mode options with their associated pricing in DH.
  */
@@ -19,10 +21,12 @@ data class ReservationData(
     val contact: String,
     val domaine: String,
     val description: String,
+    val documentUri: Uri?,
     val mode: ConsultationMode,
     val cardNumber: String,
     val expiryDate: String,
     val cvv: String,
     val lawyerId: String,
-    val lawyerName: String
+    val lawyerName: String,
+    val lawyerAvatarUrl: String
 )

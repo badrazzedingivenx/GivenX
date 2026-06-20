@@ -7,9 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.client_mobile.network.MainRepository
 import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.TokenManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Fetches historical messages for [conversationId] from
@@ -27,7 +29,11 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage
+
     fun clearError() { _errorMessage.value = null }
+    fun clearUserMessage() { _userMessage.value = null }
 
     init {
         Log.d("ChatViewModel", "Initializing for conversationId: $conversationId")
@@ -72,15 +78,97 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
      * call [ConversationRepository] directly from the UI.
      */
     fun send(text: String, senderName: String, isFromUser: Boolean) {
-        val trimmed = text.trim()
-        if (trimmed.isBlank() || conversationId.isBlank()) return
+        if (text.isBlank() || conversationId.isBlank()) return
+        val tempId = java.util.UUID.randomUUID().toString()
         viewModelScope.launch {
-            MainRepository.sendMessage(
+            val response = MainRepository.sendMessage(
                 conversationId = conversationId,
-                content        = trimmed,
+                content        = text,
                 senderName     = senderName,
-                isFromUser     = isFromUser
+                isFromUser     = isFromUser,
+                tempId         = tempId
             )
+            
+            // Replace optimistic message with the real one from DB to prevent duplication
+            if (response != null) {
+                val messages = ConversationRepository.getMessages(conversationId)
+                val idx = messages.indexOfFirst { it.id == tempId }
+                if (idx != -1) {
+                    messages[idx] = messages[idx].copy(
+                        id = response.id.ifBlank { "${response.senderId}_${response.time}_new" },
+                        timestamp = response.time
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * DEBUG: Instantly clears all messages for this conversation from the local UI,
+     * then best-effort deletes them from the json-server.
+     */
+    fun clearChat() {
+        val messages = ConversationRepository.getMessages(conversationId)
+        val idsToDelete = messages.map { it.id }.toList()
+        // 1. Instant UI update
+        messages.clear()
+        // 2. Best-effort server delete (json-server supports DELETE /messages/:id)
+        viewModelScope.launch(Dispatchers.IO) {
+            idsToDelete.forEach { id ->
+                try { RetrofitClient.haqApi.deleteMessage(id) }
+                catch (_: Exception) { /* ignore — UI is already clear */ }
+            }
+        }
+    }
+
+    fun sendDocumentMessage(document: VaultDocument, senderName: String, isFromUser: Boolean) {
+        if (conversationId.isBlank()) return
+
+        val safeName    = document.name.takeIf { it.isNotBlank() } ?: "Document"
+        val safeUri     = document.urlOrUri
+        val safeMime    = document.mimeType
+        val messageText = "\uD83D\uDCCE Document partag\u00e9: $safeName"
+        val tempId      = java.util.UUID.randomUUID().toString()
+
+        viewModelScope.launch {
+            try {
+                val safeDocument = document.copy(
+                    name     = safeName,
+                    urlOrUri = safeUri,
+                    mimeType = safeMime
+                )
+                val time = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+                val chatMessage = ChatMessage(
+                    id         = tempId,
+                    content    = messageText,
+                    senderName = senderName.ifBlank { "Moi" },
+                    timestamp  = time,
+                    isFromUser = isFromUser,
+                    document   = safeDocument
+                )
+                withContext(Dispatchers.Main) {
+                    ConversationRepository.getMessages(conversationId).add(chatMessage)
+                }
+                withContext(Dispatchers.IO) {
+                    try {
+                        MainRepository.sendMessage(
+                            conversationId = conversationId,
+                            content        = messageText,
+                            senderName     = senderName.ifBlank { "Moi" },
+                            isFromUser     = isFromUser,
+                            tempId         = tempId
+                        )
+                    } catch (e: Exception) {
+                        Log.w("ChatViewModel", "Server send failed (doc stays local): ${e.message}")
+                    }
+                }
+            } catch (e: SecurityException) {
+                Log.e("ChatViewModel", "URI SecurityException: ${e.message}")
+                _userMessage.value = "Erreur de permission lors de l'envoi du fichier"
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Unexpected error sending doc: ${e.message}")
+                _userMessage.value = "Erreur lors de l'envoi du fichier"
+            }
         }
     }
 

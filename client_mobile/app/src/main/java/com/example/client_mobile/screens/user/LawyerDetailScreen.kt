@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
+import com.example.client_mobile.network.TokenManager
 
 // ─── Lawyer Detail Screen ─────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,7 +38,8 @@ import coil.compose.AsyncImage
 fun LawyerDetailScreen(
     lawyerId: String = "",
     onBack: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {}
+    onNavigateToChat: (String) -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
 ) {
     val lawyerListViewModel: LawyerListViewModel = viewModel(key = "lawyer_list")
     LaunchedEffect(lawyerId) {
@@ -46,19 +49,36 @@ fun LawyerDetailScreen(
     val lawyer  = lawyers?.firstOrNull { it.id == lawyerId }
 
     var showBookingDialog by remember { mutableStateOf(false) }
+    var showAccessDeniedDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val handleSecureMessageClick = {
+        coroutineScope.launch {
+            // Verify payment status securely before allowing chat access
+            val hasAccess = userViewModel.hasPaidConsultation(
+                clientId = TokenManager.getUserIdInt().toString(), 
+                lawyerId = lawyerId
+            )
+            
+            if (hasAccess) {
+                val conv = ConversationRepository.getOrCreate(
+                    lawyerId   = lawyerId,
+                    lawyerName = lawyer?.name ?: "",
+                    clientName = UserSession.name,
+                    avatarUrl  = lawyer?.avatarUrl ?: ""
+                )
+                onNavigateToChat(conv.id)
+            } else {
+                showBookingDialog = true
+            }
+        }
+    }
 
     BaseScreen(
         title = "Fiche Avocat",
         onBack = onBack,
         actions = {
-            IconButton(onClick = {
-                val conv = ConversationRepository.getOrCreate(
-                    lawyerId   = lawyerId,
-                    lawyerName = lawyer?.name ?: "",
-                    clientName = UserSession.name
-                )
-                onNavigateToChat(conv.id)
-            }) {
+            IconButton(onClick = { handleSecureMessageClick() }) {
                 Icon(
                     Icons.AutoMirrored.Filled.Chat,
                     contentDescription = "Message",
@@ -203,14 +223,7 @@ fun LawyerDetailScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Button(
-                            onClick = {
-                                val conv = ConversationRepository.getOrCreate(
-                                    lawyerId   = lawyerId,
-                                    lawyerName = lawyer?.name ?: "",
-                                    clientName = UserSession.name
-                                )
-                                onNavigateToChat(conv.id)
-                            },
+                            onClick = { handleSecureMessageClick() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(54.dp),
@@ -262,21 +275,74 @@ fun LawyerDetailScreen(
             }
         } // end else (lawyer found)
 
+        // ── Access Denied Alert Dialog ─────────────────────────────────────────
+        if (showAccessDeniedDialog) {
+            AlertDialog(
+                onDismissRequest = { showAccessDeniedDialog = false },
+                title = {
+                    Text("Accès Restreint", fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                },
+                text = {
+                    Text(
+                        text = "Vous devez d'abord réserver et payer une consultation pour pouvoir contacter cet avocat en privé.",
+                        color = AppDarkGreen.copy(alpha = 0.8f)
+                    )
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAccessDeniedDialog = false }) {
+                        Text("Annuler", color = Color.Gray)
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showAccessDeniedDialog = false
+                            // UX Bonus: Automatically open the reservation sheet!
+                            showBookingDialog = true
+                        }
+                    ) {
+                        Text("Réserver maintenant", color = AppGoldColor, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+
         // ── Reservation Sheet (replaces the old booking dialog) ────────────────
         if (showBookingDialog) {
             ReservationSheet(
                 lawyerId = lawyerId,
                 lawyerName = lawyer?.name ?: "",
+                lawyerAvatarUrl = lawyer?.avatarUrl ?: "",
                 prefillNom = UserSession.name,
                 onDismiss = { showBookingDialog = false },
                 onPaymentValidated = { reservationData ->
                     showBookingDialog = false
+                    
+                    val safeLawyerId = reservationData.lawyerId
+                    val clientId = TokenManager.getUserIdInt().toString()
+                    
+                    // 1. Persist the paid consultation
+                    ConsultationRepository.addConsultation(
+                        Consultation(
+                            id = "${clientId}_${safeLawyerId}_${System.currentTimeMillis()}",
+                            clientId = clientId,
+                            lawyerId = safeLawyerId,
+                            lawyerName = reservationData.lawyerName,
+                            avatarUrl = reservationData.lawyerAvatarUrl,
+                            isPaid = true,
+                            status = ConsultationStatus.ACTIVE
+                        )
+                    )
+
                     // Parent handles: grant messaging access, send to API, etc.
                     // reservationData contains all form + payment info.
                     val conv = ConversationRepository.getOrCreate(
                         lawyerId   = lawyerId,
                         lawyerName = reservationData.lawyerName,
-                        clientName = reservationData.nom
+                        clientName = reservationData.nom,
+                        avatarUrl  = reservationData.lawyerAvatarUrl
                     )
                     onNavigateToChat(conv.id)
                 }

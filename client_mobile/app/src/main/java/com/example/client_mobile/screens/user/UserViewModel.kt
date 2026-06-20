@@ -7,6 +7,7 @@ import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.UpdateProfileRequest
 import com.example.client_mobile.network.dto.UserDto
 import com.example.client_mobile.screens.shared.UserSession
+import com.example.client_mobile.screens.shared.ConsultationRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -148,6 +149,15 @@ class UserViewModel : ViewModel() {
 
         val avatar = dto.effectiveAvatarUrl()
         if (avatar.isNotBlank())     UserSession.avatarUrl = avatar
+    }
+
+    /**
+     * Verifies if the client has an active, paid consultation with the specific lawyer.
+     * Returns true if access is granted, false if blocked.
+     */
+    suspend fun hasPaidConsultation(clientId: String, lawyerId: String): Boolean {
+        // Now checks the persistent local session state (mocking a true backend query)
+        return ConsultationRepository.hasPaidActiveConsultation(clientId, lawyerId)
     }
 }
 
