@@ -1,6 +1,7 @@
 package com.example.client_mobile.screens.user
 
 import com.example.client_mobile.screens.shared.*
+import com.example.client_mobile.network.TokenManager
 
 import android.view.ViewGroup
 import androidx.compose.animation.core.Spring
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -258,10 +260,24 @@ private fun ReelPage(
 ) {
     val context = LocalContext.current
 
+    // ── Fix 3: Explicit 1.0f playback speed + play/pause state ─────────────
+    var isPlaying by remember { mutableStateOf(true) }
+    // Pulse icon state: null = hidden, true = play icon, false = pause icon
+    var pulseIcon by remember { mutableStateOf<Boolean?>(null) }
+    val pulseAlpha by animateFloatAsState(
+        targetValue  = if (pulseIcon != null) 1f else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label        = "pulseAlpha"
+    )
+
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            repeatMode = Player.REPEAT_MODE_ONE
-            volume = 0f
+            repeatMode         = Player.REPEAT_MODE_ONE
+            volume             = 0f
+            // Explicitly reset speed=1.0f AND pitch=1.0f to guarantee normal playback.
+            // PlaybackParameters is the canonical approach; setPlaybackSpeed() only
+            // sets speed but does not guarantee the pitch multiplier is reset.
+            playbackParameters = PlaybackParameters(1.0f)
         }
     }
 
@@ -270,8 +286,10 @@ private fun ReelPage(
         if (reel.videoUrl.isNotBlank()) {
             exoPlayer.setMediaItem(MediaItem.fromUri(reel.videoUrl))
             exoPlayer.prepare()
+            isPlaying = isActive
             exoPlayer.playWhenReady = isActive
         } else {
+            isPlaying = false
             exoPlayer.pause()
         }
     }
@@ -286,7 +304,8 @@ private fun ReelPage(
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // ── Video / Fallback gradient ─────────────────────────────────────
+        // ── Fix 4: Video area — tap to toggle play/pause ──────────────────
+        val interactionSource = remember { MutableInteractionSource() }
         if (reel.videoUrl.isNotBlank()) {
             AndroidView(
                 factory = { ctx ->
@@ -299,7 +318,13 @@ private fun ReelPage(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(interactionSource = interactionSource, indication = null) {
+                        isPlaying = !isPlaying
+                        exoPlayer.playWhenReady = isPlaying
+                        pulseIcon = isPlaying  // true=play icon, false=pause icon
+                    }
             )
         } else {
             Box(
@@ -341,7 +366,39 @@ private fun ReelPage(
                 )
         )
 
-        // ── Center play icon (no video fallback) ─────────────────────────
+        // ── Fix 4: Animated play/pause flash icon (center) ───────────────
+        // Shown briefly when user taps to toggle playback, then auto-hides.
+        if (pulseIcon != null) {
+            LaunchedEffect(pulseIcon) {
+                kotlinx.coroutines.delay(700)
+                pulseIcon = null
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 180.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .size(76.dp)
+                        .scale(pulseAlpha),
+                    shape = CircleShape,
+                    color = Color.Black.copy(alpha = 0.45f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector        = if (pulseIcon == true) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            contentDescription = if (pulseIcon == true) "Lecture" else "Pause",
+                            tint               = Color.White,
+                            modifier           = Modifier.size(44.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Static play icon shown only when there is no video at all
         if (reel.videoUrl.isBlank()) {
             Box(
                 modifier = Modifier
@@ -532,8 +589,9 @@ private fun ReelBottomCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // lawyerName from API already includes full title, e.g. "Maître Youssef El Alami"
                     Text(
-                        text       = "Maître ${reel.lawyerName}",
+                        text       = reel.lawyerName,
                         color      = Color.White,
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
@@ -560,27 +618,31 @@ private fun ReelBottomCard(
                     }
                 }
 
-                // Specialty chip
+                // Fix 1: Specialty badge — constrained width + single line with ellipsis
                 if (reel.specialty.isNotBlank()) {
                     Surface(
-                        shape  = RoundedCornerShape(16.dp),
-                        color  = Color.Transparent,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, ReelGold)
+                        shape    = RoundedCornerShape(16.dp),
+                        color    = Color.Transparent,
+                        border   = androidx.compose.foundation.BorderStroke(1.dp, ReelGold),
+                        modifier = Modifier.widthIn(max = 140.dp)
                     ) {
                         Text(
-                            text     = reel.specialty,
-                            color    = ReelGold,
-                            fontSize = 11.sp,
+                            text       = reel.specialty,
+                            color      = ReelGold,
+                            fontSize   = 11.sp,
                             fontWeight = FontWeight.Medium,
                             fontFamily = FontFamily.Serif,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            maxLines   = 1,
+                            overflow   = TextOverflow.Ellipsis,
+                            modifier   = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
             }
 
-            // ── Row 2: Legal tip text ─────────────────────────────────────
+            // ── Fix 2: Expandable caption with "Voir plus" / "Voir moins" ─
             if (reel.title.isNotBlank()) {
+                var isExpanded by remember(reel.id) { mutableStateOf(false) }
                 Row(
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -591,43 +653,59 @@ private fun ReelBottomCard(
                         tint     = ReelGold,
                         modifier = Modifier.size(16.dp).padding(top = 2.dp)
                     )
-                    Text(
-                        text       = reel.title,
-                        color      = Color.White.copy(alpha = 0.90f),
-                        fontFamily = FontFamily.Serif,
-                        fontSize   = 13.sp,
-                        lineHeight = 18.sp,
-                        maxLines   = 2,
-                        overflow   = TextOverflow.Ellipsis
-                    )
+                    Column {
+                        Text(
+                            text       = reel.title,
+                            color      = Color.White.copy(alpha = 0.90f),
+                            fontFamily = FontFamily.Serif,
+                            fontSize   = 13.sp,
+                            lineHeight = 18.sp,
+                            maxLines   = if (isExpanded) Int.MAX_VALUE else 2,
+                            overflow   = if (isExpanded) TextOverflow.Visible else TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text     = if (isExpanded) "Voir moins" else "Voir plus...",
+                            color    = ReelGold,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.Serif,
+                            modifier = Modifier
+                                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                                    isExpanded = !isExpanded
+                                }
+                                .padding(top = 2.dp)
+                        )
+                    }
                 }
             }
 
             // ── CTA Button ────────────────────────────────────────────────
-            Button(
-                onClick  = onBookConsultation,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape  = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ReelGold,
-                    contentColor   = Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Icon(
-                    Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Réserver une Consultation",
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 14.sp
-                )
+            if (TokenManager.getUserType() != "lawyer") {
+                Button(
+                    onClick  = onBookConsultation,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape  = RoundedCornerShape(22.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ReelGold,
+                        contentColor   = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Réserver une Consultation",
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 14.sp
+                    )
+                }
             }
         }
     }

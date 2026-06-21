@@ -7,6 +7,8 @@ import com.example.client_mobile.network.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import com.example.client_mobile.screens.shared.ConsultationRepository
+import com.example.client_mobile.screens.shared.UserSession
 
 class ConversationViewModel : ViewModel() {
 
@@ -58,6 +60,19 @@ class ConversationViewModel : ViewModel() {
                             )
                         }
                     )
+                    
+                    // Force inject all locally saved ACTIVE consultations into the inbox
+                    if (!isLawyer) {
+                        val clientId = TokenManager.getUserIdInt().toString()
+                        ConsultationRepository.getActiveConsultations(clientId).forEach { cons ->
+                            ConversationRepository.getOrCreate(
+                                lawyerId = cons.lawyerId,
+                                lawyerName = cons.lawyerName,
+                                clientName = UserSession.name,
+                                avatarUrl  = cons.avatarUrl
+                            )
+                        }
+                    }
                 }
             } catch (_: Exception) {
                 // Genuine network failure (no internet, timeout, etc.)

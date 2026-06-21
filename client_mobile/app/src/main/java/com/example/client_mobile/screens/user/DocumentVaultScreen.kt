@@ -3,6 +3,7 @@ package com.example.client_mobile.screens.user
 import com.example.client_mobile.screens.shared.*
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -167,11 +168,32 @@ fun DocumentVaultScreen(
     }
 
     // ── Dialogs ────────────────────────────────────────────────────────────
+    val context = androidx.compose.ui.platform.LocalContext.current
     if (showAddDialog) {
         AddDocumentDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name ->
-                if (name.isNotBlank()) viewModel.add(name)
+            onConfirm = { name, uri ->
+                if (name.isNotBlank() && uri != null) {
+                    val mimeType = context.contentResolver.getType(uri) ?: "*/*"
+                    var savedPath = uri.toString()
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        if (inputStream != null) {
+                            val ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
+                            val safeName = name.replace(Regex("[^a-zA-Z0-9.-]"), "_")
+                            val fileName = "doc_${System.currentTimeMillis()}_$safeName.$ext"
+                            val file = java.io.File(context.filesDir, fileName)
+                            val outputStream = java.io.FileOutputStream(file)
+                            inputStream.copyTo(outputStream)
+                            inputStream.close()
+                            outputStream.close()
+                            savedPath = file.absolutePath
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("Vault", "Error copying file", e)
+                    }
+                    viewModel.add(name, savedPath, mimeType)
+                }
                 showAddDialog = false
             }
         )
@@ -250,6 +272,7 @@ private fun DocumentCard(
     onDelete: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Surface(
         modifier        = Modifier.fillMaxWidth(),
@@ -259,7 +282,28 @@ private fun DocumentCard(
         shadowElevation = 2.dp
     ) {
         Row(
-            modifier              = Modifier.padding(14.dp),
+            modifier              = Modifier.fillMaxWidth().clickable {
+                if (doc.urlOrUri.isNotBlank()) {
+                    try {
+                        val file = java.io.File(doc.urlOrUri)
+                        val uriToOpen = if (file.exists()) {
+                            androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                        } else {
+                            android.net.Uri.parse(doc.urlOrUri)
+                        }
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                            setDataAndType(uriToOpen, doc.mimeType ?: "*/*")
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(context, "Aucune application pour ouvrir ce fichier", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    android.widget.Toast.makeText(context, "Fichier non disponible", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }.padding(14.dp),
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -328,8 +372,39 @@ private fun DocumentCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddDocumentDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+private fun AddDocumentDialog(onDismiss: () -> Unit, onConfirm: (String, android.net.Uri?) -> Unit) {
     var name by remember { mutableStateOf("") }
+    var selectedUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            selectedUri = it
+        }
+    }
+
+    val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        android.Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        android.Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launcher.launch(arrayOf("application/pdf", "image/*"))
+        } else {
+            android.widget.Toast.makeText(context, "Permission refusée. HAQQI a besoin d'accès pour ajouter des documents.", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -379,7 +454,14 @@ private fun AddDocumentDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit
 
                 // Simulated file picker hint
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        val isGranted = androidx.core.content.ContextCompat.checkSelfPermission(context, permission) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        if (isGranted) {
+                            launcher.launch(arrayOf("application/pdf", "image/*"))
+                        } else {
+                            permissionLauncher.launch(permission)
+                        }
+                    },
                     shape    = RoundedCornerShape(12.dp),
                     color    = AppDarkGreen.copy(alpha = 0.05f),
                     border   = BorderStroke(1.dp, AppDarkGreen.copy(alpha = 0.12f))
@@ -389,9 +471,9 @@ private fun AddDocumentDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit
                         verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(Icons.Default.AttachFile, contentDescription = null, tint = AppGoldColor, modifier = Modifier.size(18.dp))
+                        Icon(if (selectedUri != null) Icons.Default.CheckCircle else Icons.Default.AttachFile, contentDescription = null, tint = AppGoldColor, modifier = Modifier.size(18.dp))
                         Text(
-                            "Sélectionner un fichier (PDF, JPG, PNG)",
+                            if (selectedUri != null) "Fichier sélectionné" else "Sélectionner un fichier (PDF, JPG, PNG)",
                             fontFamily = FontFamily.Serif,
                             fontSize   = 12.sp,
                             color      = AppDarkGreen.copy(alpha = 0.55f)
@@ -412,8 +494,8 @@ private fun AddDocumentDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit
                     ) { Text("Annuler", fontFamily = FontFamily.Serif, color = AppDarkGreen, fontSize = 13.sp) }
 
                     Button(
-                        onClick  = { onConfirm(name) },
-                        enabled  = name.isNotBlank(),
+                        onClick  = { onConfirm(name, selectedUri) },
+                        enabled  = name.isNotBlank() && selectedUri != null,
                         modifier = Modifier.weight(1f),
                         shape    = RoundedCornerShape(12.dp),
                         colors   = ButtonDefaults.buttonColors(

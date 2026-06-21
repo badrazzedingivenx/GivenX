@@ -80,7 +80,11 @@ data class ChatMessageApiDto(
     @SerializedName("sent_at")      val sentAt:      String  = "",
     // Legacy flat fields
     @SerializedName("text")         val text:        String  = "",
-    @SerializedName("time")         val time:        String  = ""
+    @SerializedName("time")         val time:        String  = "",
+    // Document persistence
+    @SerializedName("documentUrl")  val documentUrl: String? = null,
+    @SerializedName("documentName") val documentName: String? = null,
+    @SerializedName("documentMime") val documentMime: String? = null
 ) {
     fun effectiveContent(): String  = content.ifBlank { text }
     fun effectiveTime():    String  = sentAt.ifBlank { time }

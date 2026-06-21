@@ -3,6 +3,7 @@ package com.example.client_mobile.screens.shared
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -55,9 +56,29 @@ fun ChatScreen(
         .joinToString("")
 
     var messageText by remember { mutableStateOf("") }
+    var showClearConfirm by remember { mutableStateOf(false) }
+    var showCoffreFortSheet by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage by chatViewModel.errorMessage.collectAsStateWithLifecycle()
+
+    if (showClearConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirm = false },
+            title = { Text("Vider la conversation") },
+            text = { Text("Êtes-vous sûr de vouloir supprimer tous les messages de cette conversation ? Cette action est irréversible.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    chatViewModel.clearChat()
+                    showClearConfirm = false
+                }) { Text("Supprimer", color = Color.Red) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirm = false }) { Text("Annuler") }
+            }
+        )
+    }
 
     LaunchedEffect(errorMessage) {
         if (!errorMessage.isNullOrBlank()) {
@@ -136,6 +157,16 @@ fun ChatScreen(
                                 )
                             }
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showClearConfirm = true }) {
+                        Icon(
+                            Icons.Default.DeleteSweep,
+                            contentDescription = "Vider le chat",
+                            tint = Color.White.copy(alpha = 0.85f),
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                 },
                 onBack = onBack
@@ -219,7 +250,7 @@ fun ChatScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     IconButton(
-                        onClick = { /* attach */ },
+                        onClick = { showCoffreFortSheet = true },
                         modifier = Modifier.size(44.dp)
                     ) {
                         Icon(
@@ -254,14 +285,13 @@ fun ChatScreen(
                         maxLines = 4
                     )
 
-                    val isNotEmpty = messageText.trim().isNotEmpty()
+                    val isNotEmpty = messageText.isNotBlank()
                     
                     IconButton(
                         onClick = {
-                            val trimmed = messageText.trim()
-                            if (trimmed.isNotEmpty()) {
+                            if (messageText.isNotBlank()) {
                                 chatViewModel.send(
-                                    text       = trimmed,
+                                    text       = messageText,
                                     senderName = currentUserName,
                                     isFromUser = !isLawyer
                                 )
@@ -286,11 +316,78 @@ fun ChatScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
     }
+
+    if (showCoffreFortSheet) {
+        val documents = DocumentRepository.documents
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        ModalBottomSheet(
+            onDismissRequest = { showCoffreFortSheet = false },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "Sélectionner depuis le Coffre-fort",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = AppDarkGreen,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                if (documents.isEmpty()) {
+                    Text(
+                        "Aucun document trouvé dans votre coffre-fort.",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 14.sp,
+                        color = AppDarkGreen.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                } else {
+                    LazyColumn {
+                        items(documents) { doc ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        showCoffreFortSheet = false
+                                        chatViewModel.sendDocumentMessage(doc, currentUserName, !isLawyer, context)
+                                    }
+                                    .padding(vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = doc.icon,
+                                    contentDescription = null,
+                                    tint = AppDarkGreen,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    doc.name,
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 14.sp,
+                                    color = AppDarkGreen
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
 }
 
 // --- Chat Message Bubble ------------------------------------------------------
 @Composable
 private fun ChatMessageBubble(message: ChatMessage, fromMe: Boolean) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -302,6 +399,30 @@ private fun ChatMessageBubble(message: ChatMessage, fromMe: Boolean) {
             modifier = Modifier.widthIn(max = 300.dp)
         ) {
             Surface(
+                modifier = if (message.document != null) {
+                    Modifier.clickable {
+                        if (message.document.urlOrUri.isNotBlank()) {
+                            try {
+                                val file = java.io.File(message.document.urlOrUri)
+                                val uriToOpen = if (file.exists()) {
+                                    androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                                } else {
+                                    android.net.Uri.parse(message.document.urlOrUri)
+                                }
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                    setDataAndType(uriToOpen, message.document.mimeType ?: "*/*")
+                                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "Aucune application trouvée pour ouvrir ce fichier", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            android.widget.Toast.makeText(context, "Fichier non disponible", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else Modifier,
                 shape = if (fromMe)
                     RoundedCornerShape(topStart = 20.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
                 else
@@ -313,14 +434,50 @@ private fun ChatMessageBubble(message: ChatMessage, fromMe: Boolean) {
                     BorderStroke(1.dp, AppDarkGreen.copy(alpha = 0.08f)),
                 shadowElevation = 2.dp
             ) {
-                Text(
-                    message.content,
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 15.sp,
-                    color = if (fromMe) Color.White else AppDarkGreen.copy(alpha = 0.9f),
-                    lineHeight = 22.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
+                if (message.document != null) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        if (message.document.mimeType?.startsWith("image/") == true) {
+                            val file = java.io.File(message.document.urlOrUri)
+                            val model = if (file.exists()) android.net.Uri.fromFile(file) else message.document.urlOrUri
+                            AsyncImage(
+                                model = model,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 200.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = message.document.icon,
+                                contentDescription = null,
+                                tint = if (fromMe) Color.White else AppDarkGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                message.document.name,
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 14.sp,
+                                color = if (fromMe) Color.White else AppDarkGreen,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        message.content,
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 15.sp,
+                        color = if (fromMe) Color.White else AppDarkGreen.copy(alpha = 0.9f),
+                        lineHeight = 22.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
+                }
             }
             
             Row(

@@ -193,20 +193,37 @@ data class VaultDocument(
     val id: Long,
     val name: String,
     val addedDate: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val urlOrUri: String = "",
+    val mimeType: String? = null
 )
 
 object DocumentRepository {
     val documents = mutableStateListOf<VaultDocument>()
 
-    fun add(name: String) {
+    fun add(name: String, localPath: String = "", mimeType: String? = null) {
         val ext  = name.substringAfterLast('.', "").lowercase()
         val icon = when (ext) {
             "jpg", "jpeg", "png" -> Icons.Default.Image
             "pdf"                -> Icons.Default.PictureAsPdf
             else                 -> Icons.AutoMirrored.Filled.InsertDriveFile
         }
-        documents.add(VaultDocument(id = System.currentTimeMillis(), name = name.trim(), addedDate = "Aujourd'hui", icon = icon))
+        val resolvedMime = mimeType ?: when (ext) {
+            "pdf"         -> "application/pdf"
+            "jpg", "jpeg" -> "image/jpeg"
+            "png"         -> "image/png"
+            else          -> "*/*"
+        }
+        documents.add(
+            VaultDocument(
+                id        = System.currentTimeMillis(),
+                name      = name.trim(),
+                addedDate = "Aujourd'hui",
+                icon      = icon,
+                urlOrUri  = localPath,
+                mimeType  = resolvedMime
+            )
+        )
     }
 
     fun rename(id: Long, newName: String) {

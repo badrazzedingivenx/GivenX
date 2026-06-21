@@ -333,4 +333,12 @@ interface HaqApiService {
         @Path("id") id: Int,
         @Body consultation: Consultation
     ): Response<ApiResponse<Consultation>>
+
+    // ── Debug / Chat management ───────────────────────────────────────────────
+
+    /** DELETE /messages/:id — json-server natively handles this. */
+    @DELETE("messages/{id}")
+    suspend fun deleteMessage(
+        @Path("id") id: String
+    ): Response<Unit>
 }

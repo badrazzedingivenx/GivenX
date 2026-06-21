@@ -3,8 +3,11 @@ package com.example.client_mobile.screens.shared
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -69,6 +72,7 @@ private val legalDomains = listOf(
 fun ReservationSheet(
     lawyerId: String = "",
     lawyerName: String = "",
+    lawyerAvatarUrl: String = "",
     prefillNom: String = "",
     prefillContact: String = "",
     onDismiss: () -> Unit,
@@ -84,6 +88,7 @@ fun ReservationSheet(
     var contact by remember { mutableStateOf(prefillContact) }
     var domaine by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var selectedDocumentUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var selectedMode by remember { mutableStateOf<ConsultationMode?>(null) }
 
     // ── Payment fields ───────────────────────────────────────────────────────
@@ -140,6 +145,8 @@ fun ReservationSheet(
                     onDomaineChange = { domaine = it },
                     description = description,
                     onDescriptionChange = { description = it },
+                    selectedDocumentUri = selectedDocumentUri,
+                    onDocumentSelected = { selectedDocumentUri = it },
                     selectedMode = selectedMode,
                     onModeSelected = { selectedMode = it },
                     lawyerName = lawyerName,
@@ -173,22 +180,26 @@ fun ReservationSheet(
                     onBack = { currentStep = ReservationStep.FORM },
                     onValidate = {
                         paymentSubmitted = true
-                        if (cardNumber.length == 16 && expiryDate.length == 5 && cvv.length == 3) {
-                            onPaymentValidated(
-                                ReservationData(
-                                    nom = nom,
-                                    contact = contact,
-                                    domaine = domaine,
-                                    description = description,
-                                    mode = selectedMode!!,
-                                    cardNumber = cardNumber,
-                                    expiryDate = expiryDate,
-                                    cvv = cvv,
-                                    lawyerId = lawyerId,
-                                    lawyerName = lawyerName
-                                )
+                        cardNumber.length == 16 && expiryDate.length == 5 && cvv.length == 3
+                    },
+                    onSuccessConfirm = {
+                        // The user clicked OK on the success alert
+                        onPaymentValidated(
+                            ReservationData(
+                                nom = nom,
+                                contact = contact,
+                                domaine = domaine,
+                                description = description,
+                                documentUri = selectedDocumentUri,
+                                mode = selectedMode!!,
+                                cardNumber = cardNumber,
+                                expiryDate = expiryDate,
+                                cvv = cvv,
+                                lawyerId = lawyerId,
+                                lawyerName = lawyerName,
+                                lawyerAvatarUrl = lawyerAvatarUrl
                             )
-                        }
+                        )
                     }
                 )
             }
@@ -211,12 +222,22 @@ private fun ReservationFormContent(
     onDomaineChange: (String) -> Unit,
     description: String,
     onDescriptionChange: (String) -> Unit,
+    selectedDocumentUri: android.net.Uri?,
+    onDocumentSelected: (android.net.Uri?) -> Unit,
     selectedMode: ConsultationMode?,
-    onModeSelected: (ConsultationMode) -> Unit,
+    onModeSelected: (ConsultationMode?) -> Unit,
     lawyerName: String,
     formSubmitted: Boolean,
     onPayClick: () -> Unit
 ) {
+    val filePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            onDocumentSelected(uri)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -283,7 +304,12 @@ private fun ReservationFormContent(
         Spacer(modifier = Modifier.height(14.dp))
 
         // ── Documents (placeholder) ──────────────────────────────────────────
-        DocumentPlaceholder()
+        DocumentPlaceholder(
+            selectedDocumentUri = selectedDocumentUri,
+            onClick = {
+                filePickerLauncher.launch(arrayOf("application/pdf", "image/jpeg", "image/png"))
+            }
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -301,7 +327,9 @@ private fun ReservationFormContent(
             ConsultationModeCard(
                 mode = mode,
                 isSelected = selectedMode == mode,
-                onClick = { onModeSelected(mode) }
+                onClick = {
+                    if (selectedMode == mode) onModeSelected(null) else onModeSelected(mode)
+                }
             )
             if (mode != ConsultationMode.entries.last()) {
                 Spacer(modifier = Modifier.height(10.dp))
@@ -350,8 +378,12 @@ private fun PaymentFormContent(
     total: Int,
     paymentSubmitted: Boolean,
     onBack: () -> Unit,
-    onValidate: () -> Unit
+    onValidate: () -> Boolean,
+    onSuccessConfirm: () -> Unit
 ) {
+    var showSuccessAlert by remember { mutableStateOf(false) }
+
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -459,10 +491,48 @@ private fun PaymentFormContent(
         // ── Validate Button ──────────────────────────────────────────────────
         LegalButton(
             text = "Valider le paiement",
-            onClick = onValidate
+            onClick = {
+                val isValid = onValidate() // Trigger ViewModel logic/validation
+                if (isValid) {
+                    showSuccessAlert = true
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    if (showSuccessAlert) {
+        AlertDialog(
+            onDismissRequest = { /* Do nothing, force OK click */ },
+            title = {
+                Text(
+                    text = "Paiement Validé",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen
+                )
+            },
+            text = {
+                Text(
+                    text = "Votre réservation a été confirmée et envoyée avec succès à l'avocat.",
+                    fontFamily = FontFamily.Serif,
+                    color = AppDarkGreen.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSuccessAlert = false
+                        onSuccessConfirm() // Navigate or close
+                    }
+                ) {
+                    Text("OK", color = AppGoldColor, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 
@@ -683,7 +753,10 @@ private fun DomainDropdown(
 
 /** Visual placeholder for document attachment. */
 @Composable
-private fun DocumentPlaceholder() {
+private fun DocumentPlaceholder(
+    selectedDocumentUri: android.net.Uri? = null,
+    onClick: () -> Unit = {}
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -692,7 +765,7 @@ private fun DocumentPlaceholder() {
     ) {
         Row(
             modifier = Modifier
-                .clickable { /* TODO: Implement file picker */ }
+                .clickable(onClick = onClick)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -703,35 +776,46 @@ private fun DocumentPlaceholder() {
                 color = AppGoldColor.copy(alpha = 0.12f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.AttachFile,
-                        contentDescription = null,
-                        tint = AppGoldColor,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    if (selectedDocumentUri != null) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Document attaché",
+                            tint = AppGoldColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.AttachFile,
+                            contentDescription = null,
+                            tint = AppGoldColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Ajouter un document",
+                    if (selectedDocumentUri != null) "Document attaché" else "Ajouter un document",
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
                     color = AppDarkGreen
                 )
                 Text(
-                    "PDF, JPEG, PNG — 10 Mo max",
+                    if (selectedDocumentUri != null) "Fichier sélectionné avec succès" else "PDF, JPEG, PNG — 10 Mo max",
                     fontFamily = FontFamily.Serif,
                     fontSize = 11.sp,
                     color = AppDarkGreen.copy(alpha = 0.45f)
                 )
             }
-            Icon(
-                Icons.Default.Add,
-                contentDescription = null,
-                tint = AppGoldColor,
-                modifier = Modifier.size(22.dp)
-            )
+            if (selectedDocumentUri == null) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    tint = AppGoldColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
     }
 }
@@ -749,118 +833,81 @@ private fun ConsultationModeCard(
         ConsultationMode.MESSAGE -> Icons.AutoMirrored.Filled.Chat
     }
 
-    val borderColor = if (isSelected) AppGoldColor else AppDarkGreen.copy(alpha = 0.10f)
-    val bgColor = if (isSelected) AppGoldColor.copy(alpha = 0.06f) else Color.White
+    val borderColor by animateColorAsState(if (isSelected) AppGoldColor else AppDarkGreen.copy(alpha = 0.10f), label = "border")
+    val bgColor by animateColorAsState(if (isSelected) AppGoldColor.copy(alpha = 0.04f) else Color.White, label = "bg")
+    val borderWidth by androidx.compose.animation.core.animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "borderWidth")
+    val elevation by androidx.compose.animation.core.animateDpAsState(if (isSelected) 2.dp else 0.dp, label = "elevation")
+    val iconColor by animateColorAsState(if (isSelected) AppGoldColor else AppDarkGreen.copy(alpha = 0.6f), label = "iconColor")
+    val checkmarkAlpha by androidx.compose.animation.core.animateFloatAsState(if (isSelected) 1f else 0f, label = "checkmark")
 
-    Surface(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = bgColor,
-        border = BorderStroke(
-            width = if (isSelected) 1.5.dp else 1.dp,
-            color = borderColor
+        colors = CardDefaults.cardColors(
+            containerColor = bgColor
         ),
-        shadowElevation = if (isSelected) 2.dp else 0.dp
+        border = BorderStroke(borderWidth, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Icon badge
-            Surface(
+            // Icon badge (completely transparent)
+            Box(
                 modifier = Modifier.size(44.dp),
-                shape = RoundedCornerShape(14.dp),
-                color = if (isSelected) AppDarkGreen else AppDarkGreen.copy(alpha = 0.06f)
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = if (isSelected) AppGoldColor else AppDarkGreen,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(24.dp)
+                )
             }
 
             // Label
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    mode.label,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = AppDarkGreen
-                )
-            }
+            Text(
+                text = mode.label,
+                modifier = Modifier.weight(1f),
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = AppDarkGreen
+            )
 
-            // Price
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (isSelected) AppDarkGreen else AppDarkGreen.copy(alpha = 0.06f)
-            ) {
-                Text(
-                    text = "${mode.price} DH",
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = if (isSelected) AppGoldColor else AppDarkGreen
-                )
-            }
+            // Price (clean text without chunky background block)
+            Text(
+                text = "${mode.price} DH",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = AppDarkGreen.copy(alpha = 0.8f)
+            )
 
             // Selection indicator
             Box(
                 modifier = Modifier
                     .size(22.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (isSelected) AppGoldColor else Color.Transparent
-                    )
-                    .then(
-                        if (!isSelected) Modifier.background(
-                            Color.Transparent
-                        ) else Modifier
+                    .background(if (isSelected) AppGoldColor else Color.Transparent)
+                    .border(
+                        width = 1.5.dp,
+                        color = if (isSelected) Color.Transparent else AppDarkGreen.copy(alpha = 0.25f),
+                        shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (isSelected) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .then(
-                                Modifier.background(Color.Transparent)
-                            )
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .background(Color.White, CircleShape)
-                                .then(
-                                    Modifier.padding(2.dp)
-                                )
-                        ) {
-                            Surface(
-                                modifier = Modifier.fillMaxSize(),
-                                shape = CircleShape,
-                                color = Color.White,
-                                border = BorderStroke(1.5.dp, AppDarkGreen.copy(alpha = 0.25f))
-                            ) {}
-                        }
-                    }
-                }
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = checkmarkAlpha),
+                    modifier = Modifier.size(14.dp)
+                )
             }
         }
     }

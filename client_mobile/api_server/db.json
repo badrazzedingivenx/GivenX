@@ -48,20 +48,20 @@
     {
       "id": 6,
       "userId": 6,
-      "full_name": "Alice Martin",
-      "avatar_url": "https://randomuser.me/api/portraits/women/6.jpg",
-      "phone": "+33 7 11 22 33 44",
+      "full_name": "Tarik oulehiane",
+      "avatar_url": "/data/user/0/com.example.client_mobile/files/profile_1782053713817.jpg",
+      "phone": "+212 6464646464",
       "role": "CLIENT",
-      "address": "15 Rue de Rivoli, Paris"
+      "address": "Casablanca"
     },
     {
       "id": 7,
       "userId": 7,
       "full_name": "Robert Brown",
       "avatar_url": "https://randomuser.me/api/portraits/men/7.jpg",
-      "phone": "+33 7 22 33 44 55",
+      "phone": "+33 2145365485",
       "role": "CLIENT",
-      "address": "London, UK"
+      "address": "Paris"
     },
     {
       "id": 8,
@@ -552,6 +552,176 @@
       "status": "archived",
       "uploadDate": "2024-05-28",
       "type": "IMAGE"
+    },
+    {
+      "name": "GBGGB",
+      "type": "",
+      "id": "kWxipRH"
+    },
+    {
+      "name": "lisence",
+      "type": "",
+      "id": "ujRrVO9"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "9XZsDYH"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "xjFvL0s"
+    },
+    {
+      "name": "lisence",
+      "type": "",
+      "id": "Os5Pl9u"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "6-D-Mlg"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "a9LA6oD"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "ugw6RgL"
+    },
+    {
+      "name": "cinfff",
+      "type": "",
+      "id": "DkjU8lZ"
+    },
+    {
+      "name": "tarik",
+      "type": "",
+      "id": "NNirTKx"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "0GDZvI7"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "tfKvS1Z"
+    },
+    {
+      "name": "قرار فتح المباراة.pdf",
+      "type": "pdf",
+      "id": "vFL_eq7"
+    },
+    {
+      "name": "images.jpeg",
+      "type": "jpeg",
+      "id": "sCrJz7d"
+    },
+    {
+      "name": "cin",
+      "type": "",
+      "id": "53t8cEz"
+    },
+    {
+      "name": "councourss",
+      "type": "",
+      "id": "FKoutbx"
+    },
+    {
+      "name": "lisence",
+      "type": "",
+      "id": "iRL5UJg"
+    },
+    {
+      "name": "Image",
+      "type": "",
+      "id": "KN5usCS"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "2TBLNg6"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "SWp4awA"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "aoinf-g"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "ENrHCik"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "9VrS-JP"
+    },
+    {
+      "name": "document",
+      "type": "",
+      "id": "0Zxvr4a"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "IaS2zvw"
+    },
+    {
+      "name": "focument",
+      "type": "",
+      "id": "LGJL5Vj"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "uuGKhZG"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "_Z0enHY"
+    },
+    {
+      "name": "document",
+      "type": "",
+      "id": "aLg6z6x"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "aeQlm1b"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "z6UzIiX"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "I_QUYo7"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "RYEbq7G"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "yvzl9-B"
     }
   ],
   "dossiers": [
@@ -608,6 +778,62 @@
       "created_at": "2024-06-01T09:00:00Z"
     }
   ],
+<<<<<<< HEAD
+=======
+  "messages": [
+    {
+      "id": "msg_001",
+      "conversationId": "conv_001",
+      "content": "Bonjour Maître, voici le compromis.",
+      "sender_id": "6",
+      "sender_name": "Alice Martin",
+      "is_from_user": true,
+      "sent_at": "2024-06-01T10:30:00Z"
+    },
+    {
+      "id": "msg_002",
+      "conversationId": "conv_001",
+      "content": "Merci, j'ai bien reçu le document.",
+      "sender_id": "1",
+      "sender_name": "Jean Dupont",
+      "is_from_user": false,
+      "sent_at": "2024-06-01T11:00:00Z"
+    },
+    {
+      "content": "lets try if you will see the message",
+      "conversationId": "conv_001",
+      "type": "text",
+      "id": "ucbPIKK"
+    },
+    {
+      "content": "test message zakaria",
+      "conversationId": "conv_001",
+      "type": "text",
+      "id": "J9IOLsR"
+    },
+    {
+      "content": "message done",
+      "conversationId": "conv_001",
+      "type": "text",
+      "id": "RwJ7Rsq"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_002",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782063404502_image.jpg",
+      "type": "text",
+      "id": "5WHF0SD"
+    },
+    {
+      "content": "HEY ",
+      "conversationId": "TARIK_OULE_4",
+      "type": "text",
+      "id": "goMLYbv"
+    }
+  ],
+>>>>>>> 2847bdd4393248f8578018cba67af1df915df812
   "notifications": [
     {
       "id": "notif1",
@@ -773,6 +999,7 @@
   "reels": [
     {
       "id": "reel_001",
+<<<<<<< HEAD
       "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
       "lawyerName": "Sofia Benali",
       "lawyerId": 3,
@@ -781,10 +1008,21 @@
       "title": "Patrimoine Immobilier",
       "views": 5000,
       "duration": "00:45",
+=======
+      "videoUrl": "http://10.0.2.2:3001/vid1.mp4",
+      "lawyerName": "Maître Youssef El Alami",
+      "avatarUrl": "https://randomuser.me/api/portraits/men/32.jpg",
+      "likes": 3420,
+      "caption": "⚖️ Top 5 droits fondamentaux du salarié au Maroc que tout employeur doit respecter. Connaissez-vous vos droits ? #DroitDuTravail #Avocat #Haqqi",
+      "title": "Droits du Salarié",
+      "views": 18500,
+      "duration": "01:15",
+>>>>>>> 2847bdd4393248f8578018cba67af1df915df812
       "trend": "up"
     },
     {
       "id": "reel_002",
+<<<<<<< HEAD
       "videoUrl": "https://www.w3schools.com/html/movie.mp4",
       "lawyerName": "Marc Villeneuve",
       "lawyerId": 4,
@@ -793,6 +1031,28 @@
       "title": "Droit du Travail",
       "views": 3200,
       "duration": "01:00",
+=======
+      "videoUrl": "http://10.0.2.2:3001/vid2.mp4",
+      "lawyerName": "Maître Sofia Benali",
+      "avatarUrl": "https://randomuser.me/api/portraits/women/44.jpg",
+      "likes": 2180,
+      "caption": "🏠 3 erreurs fatales avant de signer un compromis de vente immobilier au Maroc. Protégez votre investissement ! #DroitImmobilier #ImmobilierMaroc #Haqqi",
+      "title": "Droit Immobilier",
+      "views": 11200,
+      "duration": "01:05",
+      "trend": "up"
+    },
+    {
+      "id": "reel_003",
+      "videoUrl": "http://10.0.2.2:3001/vid3.mp4",
+      "lawyerName": "Maître Karim El Mansouri",
+      "avatarUrl": "https://randomuser.me/api/portraits/men/86.jpg",
+      "likes": 1540,
+      "caption": "💼 Licenciement abusif au Maroc : comment prouver l'injustice et réclamer vos indemnités ? Ne restez pas sans défense ! #Licenciement #DroitDuTravail #Avocat",
+      "title": "Licenciement Abusif",
+      "views": 8900,
+      "duration": "00:58",
+>>>>>>> 2847bdd4393248f8578018cba67af1df915df812
       "trend": "up"
     }
   ],
@@ -843,33 +1103,5 @@
       }
     ]
   },
-  "payments": [
-    {
-      "id": "pay_001",
-      "clientId": 6,
-      "date": "2024-06-01",
-      "amount": "1 500 DH",
-      "status": "Completed",
-      "subject": "Consultation Juridique",
-      "method": "Carte Bancaire"
-    },
-    {
-      "id": "pay_002",
-      "clientId": 6,
-      "date": "2024-06-05",
-      "amount": "3 000 DH",
-      "status": "Pending",
-      "subject": "Honoraires Dossier FR-2024-001",
-      "method": "Virement"
-    },
-    {
-      "id": "pay_003",
-      "clientId": 6,
-      "date": "2024-05-20",
-      "amount": "500 DH",
-      "status": "Failed",
-      "subject": "Frais de dossier",
-      "method": "Carte Bancaire"
-    }
-  ]
+  "payments": []
 }

@@ -66,9 +66,11 @@ fun AboutScreen(onBack: () -> Unit = {}) {
 private fun AboutHeaderSection() {
     DarkDashCard {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_app),
@@ -78,6 +80,7 @@ private fun AboutHeaderSection() {
                     .height(75.dp),
                 contentScale = ContentScale.Fit
             )
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "La justice, accessible à tous.",
                 fontFamily = FontFamily.Serif,
@@ -86,13 +89,15 @@ private fun AboutHeaderSection() {
                 color = AppGoldColor,
                 textAlign = TextAlign.Center
             )
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = "HAQ est une plateforme LegalTech marocaine qui connecte citoyens et avocats qualifiés pour un accès simple, rapide et transparent à la justice.",
+                text = "HAQQI est une plateforme LegalTech marocaine qui connecte citoyens et avocats qualifiés pour un accès simple, rapide et transparent à la justice.",
                 fontFamily = FontFamily.Serif,
                 fontSize = 13.sp,
                 color = Color.White.copy(alpha = 0.72f),
                 textAlign = TextAlign.Center,
-                lineHeight = 21.sp
+                lineHeight = 24.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
     }
@@ -132,6 +137,7 @@ private fun AboutMissionSection() {
                 fontFamily = FontFamily.Serif,
                 fontSize = 13.sp,
                 color = AppDarkGreen.copy(alpha = 0.72f),
+                textAlign = TextAlign.Justify,
                 lineHeight = 22.sp
             )
         }
@@ -206,6 +212,7 @@ private fun AboutValueItem(icon: ImageVector, title: String, description: String
                 fontFamily = FontFamily.Serif,
                 fontSize = 12.sp,
                 color = AppDarkGreen.copy(alpha = 0.62f),
+                textAlign = TextAlign.Start,
                 lineHeight = 18.sp
             )
         }
@@ -215,12 +222,15 @@ private fun AboutValueItem(icon: ImageVector, title: String, description: String
 // ─── Stats ────────────────────────────────────────────────────────────────────
 @Composable
 private fun AboutStatsSection() {
-    SectionHeader(title = "HAQ en chiffres")
+    SectionHeader(title = "HAQQI en chiffres")
     Spacer(modifier = Modifier.height(6.dp))
     DarkDashCard {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             listOf(
                 Pair("240+", "Avocats"),
@@ -230,7 +240,7 @@ private fun AboutStatsSection() {
             ).forEach { (value, label) ->
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         value,
@@ -239,6 +249,7 @@ private fun AboutStatsSection() {
                         fontSize = 18.sp,
                         color = AppGoldColor
                     )
+                    Spacer(modifier = Modifier.height(5.dp))
                     Text(
                         label,
                         fontFamily = FontFamily.Serif,

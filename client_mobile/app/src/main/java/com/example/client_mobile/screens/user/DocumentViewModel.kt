@@ -44,18 +44,21 @@ class DocumentViewModel : ViewModel() {
         }
     }
 
-    fun add(name: String) {
+    fun add(name: String, localPath: String = "", mimeType: String? = null) {
         viewModelScope.launch {
             val ext = name.substringAfterLast('.', "").lowercase()
             try {
                 val response = RetrofitClient.haqApi.createDocument(CreateDocumentRequest(name = name.trim(), type = ext))
                 if (response.isSuccessful && response.body()?.success == true) {
-                    response.body()?.data?.let { DocumentRepository.documents.add(0, it.toVaultDocument()) }
+                    response.body()?.data?.let { 
+                        val doc = it.toVaultDocument().copy(name = name.trim(), urlOrUri = localPath, mimeType = mimeType)
+                        DocumentRepository.documents.add(0, doc) 
+                    }
                 } else {
-                    DocumentRepository.add(name)
+                    DocumentRepository.add(name, localPath, mimeType)
                 }
             } catch (_: Exception) {
-                DocumentRepository.add(name)
+                DocumentRepository.add(name, localPath, mimeType)
             }
         }
     }
