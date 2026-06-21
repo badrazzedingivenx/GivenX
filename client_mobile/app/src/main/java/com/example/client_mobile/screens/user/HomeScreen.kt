@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.example.client_mobile.R
 import coil.compose.AsyncImage
 import androidx.navigation.compose.NavHost
@@ -43,6 +44,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.client_mobile.network.TokenManager
+import android.util.Log
+import com.example.client_mobile.network.RetrofitClient
+import com.example.client_mobile.network.dto.CreateReservationRequest
 import com.example.client_mobile.screens.lawyer.CameraCaptureScreen
 import com.example.client_mobile.screens.lawyer.LawyerCreatorManagementScreen
 import com.example.client_mobile.screens.lawyer.LawyerDashboardHost
@@ -71,6 +75,7 @@ fun MainDashboardHost(
     onNavigateToNotifications:       () -> Unit = {},
     onNavigateToChat:                (String) -> Unit = {},
     onNavigateToRequests:            () -> Unit = {},
+    onNavigateToReservations:        () -> Unit = {},
     onNavigateToPayments:            () -> Unit = {},
     onNavigateToCreator:             () -> Unit = {},
     // Client callbacks
@@ -79,6 +84,7 @@ fun MainDashboardHost(
     onNavigateToLawyerDetail:        (String) -> Unit = {},
     onNavigateToCategory:            (String) -> Unit = {},
     onNavigateToAppointments:        () -> Unit = {},
+    onNavigateToClientReservations:  () -> Unit = {},
     onNavigateToDocuments:           () -> Unit = {},
     onNavigateToFacturation:         () -> Unit = {},
     onNavigateToDossier:             (String) -> Unit = {}
@@ -96,6 +102,7 @@ fun MainDashboardHost(
 
     var reservationLawyerId by remember { mutableStateOf<String?>(null) }
     var reservationLawyerName by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     AppScaffold(
         showBackground = false,
@@ -198,6 +205,7 @@ fun MainDashboardHost(
                         onNavigateToNotifications = onNavigateToNotifications,
                         onNavigateToChat          = onNavigateToChat,
                         onNavigateToRequests      = onNavigateToRequests,
+                        onNavigateToReservations  = onNavigateToReservations,
                         onNavigateToPayments      = onNavigateToPayments,
                         onNavigateToCreator       = {
                             innerNav.navigate("LawyerCreatorStudio") {
@@ -216,6 +224,7 @@ fun MainDashboardHost(
                         onNavigateToNotifications = onNavigateToNotifications,
                         onNavigateToChat          = onNavigateToChat,
                         onNavigateToAppointments  = onNavigateToAppointments,
+                        onNavigateToClientReservations = onNavigateToClientReservations,
                         onNavigateToDocuments     = onNavigateToDocuments,
                         onNavigateToFacturation   = onNavigateToFacturation,
                         onNavigateToDossier       = onNavigateToDossier
@@ -254,10 +263,34 @@ fun MainDashboardHost(
             prefillNom = UserSession.name,
             onDismiss = { reservationLawyerId = null },
             onPaymentValidated = { reservationData ->
+                val rLawyerId = reservationLawyerId ?: ""
+                val rLawyerName = reservationLawyerName
                 reservationLawyerId = null
+                val clientId = TokenManager.getClientId().toString()
+                scope.launch {
+                    try {
+                        val resResponse = RetrofitClient.reservationApi.createReservation(
+                            CreateReservationRequest(
+                                lawyerId    = rLawyerId,
+                                lawyerName  = rLawyerName,
+                                clientId    = clientId,
+                                fullName    = reservationData.nom,
+                                contact     = reservationData.contact,
+                                domain      = reservationData.domaine,
+                                description = reservationData.description,
+                                mode        = reservationData.mode.name,
+                                price       = reservationData.mode.price
+                            )
+                        )
+                        val savedRes = resResponse.body()?.data
+                        Log.d("HomeScreen", "Reservation created: id=${savedRes?.id}, clientId=$clientId, lawyerId=$rLawyerId")
+                    } catch (e: Exception) {
+                        Log.e("HomeScreen", "Reservation creation failed: ${e.message}")
+                    }
+                }
                 val conv = ConversationRepository.getOrCreate(
-                    lawyerId   = reservationLawyerId!!,
-                    lawyerName = reservationData.lawyerName,
+                    lawyerId   = rLawyerId,
+                    lawyerName = rLawyerName,
                     clientName = reservationData.nom
                 )
                 onNavigateToChat(conv.id)
@@ -279,6 +312,7 @@ fun UserDashboardHost(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToAppointments: () -> Unit = {},
+    onNavigateToClientReservations: () -> Unit = {},
     onNavigateToDocuments: () -> Unit = {},
     onNavigateToFacturation: () -> Unit = {},
     onNavigateToDossier: (String) -> Unit = {},
@@ -327,7 +361,8 @@ fun UserDashboardHost(
                  bottom = paddingValues.calculateBottomPadding()
             ),
             onNavigateToAbout = onNavigateToAbout,
-            onNavigateToCategory = onNavigateToCategory
+            onNavigateToCategory = onNavigateToCategory,
+            onNavigateToClientReservations = onNavigateToClientReservations
         )
     }
 }
@@ -366,7 +401,8 @@ fun HomeScreen(
 internal fun UserHomeTabContent(
     paddingValues: PaddingValues,
     onNavigateToAbout: () -> Unit = {},
-    onNavigateToCategory: (String) -> Unit = {}
+    onNavigateToCategory: (String) -> Unit = {},
+    onNavigateToClientReservations: () -> Unit = {}
 ) {
     val categories = listOf(
         LegalCategory("Droit de la\nFamille", Icons.Default.Groups,        domaine = "Droit Civil"),
@@ -398,6 +434,28 @@ internal fun UserHomeTabContent(
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SectionHeader(title = "Domaines Juridiques")
                 ServiceCategoryGrid(categories = categories, onCategoryClick = onNavigateToCategory)
+            }
+        }
+
+        // ── Mes Réservations ────────────────────────────────────────────
+        if (onNavigateToClientReservations != {}) {
+            item {
+                SectionHeader(title = "Mes Réservations", actionLabel = "Voir tout", onAction = onNavigateToClientReservations)
+                DashCard(onClick = onNavigateToClientReservations) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = AppDarkGreen.copy(alpha = 0.09f)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = AppDarkGreen, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Consultations réservées", fontSize = 14.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                            Text("Suivez l'état de vos demandes", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+                        }
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
+                    }
+                }
             }
         }
 

@@ -3,12 +3,19 @@ package com.example.client_mobile.screens.user
 import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.screens.shared.ReservationSheet
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
+import android.util.Log
+import com.example.client_mobile.network.RetrofitClient
+import com.example.client_mobile.network.TokenManager
+import com.example.client_mobile.network.dto.CreateReservationRequest
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -46,6 +53,7 @@ fun LawyerDetailScreen(
     val lawyer  = lawyers?.firstOrNull { it.id == lawyerId }
 
     var showBookingDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     BaseScreen(
         title = "Fiche Avocat",
@@ -271,8 +279,28 @@ fun LawyerDetailScreen(
                 onDismiss = { showBookingDialog = false },
                 onPaymentValidated = { reservationData ->
                     showBookingDialog = false
-                    // Parent handles: grant messaging access, send to API, etc.
-                    // reservationData contains all form + payment info.
+                    val clientId = TokenManager.getClientId().toString()
+                    scope.launch {
+                        try {
+                            val resResponse = RetrofitClient.reservationApi.createReservation(
+                                CreateReservationRequest(
+                                    lawyerId    = lawyerId,
+                                    lawyerName  = reservationData.lawyerName,
+                                    clientId    = clientId,
+                                    fullName    = reservationData.nom,
+                                    contact     = reservationData.contact,
+                                    domain      = reservationData.domaine,
+                                    description = reservationData.description,
+                                    mode        = reservationData.mode.name,
+                                    price       = reservationData.mode.price
+                                )
+                            )
+                            val savedRes = resResponse.body()?.data
+                            Log.d("LawyerDetail", "Reservation created: id=${savedRes?.id}, clientId=$clientId, lawyerId=$lawyerId")
+                        } catch (e: Exception) {
+                            Log.e("LawyerDetail", "Reservation creation failed: ${e.message}")
+                        }
+                    }
                     val conv = ConversationRepository.getOrCreate(
                         lawyerId   = lawyerId,
                         lawyerName = reservationData.lawyerName,

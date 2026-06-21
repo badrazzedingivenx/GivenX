@@ -71,6 +71,7 @@ fun LawyerDashboardHost(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
     onNavigateToRequests: () -> Unit = {},
+    onNavigateToReservations: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToCreator: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
@@ -645,6 +646,7 @@ private fun LawyerHomeTabContent(
     isMasculine: Boolean = true,
     stats: LawyerStatsDto? = null,
     onNavigateToRequests: () -> Unit = {},
+    onNavigateToReservations: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToCreator: () -> Unit = {}
 ) {
@@ -776,6 +778,26 @@ private fun LawyerHomeTabContent(
                         Text("Consultez vos dossiers", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
                     }
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ── Réservations quick view ──────────────────────────────────────────
+        SectionHeader(title = "Réservations", actionLabel = "Voir tout", onAction = onNavigateToReservations)
+        DashCard(onClick = onNavigateToReservations) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = AppDarkGreen.copy(alpha = 0.09f)) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = AppDarkGreen, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Gérer les réservations", fontSize = 14.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = AppDarkGreen)
+                    Text("Acceptez ou refusez les demandes", fontSize = 12.sp, fontFamily = FontFamily.Serif, color = Color.Gray)
+                }
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.LightGray)
             }
         }
 

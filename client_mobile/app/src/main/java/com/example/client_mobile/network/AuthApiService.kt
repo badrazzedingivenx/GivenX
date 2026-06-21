@@ -20,11 +20,10 @@ interface AuthApiService {
     @GET("profiles")
     suspend fun getProfileByUserId(@Query("userId") userId: Int): Response<ApiResponse<List<ProfileDto>>>
 
-    /** Fetch Lawyer details with profile info */
+    /** Fetch Lawyer details by profileId */
     @GET("lawyers")
     suspend fun getLawyerByProfileId(
-        @Query("profileId") profileId: Int,
-        @Query("_expand") expand: String = "profile"
+        @Query("profileId") profileId: Int
     ): Response<ApiResponse<List<LawyerDataDto>>>
 
     /** Fetch Client details */

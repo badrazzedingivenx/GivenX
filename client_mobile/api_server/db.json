@@ -1,66 +1,4 @@
 {
-  "users": [
-    {
-      "id": 1,
-      "email": "jean.dupont@law.com",
-      "password": "password123",
-      "role": "LAWYER"
-    },
-    {
-      "id": 2,
-      "email": "marie.legrand@law.com",
-      "password": "password123",
-      "role": "LAWYER"
-    },
-    {
-      "id": 3,
-      "email": "sofia.ben@law.com",
-      "password": "password123",
-      "role": "LAWYER"
-    },
-    {
-      "id": 4,
-      "email": "marc.villeneuve@law.com",
-      "password": "password123",
-      "role": "LAWYER"
-    },
-    {
-      "id": 5,
-      "email": "luc.bertrand@law.com",
-      "password": "password123",
-      "role": "LAWYER"
-    },
-    {
-      "id": 6,
-      "email": "alice.client@gmail.com",
-      "password": "password123",
-      "role": "CLIENT"
-    },
-    {
-      "id": 7,
-      "email": "robert.brown@yahoo.fr",
-      "password": "password123",
-      "role": "CLIENT"
-    },
-    {
-      "id": 8,
-      "email": "claire.martin@outlook.com",
-      "password": "password123",
-      "role": "CLIENT"
-    },
-    {
-      "id": 9,
-      "email": "pierre.durand@company.com",
-      "password": "password123",
-      "role": "CLIENT"
-    },
-    {
-      "id": 10,
-      "email": "emma.wilson@tech.io",
-      "password": "password123",
-      "role": "CLIENT"
-    }
-  ],
   "profiles": [
     {
       "id": 1,
@@ -153,138 +91,373 @@
       "address": "Berlin, Germany"
     }
   ],
+  "users": [
+    {
+      "id": 1,
+      "email": "jean.dupont@law.com",
+      "password": "password123",
+      "role": "LAWYER"
+    },
+    {
+      "id": 2,
+      "email": "marie.legrand@law.com",
+      "password": "password123",
+      "role": "LAWYER"
+    },
+    {
+      "id": 3,
+      "email": "sofia.ben@law.com",
+      "password": "password123",
+      "role": "LAWYER"
+    },
+    {
+      "id": 4,
+      "email": "marc.villeneuve@law.com",
+      "password": "password123",
+      "role": "LAWYER"
+    },
+    {
+      "id": 5,
+      "email": "luc.bertrand@law.com",
+      "password": "password123",
+      "role": "LAWYER"
+    },
+    {
+      "id": 6,
+      "email": "alice.client@gmail.com",
+      "password": "password123",
+      "role": "CLIENT"
+    },
+    {
+      "id": 7,
+      "email": "robert.brown@yahoo.fr",
+      "password": "password123",
+      "role": "CLIENT"
+    },
+    {
+      "id": 8,
+      "email": "claire.martin@outlook.com",
+      "password": "password123",
+      "role": "CLIENT"
+    },
+    {
+      "id": 9,
+      "email": "pierre.durand@company.com",
+      "password": "password123",
+      "role": "CLIENT"
+    },
+    {
+      "id": 10,
+      "email": "emma.wilson@tech.io",
+      "password": "password123",
+      "role": "CLIENT"
+    }
+  ],
   "lawyers": [
     {
-      "id": "1",
+      "id": 1,
       "profileId": 1,
-      "name": "Maître Jean Dupont",
+      "userId": 1,
+      "name": "Maitre Jean Dupont",
       "specialty": "Droit Immobilier",
-      "speciality": "Droit Immobilier",
-      "domaine": "Droit Immobilier",
       "location": "Paris",
-      "city": "Paris",
-      "avatar_url": "https://randomuser.me/api/portraits/men/1.jpg",
       "avatarUrl": "https://randomuser.me/api/portraits/men/1.jpg",
       "rating": 4.8,
       "reviewCount": 124,
-      "review_count": 124,
       "experience": 12,
-      "years_experience": 12,
       "isVerified": true,
-      "is_verified": true,
       "bar_number": "PAR-12345",
-      "bio": "Spécialiste en transactions immobilières et litiges de copropriété."
+      "bio": "Specialiste en transactions immobilieres et litiges de copropriete.",
+      "domaine": "Droit Immobilier",
+      "createdAt": "2026-01-15T08:00:00Z"
     },
     {
-      "id": "2",
+      "id": 2,
       "profileId": 2,
-      "name": "Maître Marie Legrand",
+      "userId": 2,
+      "name": "Maitre Marie Legrand",
       "specialty": "Droit de la Famille",
-      "speciality": "Droit de la Famille",
-      "domaine": "Droit Civil",
       "location": "Lyon",
-      "city": "Lyon",
-      "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
       "avatarUrl": "https://randomuser.me/api/portraits/women/2.jpg",
       "rating": 4.9,
       "reviewCount": 87,
-      "review_count": 87,
       "experience": 15,
-      "years_experience": 15,
       "isVerified": true,
-      "is_verified": true,
       "bar_number": "LYO-67890",
-      "bio": "Accompagnement en divorce, garde d'enfants et successions."
+      "bio": "Accompagnement en divorce, garde d'enfants et successions.",
+      "domaine": "Droit Civil",
+      "createdAt": "2026-02-10T09:30:00Z"
     },
     {
-      "id": "3",
+      "id": 3,
       "profileId": 3,
-      "name": "Maître Sofia Benali",
-      "specialty": "Droit Pénal",
-      "speciality": "Droit Pénal",
-      "domaine": "Droit Pénal",
+      "userId": 3,
+      "name": "Maitre Sofia Benali",
+      "specialty": "Droit Penal",
       "location": "Casablanca",
-      "city": "Casablanca",
-      "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
       "avatarUrl": "https://randomuser.me/api/portraits/women/3.jpg",
       "rating": 4.7,
       "reviewCount": 56,
-      "review_count": 56,
       "experience": 8,
-      "years_experience": 8,
       "isVerified": true,
-      "is_verified": true,
       "bar_number": "CAS-11223",
-      "bio": "Défense pénale et assistance aux victimes d'infractions."
+      "bio": "Defense penale et assistance aux victimes d'infractions.",
+      "domaine": "Droit Penal",
+      "createdAt": "2026-03-05T10:00:00Z"
     },
     {
-      "id": "4",
+      "id": 4,
       "profileId": 4,
-      "name": "Maître Marc Villeneuve",
+      "userId": 4,
+      "name": "Maitre Marc Villeneuve",
       "specialty": "Droit du Travail",
-      "speciality": "Droit du Travail",
-      "domaine": "Droit du Travail",
       "location": "Marseille",
-      "city": "Marseille",
-      "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
       "avatarUrl": "https://randomuser.me/api/portraits/men/4.jpg",
       "rating": 4.6,
       "reviewCount": 43,
-      "review_count": 43,
       "experience": 10,
-      "years_experience": 10,
       "isVerified": false,
-      "is_verified": false,
       "bar_number": "MAR-44556",
-      "bio": "Conseil aux entreprises et défense des salariés aux prud'hommes."
+      "bio": "Conseil aux entreprises et defense des salaries aux prud'hommes.",
+      "domaine": "Droit du Travail",
+      "createdAt": "2026-01-20T14:00:00Z"
     },
     {
-      "id": "5",
+      "id": 5,
       "profileId": 5,
-      "name": "Maître Luc Bertrand",
+      "userId": 5,
+      "name": "Maitre Luc Bertrand",
       "specialty": "Droit des Affaires",
-      "speciality": "Droit des Affaires",
-      "domaine": "Droit des Affaires",
       "location": "Bordeaux",
-      "city": "Bordeaux",
-      "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
       "avatarUrl": "https://randomuser.me/api/portraits/men/5.jpg",
       "rating": 4.5,
       "reviewCount": 31,
-      "review_count": 31,
       "experience": 7,
-      "years_experience": 7,
       "isVerified": true,
-      "is_verified": true,
       "bar_number": "BOR-77889",
-      "bio": "Accompagnement juridique pour la création et la gestion d'entreprises."
+      "bio": "Accompagnement juridique pour la creation et la gestion d'entreprises.",
+      "domaine": "Droit des Affaires",
+      "createdAt": "2026-02-28T11:00:00Z"
+    }
+  ],
+  "reservations": [
+    {
+      "id": "res_001",
+      "lawyerId": 2,
+      "lawyerName": "Maitre Marie Legrand",
+      "clientId": 1,
+      "fullName": "Alice Martin",
+      "contact": "alice.client@gmail.com",
+      "domain": "Droit de la Famille",
+      "description": "Consultation pour divorce a l'amiable",
+      "mode": "VIDEO",
+      "price": 350,
+      "status": "pending",
+      "paymentStatus": "unpaid",
+      "createdAt": "2026-06-19T14:30:00"
+    },
+    {
+      "id": "res_002",
+      "lawyerId": 2,
+      "lawyerName": "Maitre Marie Legrand",
+      "clientId": 2,
+      "fullName": "Robert Brown",
+      "contact": "robert.brown@yahoo.fr",
+      "domain": "Droit du Travail",
+      "description": "Litige avec employeur sur rupture de contrat",
+      "mode": "CABINET",
+      "price": 700,
+      "status": "accepted",
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-18T10:00:00"
+    },
+    {
+      "id": "res_003",
+      "lawyerId": 2,
+      "lawyerName": "Maitre Marie Legrand",
+      "clientId": 3,
+      "fullName": "Claire Martin",
+      "contact": "claire.martin@outlook.com",
+      "domain": "Droit des Affaires",
+      "description": "Creation de societe",
+      "mode": "MESSAGE",
+      "price": 150,
+      "status": "rejected",
+      "paymentStatus": "unpaid",
+      "createdAt": "2026-06-17T16:45:00"
+    },
+    {
+      "id": "res_004",
+      "lawyerId": 1,
+      "lawyerName": "Maitre Jean Dupont",
+      "clientId": 4,
+      "fullName": "Pierre Durand",
+      "contact": "pierre.durand@company.com",
+      "domain": "Droit Immobilier",
+      "description": "Consultation pour achat d'un appartement a Paris 15e",
+      "mode": "CABINET",
+      "price": 500,
+      "status": "pending",
+      "paymentStatus": "unpaid",
+      "createdAt": "2026-06-20T09:15:00"
+    },
+    {
+      "id": "res_005",
+      "lawyerId": 5,
+      "lawyerName": "Maitre Luc Bertrand",
+      "clientId": 5,
+      "fullName": "Emma Wilson",
+      "contact": "emma.wilson@tech.io",
+      "domain": "Droit des Affaires",
+      "description": "Creation de societe de conseil en technologie",
+      "mode": "VIDEO",
+      "price": 650,
+      "status": "accepted",
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-19T16:00:00"
+    },
+    {
+      "clientId": "3",
+      "contact": "432423424",
+      "description": "fafsdfsd",
+      "domain": "Droit des Affaires",
+      "fullName": "Claire Martin",
+      "lawyerId": "5",
+      "lawyerName": "Maitre Luc Bertrand",
+      "mode": "VIDEO",
+      "paymentStatus": "unpaid",
+      "price": 350,
+      "id": "Z8z50Bw"
+    },
+    {
+      "clientId": "1",
+      "contact": "2313123131",
+      "description": "fdsfsfsf",
+      "domain": "Droit des Affaires",
+      "fullName": "Alice Martin",
+      "lawyerId": "5",
+      "lawyerName": "Maitre Luc Bertrand",
+      "mode": "VIDEO",
+      "paymentStatus": "unpaid",
+      "price": 350,
+      "id": "hZr1UN_"
+    }
+  ],
+  "messages": [
+    {
+      "id": "conv_msg_001",
+      "conversationId": "conv_001",
+      "content": "Bonjour Maitre, voici le compromis.",
+      "sender_id": 6,
+      "sender_name": "Alice Martin",
+      "is_from_user": true,
+      "sent_at": "2024-06-01T10:30:00Z"
+    },
+    {
+      "id": "conv_msg_002",
+      "conversationId": "conv_001",
+      "content": "Merci, j'ai bien recu le document.",
+      "sender_id": 1,
+      "sender_name": "Jean Dupont",
+      "is_from_user": false,
+      "sent_at": "2024-06-01T11:00:00Z"
+    },
+    {
+      "id": "resmsg_001",
+      "senderId": 1,
+      "receiverId": 2,
+      "reservationId": "res_001",
+      "content": "Nouvelle demande de reservation",
+      "timestamp": "2026-06-19T14:30:00"
+    },
+    {
+      "id": "resmsg_002",
+      "senderId": 2,
+      "receiverId": 1,
+      "reservationId": "res_001",
+      "content": "Bonjour Alice, j'ai bien recu votre demande. Pouvons-nous fixer un rendez-vous cette semaine ?",
+      "timestamp": "2026-06-19T15:00:00"
+    },
+    {
+      "id": "resmsg_003",
+      "senderId": 1,
+      "receiverId": 2,
+      "reservationId": "res_001",
+      "content": "Bonjour Maitre, oui je suis disponible jeudi apres-midi.",
+      "timestamp": "2026-06-19T15:30:00"
+    },
+    {
+      "id": "resmsg_004",
+      "senderId": 4,
+      "receiverId": 1,
+      "reservationId": "res_004",
+      "content": "Nouvelle demande de reservation",
+      "timestamp": "2026-06-20T09:15:00"
+    },
+    {
+      "id": "resmsg_005",
+      "senderId": 5,
+      "receiverId": 5,
+      "reservationId": "res_005",
+      "content": "Nouvelle demande de reservation",
+      "timestamp": "2026-06-19T16:00:00"
+    },
+    {
+      "id": "resmsg_006",
+      "senderId": 5,
+      "receiverId": 5,
+      "reservationId": "res_005",
+      "content": "Bonjour Emma, merci pour votre demande. Je suis disponible pour une consultation video cette semaine. Pouvez-vous me proposer des creneaux ?",
+      "timestamp": "2026-06-19T17:00:00"
+    },
+    {
+      "content": "hiii",
+      "conversationId": "Claire_Martin_5",
+      "type": "text",
+      "id": "4_NgEbl"
+    },
+    {
+      "content": "slm maitre lue",
+      "conversationId": "Alice_Martin_5",
+      "type": "text",
+      "id": "_boFNIm"
     }
   ],
   "clients": [
     {
       "id": 1,
       "profileId": 6,
-      "company_name": null
+      "userId": 6,
+      "company_name": null,
+      "createdAt": "2026-01-10T08:00:00Z"
     },
     {
       "id": 2,
       "profileId": 7,
-      "company_name": "Brown Consulting"
+      "userId": 7,
+      "company_name": "Brown Consulting",
+      "createdAt": "2026-01-12T09:00:00Z"
     },
     {
       "id": 3,
       "profileId": 8,
-      "company_name": null
+      "userId": 8,
+      "company_name": null,
+      "createdAt": "2026-02-01T10:00:00Z"
     },
     {
       "id": 4,
       "profileId": 9,
-      "company_name": "Durand & Co"
+      "userId": 9,
+      "company_name": "Durand & Co",
+      "createdAt": "2026-02-15T11:00:00Z"
     },
     {
       "id": 5,
       "profileId": 10,
-      "company_name": "Tech Solutions IO"
+      "userId": 10,
+      "company_name": "Tech Solutions IO",
+      "createdAt": "2026-03-01T12:00:00Z"
     }
   ],
   "consultations": [
@@ -302,7 +475,7 @@
       "lawyerId": 5,
       "date": "2024-06-05T14:30:00Z",
       "status": "pending",
-      "subject": "Rédaction contrat de services"
+      "subject": "Redaction contrat de services"
     },
     {
       "id": 3,
@@ -310,7 +483,7 @@
       "lawyerId": 2,
       "date": "2024-06-10T09:00:00Z",
       "status": "rejected",
-      "subject": "Procédure de divorce"
+      "subject": "Procedure de divorce"
     },
     {
       "id": 4,
@@ -364,7 +537,7 @@
       "id": "doc_004",
       "clientId": 5,
       "lawyerId": 3,
-      "title": "Preuve de dépôt de plainte",
+      "title": "Preuve de depot de plainte",
       "file_url": "https://storage.example.com/docs/plainte.pdf",
       "status": "submitted",
       "uploadDate": "2024-05-25",
@@ -388,7 +561,7 @@
       "category": "IMMOBILIER",
       "status": "OPEN",
       "opening_date": "2024-01-10",
-      "lawyer_id": "1",
+      "lawyer_id": 1,
       "lawyer_name": "Jean Dupont",
       "lawyer_specialty": "Droit Immobilier",
       "client_name": "Alice Martin",
@@ -400,7 +573,7 @@
       "category": "FAMILLE",
       "status": "PENDING",
       "opening_date": "2024-02-15",
-      "lawyer_id": "2",
+      "lawyer_id": 2,
       "lawyer_name": "Marie Legrand",
       "lawyer_specialty": "Droit de la Famille",
       "client_name": "Claire Martin",
@@ -410,21 +583,12 @@
   "conversations": [
     {
       "id": "conv_001",
-      "lawyer": {
-        "id": "1",
-        "full_name": "Jean Dupont",
-        "speciality": "Droit Immobilier",
-        "avatar_url": "https://randomuser.me/api/portraits/men/1.jpg"
-      },
-      "client": {
-        "id": "6",
-        "full_name": "Alice Martin",
-        "avatar_url": "https://randomuser.me/api/portraits/women/6.jpg"
-      },
+      "lawyerId": 1,
+      "clientId": 6,
       "last_message": {
-        "content": "Merci, j'ai bien reçu le document.",
+        "content": "Merci, j'ai bien recu le document.",
         "sent_at": "2024-06-01T11:00:00Z",
-        "sender_id": "6"
+        "sender_id": 6
       },
       "unread_count_user": 0,
       "unread_count_lawyer": 1,
@@ -432,106 +596,60 @@
     },
     {
       "id": "conv_002",
-      "lawyer": {
-        "id": "2",
-        "full_name": "Marie Legrand",
-        "speciality": "Droit de la Famille",
-        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg"
-      },
-      "client": {
-        "id": "8",
-        "full_name": "Claire Martin",
-        "avatar_url": "https://randomuser.me/api/portraits/women/8.jpg"
-      },
+      "lawyerId": 2,
+      "clientId": 8,
       "last_message": {
-        "content": "On se voit demain à 9h.",
+        "content": "On se voit demain a 9h.",
         "sent_at": "2024-06-02T16:30:00Z",
-        "sender_id": "2"
+        "sender_id": 2
       },
       "unread_count_user": 1,
       "unread_count_lawyer": 0,
       "created_at": "2024-06-01T09:00:00Z"
     }
   ],
-  "messages": [
-    {
-      "id": "msg_001",
-      "conversationId": "conv_001",
-      "content": "Bonjour Maître, voici le compromis.",
-      "sender_id": "6",
-      "sender_name": "Alice Martin",
-      "is_from_user": true,
-      "sent_at": "2024-06-01T10:30:00Z"
-    },
-    {
-      "id": "msg_002",
-      "conversationId": "conv_001",
-      "content": "Merci, j'ai bien reçu le document.",
-      "sender_id": "1",
-      "sender_name": "Jean Dupont",
-      "is_from_user": false,
-      "sent_at": "2024-06-01T11:00:00Z"
-    },
-    {
-      "content": ".ss",
-      "conversationId": "Emma_Wilson_3",
-      "type": "text",
-      "id": "OxsnZiA"
-    },
-    {
-      "content": "s",
-      "conversationId": "Emma_Wilson_3",
-      "type": "text",
-      "id": "nko5XMJ"
-    },
-    {
-      "content": "lets try if you will see the message",
-      "conversationId": "conv_001",
-      "type": "text",
-      "id": "ucbPIKK"
-    },
-    {
-      "content": "test",
-      "conversationId": "Alice_Martin_2",
-      "type": "text",
-      "id": "h5cs-2Q"
-    },
-    {
-      "content": "test message zakaria",
-      "conversationId": "conv_001",
-      "type": "text",
-      "id": "J9IOLsR"
-    },
-    {
-      "content": "message done",
-      "conversationId": "conv_001",
-      "type": "text",
-      "id": "RwJ7Rsq"
-    }
-  ],
   "notifications": [
     {
-      "id": 1,
+      "id": "notif1",
       "userId": 6,
       "title": "Nouveau message",
-      "content": "Maître Dupont vous a envoyé un message.",
+      "description": "Maitre Dupont vous a envoye un message.",
       "type": "MESSAGE",
       "isRead": false,
-      "createdAt": "2024-06-01T11:05:00Z"
+      "time": "2024-06-01T11:05:00Z"
     },
     {
-      "id": 2,
+      "id": "notif2",
       "userId": 1,
-      "title": "Document reçu",
-      "content": "Alice Martin a partagé un document.",
+      "title": "Document recu",
+      "description": "Alice Martin a partage un document.",
       "type": "DOCUMENT",
       "isRead": false,
-      "createdAt": "2024-06-01T10:35:00Z"
+      "time": "2024-06-01T10:35:00Z"
+    },
+    {
+      "id": "notif3",
+      "lawyerId": 2,
+      "title": "Nouvelle consultation",
+      "description": "Un client a demande une consultation.",
+      "type": "RESERVATION",
+      "isRead": false,
+      "time": "2024-06-01T14:00:00Z"
+    },
+    {
+      "id": "notif4",
+      "lawyerId": 2,
+      "title": "Paiement recu",
+      "description": "Paiement confirme pour la consultation #1.",
+      "type": "PAYMENT",
+      "isRead": false,
+      "time": "2024-06-01T15:30:00Z"
     }
   ],
   "stories": [
     {
       "id": "s1",
+      "lawyerId": 1,
       "lawyerName": "Me. Yassine Alaoui",
       "lawyerAvatar": "https://randomuser.me/api/portraits/men/32.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500",
@@ -543,6 +661,7 @@
     },
     {
       "id": "s2",
+      "lawyerId": 2,
       "lawyerName": "Me. Fatima Zahra Benali",
       "lawyerAvatar": "https://randomuser.me/api/portraits/women/44.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=500",
@@ -554,6 +673,7 @@
     },
     {
       "id": "s3",
+      "lawyerId": 3,
       "lawyerName": "Me. Karim Tazi",
       "lawyerAvatar": "https://randomuser.me/api/portraits/men/86.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1454165833767-131f72a6a9d8?w=500",
@@ -565,6 +685,7 @@
     },
     {
       "id": "s4",
+      "lawyerId": 4,
       "lawyerName": "Me. Sara El Mansouri",
       "lawyerAvatar": "https://randomuser.me/api/portraits/women/62.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=500",
@@ -576,6 +697,7 @@
     },
     {
       "id": "s5",
+      "lawyerId": 5,
       "lawyerName": "Me. Hassan Idrissi",
       "lawyerAvatar": "https://randomuser.me/api/portraits/men/22.jpg",
       "imageUrl": "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=500",
@@ -588,11 +710,11 @@
   ],
   "legal-feed": [
     {
-      "lawyer_id": "1",
+      "lawyer_id": 1,
       "lawyer_name": "Me. Yassine Alaoui",
       "avatar_url": "https://randomuser.me/api/portraits/men/32.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800",
-      "legal_text": "⚖️ Rappel important : Selon l'article 475 du Code de la Famille marocain, toute convention matrimoniale doit être établie par acte notarié avant la célébration du mariage. N'attendez pas qu'il soit trop tard — consultez un avocat spécialisé en droit familial pour protéger vos droits.\n\n#DroitDeLaFamille #Haqqi #ConseilJuridique",
+      "legal_text": "Rappel important : Selon l'article 475 du Code de la Famille marocain, toute convention matrimoniale doit etre etablie par acte notarie avant la celebration du mariage.",
       "date": "2026-04-16T08:00:00Z",
       "likes_count": 142,
       "is_liked": false,
@@ -600,11 +722,11 @@
       "comments_count": 23
     },
     {
-      "lawyer_id": "2",
+      "lawyer_id": 2,
       "lawyer_name": "Me. Fatima Zahra Benali",
       "avatar_url": "https://randomuser.me/api/portraits/women/44.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
-      "legal_text": "🏢 Droit des affaires : La création d'une SARL au Maroc nécessite un capital minimum de 10 000 DH depuis la réforme. Cependant, plusieurs aspects statutaires sont souvent négligés par les entrepreneurs. Notre cabinet accompagne les startups de A à Z.\n\n#StartupMaroc #DroitDesAffaires #SARL",
+      "legal_text": "Droit des affaires : La creation d'une SARL au Maroc necessite un capital minimum de 10 000 DH depuis la reforme.",
       "date": "2026-04-15T14:30:00Z",
       "likes_count": 89,
       "is_liked": false,
@@ -612,11 +734,11 @@
       "comments_count": 11
     },
     {
-      "lawyer_id": "3",
+      "lawyer_id": 3,
       "lawyer_name": "Me. Karim Tazi",
       "avatar_url": "https://randomuser.me/api/portraits/men/86.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800",
-      "legal_text": "📋 Saviez-vous que le délai de prescription pour les infractions pénales varie selon leur gravité ? \n• Crimes : 15 ans\n• Délits : 5 ans  \n• Contraventions : 1 an\n\nCes délais courent à partir du jour où l'infraction a été commise. Partagez pour informer !\n\n#DroitPénal #Justice #Haqqi",
+      "legal_text": "Saviez-vous que le delai de prescription pour les infractions penales varie selon leur gravite ? Crimes : 15 ans, Delits : 5 ans, Contraventions : 1 an.",
       "date": "2026-04-15T09:00:00Z",
       "likes_count": 207,
       "is_liked": false,
@@ -624,11 +746,11 @@
       "comments_count": 45
     },
     {
-      "lawyer_id": "4",
+      "lawyer_id": 4,
       "lawyer_name": "Me. Sara El Mansouri",
       "avatar_url": "https://randomuser.me/api/portraits/women/62.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1521791055366-0d553872952f?w=800",
-      "legal_text": "🏠 Droit immobilier : Avant de signer un compromis de vente, vérifiez TOUJOURS :\n✅ Le titre foncier (réquisition d'immatriculation)\n✅ L'absence de servitudes cachées\n✅ Le certificat de conformité\n✅ Les charges de copropriété en souffrance\n\nContactez-nous pour un audit complet de votre projet immobilier.\n\n#DroitImmobilier #Casablanca",
+      "legal_text": "Droit immobilier : Avant de signer un compromis de vente, verifiez le titre foncier, l'absence de servitudes cachees, le certificat de conformite et les charges de copropriete.",
       "date": "2026-04-14T16:00:00Z",
       "likes_count": 334,
       "is_liked": false,
@@ -636,11 +758,11 @@
       "comments_count": 67
     },
     {
-      "lawyer_id": "5",
+      "lawyer_id": 5,
       "lawyer_name": "Me. Hassan Idrissi",
       "avatar_url": "https://randomuser.me/api/portraits/men/22.jpg",
       "post_image_url": "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=800",
-      "legal_text": "💼 Code du travail : Tout licenciement abusif ouvre droit à des dommages-intérêts. Selon l'article 41 du Code du Travail marocain, l'employeur doit respecter la procédure disciplinaire sous peine de nullité. Vos droits valent d'être défendus.\n\n#DroitDuTravail #LicenciementAbusif #Haqqi",
+      "legal_text": "Code du travail : Tout licenciement abusif ouvre droit a des dommages-interets selon l'article 41 du Code du Travail marocain.",
       "date": "2026-04-13T11:00:00Z",
       "likes_count": 156,
       "is_liked": false,
@@ -653,8 +775,9 @@
       "id": "reel_001",
       "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
       "lawyerName": "Sofia Benali",
+      "lawyerId": 3,
       "likes": 1240,
-      "caption": "Comment protéger votre patrimoine immobilier ?",
+      "caption": "Comment proteger votre patrimoine immobilier ?",
       "title": "Patrimoine Immobilier",
       "views": 5000,
       "duration": "00:45",
@@ -664,8 +787,9 @@
       "id": "reel_002",
       "videoUrl": "https://www.w3schools.com/html/movie.mp4",
       "lawyerName": "Marc Villeneuve",
+      "lawyerId": 4,
       "likes": 850,
-      "caption": "Les 3 erreurs à éviter lors d'un licenciement.",
+      "caption": "Les 3 erreurs a eviter lors d'un licenciement.",
       "title": "Droit du Travail",
       "views": 3200,
       "duration": "01:00",
@@ -675,8 +799,9 @@
   "lives": [
     {
       "id": "live_001",
-      "title": "Questions/Réponses : Divorce et Garde d'enfants",
+      "title": "Questions/Reponses : Divorce et Garde d'enfants",
       "lawyerName": "Marie Legrand",
+      "lawyerId": 2,
       "viewersCount": 156,
       "thumbnail": "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=500",
       "participants": 45,
@@ -684,8 +809,9 @@
     },
     {
       "id": "live_002",
-      "title": "Webinaire : Création d'entreprise en France",
+      "title": "Webinaire : Creation d'entreprise en France",
       "lawyerName": "Luc Bertrand",
+      "lawyerId": 5,
       "viewersCount": 0,
       "thumbnail": "https://images.unsplash.com/photo-1454165833767-131f72a6a9d8?w=500",
       "participants": 120,

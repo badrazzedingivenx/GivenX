@@ -1,5 +1,6 @@
 package com.example.client_mobile.screens.shared
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.client_mobile.network.RetrofitClient
@@ -11,15 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Fetches notifications from /api/notifications and writes them into
- * [NotificationRepository] — the observable list consumed by
- * both [NotificationScreen] (list of cards) and the notification badge in TopBarActions.
- *
- * Exposes [unreadCount] as a [StateFlow] for global badge consumption.
- * Automatically handles routing to userNotifications or lawyerNotifications
- * based on the logged-in [TokenManager.getUserType].
- */
 class NotificationViewModel : ViewModel() {
 
     private val _unreadCount = MutableStateFlow(0)
@@ -31,7 +23,6 @@ class NotificationViewModel : ViewModel() {
         startPolling()
     }
 
-    /** Polls the server every 30 seconds for the latest unread count. */
     private fun startPolling() {
         viewModelScope.launch {
             while (true) {
@@ -48,7 +39,7 @@ class NotificationViewModel : ViewModel() {
                 if (resp.isSuccessful && resp.body()?.success == true) {
                     _unreadCount.value = resp.body()?.data?.unreadCount ?: 0
                 }
-            } catch (_: Exception) { /* keep current value */ }
+            } catch (_: Exception) { }
         }
     }
 
@@ -59,7 +50,9 @@ class NotificationViewModel : ViewModel() {
                 val response = RetrofitClient.haqApi.getNotifications()
                 
                 if (response.isSuccessful && response.body()?.success == true) {
-                    val items = response.body()?.data?.map { it.toAppNotification() } ?: return@launch
+                    val rawItems = response.body()?.data ?: emptyList()
+                    Log.d("NotifVM", "Fetched ${rawItems.size} notifications, isLawyer=$isLawyer")
+                    val items = rawItems.map { it.toAppNotification() }
                     
                     if (isLawyer) {
                         NotificationRepository.lawyerNotifications.clear()
@@ -69,9 +62,11 @@ class NotificationViewModel : ViewModel() {
                         NotificationRepository.userNotifications.addAll(items)
                     }
                     syncUnreadCount()
+                } else {
+                    Log.w("NotifVM", "fetch failed: ${response.code()} ${response.message()}")
                 }
-            } catch (_: Exception) {
-                // Keep existing state on network failure
+            } catch (e: Exception) {
+                Log.e("NotifVM", "fetch threw: ${e.message}")
             }
         }
     }
@@ -102,27 +97,27 @@ class NotificationViewModel : ViewModel() {
             NotificationRepository.userNotifications.count { !it.isRead }
     }
 
-    // ── Mapping ───────────────────────────────────────────────────────────────
-
     private fun NotificationDto.toAppNotification() = AppNotification(
         id      = id,
         title   = title,
         message = description,
-        type    = inferType(title, description),
+        type    = inferType(type, title, description),
         isRead  = isRead,
         time    = formatTime(time)
     )
 
-    private fun inferType(title: String, body: String): NotificationType = when {
-        title.contains("rendez-vous", ignoreCase = true)                         -> NotificationType.APPOINTMENT
-        title.contains("message",     ignoreCase = true)                         -> NotificationType.MESSAGE
-        title.contains("document",    ignoreCase = true)                         -> NotificationType.CASE_UPDATE
-        title.contains("dossier",     ignoreCase = true)
-                || body.contains("dossier", ignoreCase = true)                   -> NotificationType.CASE_UPDATE
-        else                                                                     -> NotificationType.CASE_UPDATE
+    private fun inferType(serverType: String, title: String, body: String): NotificationType = when {
+        serverType.contains("MESSAGE", ignoreCase = true)     -> NotificationType.MESSAGE
+        serverType.contains("RESERVATION", ignoreCase = true)
+            || serverType.contains("APPOINTMENT", ignoreCase = true)
+            || title.contains("rendez-vous", ignoreCase = true) -> NotificationType.APPOINTMENT
+        serverType.contains("PAYMENT", ignoreCase = true)     -> NotificationType.CASE_UPDATE
+        serverType.contains("DOCUMENT", ignoreCase = true)    -> NotificationType.CASE_UPDATE
+        title.contains("dossier", ignoreCase = true)
+            || body.contains("dossier", ignoreCase = true)    -> NotificationType.CASE_UPDATE
+        else                                                   -> NotificationType.CASE_UPDATE
     }
 
-    /** Trims ISO-8601 timestamp to a readable date string. */
     private fun formatTime(isoTime: String): String =
         if (isoTime.length >= 10) isoTime.substring(0, 10) else isoTime
 }

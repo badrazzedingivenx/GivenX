@@ -51,8 +51,7 @@ data class LawyerDataDto(
     @SerializedName("profileId")   val profileId:  Int?,
     @SerializedName("speciality")  val speciality: String?,
     @SerializedName("bar_number")  val barNumber:  String?,
-    @SerializedName("bio")         val bio:        String?,
-    @SerializedName("profile")     val profile:    ProfileDto? = null
+    @SerializedName("bio")         val bio:        String?
 ) {
     fun effectiveId(): Int = id ?: -1
     fun effectiveSpeciality(): String = speciality ?: ""

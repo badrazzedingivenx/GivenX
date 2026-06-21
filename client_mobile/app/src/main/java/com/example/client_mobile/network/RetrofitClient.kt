@@ -99,6 +99,8 @@ object RetrofitClient {
 
     // ── Pre-built instances ──────────────────────────────────────────────────
 
-    val authApi:   AuthApiService   by lazy { create(AuthApiService::class.java)   }
-    val haqApi:    HaqApiService    by lazy { create(HaqApiService::class.java)    }
+    val authApi:         AuthApiService         by lazy { create(AuthApiService::class.java)         }
+    val haqApi:          HaqApiService          by lazy { create(HaqApiService::class.java)          }
+    val reservationApi:  ReservationApi         by lazy { create(ReservationApi::class.java)         }
+    val messageApi:      MessageApi             by lazy { create(MessageApi::class.java)             }
 }

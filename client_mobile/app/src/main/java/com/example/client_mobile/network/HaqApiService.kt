@@ -7,7 +7,11 @@ import com.example.client_mobile.network.dto.AppointmentDto
 import com.example.client_mobile.network.dto.BillingSummaryDto
 import com.example.client_mobile.network.dto.ConversationApiDto
 import com.example.client_mobile.network.dto.CreateDocumentRequest
+import com.example.client_mobile.network.dto.CreateReservationRequest
 import com.example.client_mobile.network.dto.DocumentApiDto
+import com.example.client_mobile.network.dto.ReservationMessageDto
+import com.example.client_mobile.network.dto.SendReservationMessageRequest
+import com.example.client_mobile.network.dto.UpdateReservationStatusRequest
 import com.example.client_mobile.network.dto.DossierDto
 import com.example.client_mobile.network.dto.LawyerDto
 import com.example.client_mobile.network.dto.LawyerProfileDto
@@ -16,6 +20,7 @@ import com.example.client_mobile.network.dto.LiveDto
 import com.example.client_mobile.network.dto.LegalPostDto
 import com.example.client_mobile.network.dto.ReelDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
+import com.example.client_mobile.network.dto.ReservationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.network.dto.RenameDocumentRequest
 import com.example.client_mobile.network.dto.SaveConsultationRequest
@@ -166,6 +171,33 @@ interface HaqApiService {
     @GET("appointments/me")
     suspend fun getMyAppointments(): Response<ApiResponse<List<AppointmentDto>>>
 
+    // ── Reservations ───────────────────────────────────────────────────────
+
+    /** POST /reservations — create a new reservation from client booking. */
+    @POST("reservations")
+    suspend fun createReservation(
+        @Body request: CreateReservationRequest
+    ): Response<ApiResponse<ReservationDto>>
+
+    /** GET /reservations?lawyerId={id} — all reservations for a given lawyer. */
+    @GET("reservations")
+    suspend fun getLawyerReservations(
+        @Query("lawyerId") lawyerId: String
+    ): Response<ApiResponse<List<ReservationDto>>>
+
+    /** GET /reservations?clientId={id} — all reservations for a given client. */
+    @GET("reservations")
+    suspend fun getClientReservations(
+        @Query("clientId") clientId: String
+    ): Response<ApiResponse<List<ReservationDto>>>
+
+    /** PATCH /reservations/{id} — update reservation status (confirm/reject). */
+    @PATCH("reservations/{id}")
+    suspend fun updateReservationStatus(
+        @Path("id") id: String,
+        @Body request: UpdateReservationStatusRequest
+    ): Response<ApiResponse<ReservationDto>>
+
     // ── Billing ───────────────────────────────────────────────────────────────
 
     /** GET /billing/me — returns billing summary + invoice list for current user. */
@@ -251,6 +283,20 @@ interface HaqApiService {
     /** GET /notifications/unread-count — quick unread badge count. */
     @GET("notifications/unread-count")
     suspend fun getUnreadCount(): Response<ApiResponse<com.example.client_mobile.network.dto.UnreadCountDto>>
+
+    // ── Reservation Messages ──────────────────────────────────────────────────
+
+    /** GET /messages?reservationId={id} — all messages for a reservation. */
+    @GET("messages")
+    suspend fun getReservationMessages(
+        @Query("reservationId") reservationId: String
+    ): Response<ApiResponse<List<ReservationMessageDto>>>
+
+    /** POST /messages — send a new message in a reservation thread. */
+    @POST("messages")
+    suspend fun sendReservationMessage(
+        @Body request: SendReservationMessageRequest
+    ): Response<ApiResponse<ReservationMessageDto>>
 
     // ── Payments ─────────────────────────────────────────────────────────────
 

@@ -28,9 +28,14 @@ sealed class Route(val route: String) {
     data object AvocatProfile     : Route("AvocatProfile")
     data object EditLawyerProfile : Route("EditLawyerProfile")
     data object LawyerRequests    : Route("LawyerRequests")
+    data object LawyerReservations : Route("LawyerReservations")
+    data object ReservationChat    : Route("ReservationChat/{reservationId}") {
+        fun createRoute(reservationId: String) = "ReservationChat/$reservationId"
+    }
     data object LawyerCreator     : Route("LawyerCreatorStudio")
     data object About             : Route("About")
     data object Appointments      : Route("Appointments")
+    data object ClientReservations : Route("ClientReservations")
     data object DocumentVault     : Route("DocumentVault")
 
     // ── Parameterised destinations ────────────────────────────────────────────

@@ -43,8 +43,10 @@ object AuthRepository {
             val lawyerResp = RetrofitClient.authApi.getLawyerByProfileId(profile.id)
             val lawyer = lawyerResp.body()?.data?.firstOrNull() ?: throw Exception("Détails avocat manquants")
             
+            val savedLawyerId = lawyer.effectiveId()
+            Log.d("AuthRepo", "Lawyer login: lawyerId=$savedLawyerId (from profileId=${profile.id})")
             TokenManager.saveUserType("lawyer")
-            TokenManager.saveLawyerId(lawyer.effectiveId())
+            TokenManager.saveLawyerId(savedLawyerId)
             
             // Create a combined UserDto for legacy UI compatibility
             val legacyUser = UserDto(

@@ -28,8 +28,11 @@ class DashboardRepository {
         return try {
             val response = RetrofitClient.haqApi.getLawyerProfile()
             if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data
+                val dto = response.body()?.data
+                Log.d("DashboardRepo", "Profile: name=${dto?.fullName}, spec=${dto?.speciality}")
+                dto
             } else {
+                Log.w("DashboardRepo", "Profile API failed: ${response.code()}")
                 null
             }
         } catch (_: Exception) {
@@ -53,11 +56,15 @@ class DashboardRepository {
         return try {
             val response = RetrofitClient.haqApi.getLawyerStats()
             if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data
+                val dto = response.body()?.data
+                Log.d("DashboardRepo", "Stats: clients=${dto?.activeClients}, revenue=${dto?.totalRevenueMonth}, pending=${dto?.newRequests}")
+                dto
             } else {
+                Log.w("DashboardRepo", "Stats API failed: ${response.code()}")
                 null
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("DashboardRepo", "Stats API threw: ${e.message}")
             null
         }
     }
@@ -103,7 +110,9 @@ class DashboardRepository {
         try {
             val primary = RetrofitClient.haqApi.getAvocatConsultationsRecent()
             if (primary.isSuccessful && primary.body()?.success == true) {
-                return primary.body()?.data ?: emptyList()
+                val data = primary.body()?.data ?: emptyList()
+                Log.d("DashboardRepo", "Consultations: ${data.size} items")
+                return data
             }
         } catch (e: Exception) {
             Log.w("GivenX-API", "[Consultations] primary threw: ${e.message}")

@@ -1,0 +1,210 @@
+Server is running on port 3001 with ApiResponse wrapping
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:38 PM] GET /api/notifications/unread-count
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "unreadCount": 0
+  },
+  "message": "OK"
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/notifications/unread-count [32m200[0m 27.636 ms - 78[0m
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:38 PM] GET /api/notifications/unread-count
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "unreadCount": 0
+  },
+  "message": "OK"
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/notifications/unread-count [32m200[0m 1.824 ms - 78[0m
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:46 PM] GET /api/notifications/unread-count
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "unreadCount": 0
+  },
+  "message": "OK"
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/notifications/unread-count [32m200[0m 0.594 ms - 78[0m
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:46 PM] GET /api/notifications/unread-count
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "unreadCount": 0
+  },
+  "message": "OK"
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/notifications/unread-count [32m200[0m 0.729 ms - 78[0m
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:48 PM] GET /api/notifications/unread-count
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "unreadCount": 0
+  },
+  "message": "OK"
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/notifications/unread-count [32m200[0m 0.922 ms - 78[0m
+[STATS] lawyerId=2 reservations=3 paid=1 revenue=700 pending=1
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:55 PM] GET /api/lawyers/me/stats
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "total_clients": 1,
+    "active_clients": 1,
+    "audiences_today": 0,
+    "new_requests": 1,
+    "closed_cases": 1,
+    "dossiers_gagnes": 1,
+    "total_revenue_month": 700,
+    "total_revenue_year": 700,
+    "average_rating": 4.9,
+    "revenue_change": 0,
+    "clients_change": 0,
+    "rating_change": 0,
+    "requests_change": 0,
+    "monthly_revenue": [
+      {
+        "month": "Jan",
+        "amount": 0
+      },
+      {
+        "month": "Fév",
+        "amount": 0
+      },
+      {
+        "month": "Mar",
+        "amount": 0
+      },
+      {
+        "month": "Avr",
+        "amount": 0
+      },
+      {
+        "month": "Mai",
+        "amount": 0
+      },
+      {
+        "month": "Juin",
+        "amount": 700
+      },
+      {
+        "month": "Juil",
+        "amount": 0
+      },
+      {
+        "month": "Août",
+        "amount": 0
+      },
+      {
+        "month": "Sep",
+        "amount": 0
+      },
+      {
+        "month": "Oct",
+        "amount": 0
+      },
+      {
+        "month": "Nov",
+        "amount": 0
+      },
+      {
+        "month": "Déc",
+        "amount": 0
+      }
+    ]
+  },
+  "message": "OK",
+  "total": 1
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/lawyers/me/stats [32m200[0m 1.107 ms - 1178[0m
+[CONSULTATIONS] lawyerId=2 returning 3 items
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:32:56 PM] GET /api/avocat/consultations/recent
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "res_001",
+      "client_name": "Alice Martin",
+      "legal_case": "Droit de la Famille",
+      "date": "2026-06-19T14:30:00",
+      "price": 350,
+      "status": "En attente"
+    },
+    {
+      "id": "res_002",
+      "client_name": "Robert Brown",
+      "legal_case": "Droit du Travail",
+      "date": "2026-06-18T10:00:00",
+      "price": 700,
+      "status": "Terminé"
+    },
+    {
+      "id": "res_003",
+      "client_name": "Claire Martin",
+      "legal_case": "Droit des Affaires",
+      "date": "2026-06-17T16:45:00",
+      "price": 150,
+      "status": "Refusé"
+    }
+  ],
+  "message": "OK",
+  "total": 3
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/avocat/consultations/recent [32m200[0m 1.989 ms - 668[0m
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+[4:33:01 PM] GET /api/notifications/unread-count
+Status: ✅ 200 OK
+Response Body:
+{
+  "success": true,
+  "data": {
+    "unreadCount": 0
+  },
+  "message": "OK"
+}
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+[0mGET /api/notifications/unread-count [32m200[0m 0.407 ms - 78[0m

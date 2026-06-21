@@ -10,9 +10,10 @@ import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.screens.shared.LawyerSession
-import com.example.client_mobile.screens.shared.NotificationViewModel
 import com.google.gson.Gson
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -60,6 +61,8 @@ class LawyerDashboardViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private var pollingJob: Job? = null
+
     /** Retry fetching consultations after a network failure. Called from the 'Réessayer' button. */
     fun retryConsultations() {
         viewModelScope.launch { fetchRecentConsultations() }
@@ -67,30 +70,42 @@ class LawyerDashboardViewModel : ViewModel() {
 
     fun clearError() { _errorMessage.value = null; _isError.value = false }
 
-    init { fetch() }
+    init { fetch(); startPolling() }
 
-    fun fetch() {
-        viewModelScope.launch {
-            // RBAC guard: only lawyers may call these endpoints
-            if (!TokenManager.isLoggedIn() || TokenManager.getUserType() != "lawyer") {
-                _isRefreshing.value = false
-                return@launch
+    fun startPolling() {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                delay(15_000L)
+                fetchInternal(skipProfile = true)
             }
-            _isRefreshing.value = true
-            // fetchStats() also populates _revenueMonthly from the embedded
-            // monthly_revenue array, so no separate revenue job is needed.
-            val profileJob       = async { fetchProfile() }
+        }
+    }
+
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
+
+    fun fetch() { viewModelScope.launch { fetchInternal(skipProfile = false) } }
+
+    private suspend fun fetchInternal(skipProfile: Boolean = false) {
+        if (!TokenManager.isLoggedIn() || TokenManager.getUserType() != "lawyer") {
+            _isRefreshing.value = false
+            return
+        }
+        _isRefreshing.value = true
+        Log.d("DashboardVM", "Fetching dashboard data (skipProfile=$skipProfile)")
+        kotlinx.coroutines.coroutineScope {
+            val profileJob       = if (!skipProfile) async { fetchProfile() } else null
             val statsJob         = async { fetchStats() }
             val consultationsJob = async { fetchRecentConsultations() }
-            profileJob.await()
+            profileJob?.await()
             statsJob.await()
             consultationsJob.await()
-
-            // Trigger notification sync
-            NotificationViewModel().fetch()
-
-            _isRefreshing.value = false
         }
+        Log.d("DashboardVM", "Dashboard data fetched: profile=${_profile.value?.fullName}, stats=${_stats.value != null}, consultations=${_recentConsultations.value.size}")
+        _isRefreshing.value = false
     }
 
     /**

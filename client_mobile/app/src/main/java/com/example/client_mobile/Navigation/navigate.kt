@@ -216,7 +216,8 @@ fun AppNavigation() {
                 onNavigateToLawyerProfile = { navController.navigate(Route.AvocatProfile.route) { launchSingleTop = true } },
                 onNavigateToNotifications = { navController.navigate(if (isLawyer) Route.Notifications.createRoute("lawyer") else Route.Notifications.createRoute("user")) },
                 onNavigateToChat          = { convId -> navController.navigate(Route.Chat.createRoute(convId)) },
-                onNavigateToRequests      = { navController.navigate(Route.LawyerRequests.route) },
+                onNavigateToRequests = { navController.navigate(Route.LawyerRequests.route) },
+                onNavigateToReservations = { navController.navigate(Route.LawyerReservations.route) },
                 onNavigateToPayments      = { navController.navigate(Route.LawyerPayments.createRoute(lawyerId)) },
                 onNavigateToCreator       = { navController.navigate(Route.LawyerCreator.route) { launchSingleTop = true } },
                 onNavigateToUserProfile   = { navController.navigate(Route.UserProfile.route) { launchSingleTop = true } },
@@ -224,6 +225,7 @@ fun AppNavigation() {
                 onNavigateToLawyerDetail  = { lawyerId -> navController.navigate(Route.LawyerDetail.createRoute(lawyerId)) },
                 onNavigateToCategory      = { domaine -> navController.navigate(Route.LawyerList.createRoute(android.net.Uri.encode(domaine))) },
                 onNavigateToAppointments  = { navController.navigate(Route.Appointments.route) },
+                onNavigateToClientReservations = { navController.navigate(Route.ClientReservations.route) },
                 onNavigateToDocuments     = { navController.navigate(Route.DocumentVault.route) },
                 onNavigateToFacturation   = { navController.navigate(Route.Billing.createRoute(clientId)) },
                 onNavigateToDossier       = { caseId -> navController.navigate(Route.DossierDetail.createRoute(caseId)) }
@@ -249,6 +251,13 @@ fun AppNavigation() {
 
         composable(Route.LawyerRequests.route) {
             LawyerRequestsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Route.LawyerReservations.route) {
+            LawyerReservationsScreen(
+                onBack = { navController.popBackStack() },
+                onChat = { resId -> navController.navigate(Route.ReservationChat.createRoute(resId)) }
+            )
         }
 
         composable(
@@ -318,6 +327,7 @@ fun AppNavigation() {
         }
 
         composable(Route.Appointments.route) { AppointmentsScreen(onBack = { navController.popBackStack() }) }
+        composable(Route.ClientReservations.route) { ClientReservationsScreen(onBack = { navController.popBackStack() }) }
         composable(Route.DocumentVault.route) { DocumentVaultScreen(onBack = { navController.popBackStack() }) }
         composable(
             route = Route.Billing.route,
@@ -355,6 +365,17 @@ fun AppNavigation() {
                 lawyerId = lawyerId,
                 onBack = { navController.popBackStack() },
                 onNavigateToChat = { convId -> navController.navigate(Route.Chat.createRoute(convId)) }
+            )
+        }
+
+        composable(
+            route = Route.ReservationChat.route,
+            arguments = listOf(navArgument("reservationId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val reservationId = backStackEntry.arguments?.getString("reservationId") ?: ""
+            ReservationChatScreen(
+                reservationId = reservationId,
+                onBack = { navController.popBackStack() }
             )
         }
 
