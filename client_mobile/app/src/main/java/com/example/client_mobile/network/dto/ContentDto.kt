@@ -55,7 +55,10 @@ data class LikeResponseDto(
 data class SendMessageRequest(
     @SerializedName("conversationId") val conversationId: String,
     @SerializedName("content")        val content:        String,
-    @SerializedName("type")           val type:           String = "text"
+    @SerializedName("type")           val type:           String = "text",
+    @SerializedName("documentUrl")    val documentUrl:    String? = null,
+    @SerializedName("documentName")   val documentName:   String? = null,
+    @SerializedName("documentMime")   val documentMime:   String? = null
 )
 
 // Response from POST /api/messages/send

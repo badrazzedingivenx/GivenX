@@ -110,20 +110,20 @@
     {
       "id": 6,
       "userId": 6,
-      "full_name": "Alice Martin",
-      "avatar_url": "https://randomuser.me/api/portraits/women/6.jpg",
-      "phone": "+33 7 11 22 33 44",
+      "full_name": "Tarik oulehiane",
+      "avatar_url": "/data/user/0/com.example.client_mobile/files/profile_1782053713817.jpg",
+      "phone": "+212 6464646464",
       "role": "CLIENT",
-      "address": "15 Rue de Rivoli, Paris"
+      "address": "Casablanca"
     },
     {
       "id": 7,
       "userId": 7,
       "full_name": "Robert Brown",
       "avatar_url": "https://randomuser.me/api/portraits/men/7.jpg",
-      "phone": "+33 7 22 33 44 55",
+      "phone": "+33 2145365485",
       "role": "CLIENT",
-      "address": "London, UK"
+      "address": "Paris"
     },
     {
       "id": 8,
@@ -449,6 +449,106 @@
       "name": "images.jpeg",
       "type": "jpeg",
       "id": "sCrJz7d"
+    },
+    {
+      "name": "cin",
+      "type": "",
+      "id": "53t8cEz"
+    },
+    {
+      "name": "councourss",
+      "type": "",
+      "id": "FKoutbx"
+    },
+    {
+      "name": "lisence",
+      "type": "",
+      "id": "iRL5UJg"
+    },
+    {
+      "name": "Image",
+      "type": "",
+      "id": "KN5usCS"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "2TBLNg6"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "SWp4awA"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "aoinf-g"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "ENrHCik"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "9VrS-JP"
+    },
+    {
+      "name": "document",
+      "type": "",
+      "id": "0Zxvr4a"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "IaS2zvw"
+    },
+    {
+      "name": "focument",
+      "type": "",
+      "id": "LGJL5Vj"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "uuGKhZG"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "_Z0enHY"
+    },
+    {
+      "name": "document",
+      "type": "",
+      "id": "aLg6z6x"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "aeQlm1b"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "z6UzIiX"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "I_QUYo7"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "RYEbq7G"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "yvzl9-B"
     }
   ],
   "dossiers": [
@@ -559,6 +659,21 @@
       "conversationId": "conv_001",
       "type": "text",
       "id": "RwJ7Rsq"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_002",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782063404502_image.jpg",
+      "type": "text",
+      "id": "5WHF0SD"
+    },
+    {
+      "content": "HEY ",
+      "conversationId": "TARIK_OULE_4",
+      "type": "text",
+      "id": "goMLYbv"
     }
   ],
   "notifications": [

@@ -52,7 +52,7 @@ object ConversationRepository {
         ).also { conversations.add(it) }
     }
 
-    fun sendUserMessage(conversationId: String, content: String, senderName: String, tempId: String? = null) {
+    fun sendUserMessage(conversationId: String, content: String, senderName: String, tempId: String? = null, document: VaultDocument? = null) {
         val time = currentTime()
         getMessages(conversationId).add(
             ChatMessage(
@@ -60,13 +60,14 @@ object ConversationRepository {
                 content = content,
                 senderName = senderName,
                 timestamp = time,
-                isFromUser = true
+                isFromUser = true,
+                document = document
             )
         )
         updateMeta(conversationId, content, time)
     }
 
-    fun sendLawyerMessage(conversationId: String, content: String, senderName: String, tempId: String? = null) {
+    fun sendLawyerMessage(conversationId: String, content: String, senderName: String, tempId: String? = null, document: VaultDocument? = null) {
         val time = currentTime()
         getMessages(conversationId).add(
             ChatMessage(
@@ -74,7 +75,8 @@ object ConversationRepository {
                 content = content,
                 senderName = senderName,
                 timestamp = time,
-                isFromUser = false
+                isFromUser = false,
+                document = document
             )
         )
         updateMeta(conversationId, content, time)

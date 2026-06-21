@@ -94,7 +94,7 @@ class UserViewModel : ViewModel() {
      * Sends PATCH /api/auth/me and, on success, updates [profile] directly
      * from the server response — no second fetch required.
      */
-    fun saveProfile(fullName: String, phone: String, address: String) {
+    fun saveProfile(context: android.content.Context, fullName: String, phone: String, address: String, imageUri: android.net.Uri? = null) {
         if (!TokenManager.isLoggedIn()) return
         _isSaving.value = true
         viewModelScope.launch {
@@ -105,11 +105,31 @@ class UserViewModel : ViewModel() {
                 val currentProfile = profileResp.body()?.data?.firstOrNull()
                 
                 if (currentProfile != null) {
-                    val updates = mutableMapOf(
+                    val updates = mutableMapOf<String, String>(
                         "full_name" to fullName.trim(),
                         "phone" to phone.trim(),
                         "address" to address.trim()
                     )
+
+                    var newAvatarPath: String? = null
+                    if (imageUri != null) {
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(imageUri)
+                            if (inputStream != null) {
+                                val fileName = "profile_${System.currentTimeMillis()}.jpg"
+                                val file = java.io.File(context.filesDir, fileName)
+                                val outputStream = java.io.FileOutputStream(file)
+                                inputStream.copyTo(outputStream)
+                                inputStream.close()
+                                outputStream.close()
+                                newAvatarPath = file.absolutePath
+                                updates["avatar_url"] = newAvatarPath
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                    
                     val updateResp = RetrofitClient.authApi.patchProfile(currentProfile.id, updates)
                     
                     if (updateResp.isSuccessful) {
@@ -117,7 +137,8 @@ class UserViewModel : ViewModel() {
                         _profile.value = (_profile.value ?: UserDto()).copy(
                             fullName = updatedProfile?.fullName ?: fullName.trim(),
                             phone = updatedProfile?.phone ?: phone.trim(),
-                            address = updatedProfile?.address ?: address.trim()
+                            address = updatedProfile?.address ?: address.trim(),
+                            avatarUrl = updatedProfile?.avatarUrl ?: newAvatarPath ?: _profile.value?.avatarUrl
                         )
                         _updateSuccess.value = true
                     } else {

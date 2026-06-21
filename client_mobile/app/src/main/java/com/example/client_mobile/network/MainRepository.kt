@@ -83,20 +83,25 @@ object MainRepository {
         content: String,
         senderName: String,
         isFromUser: Boolean,
-        tempId: String? = null
+        tempId: String? = null,
+        document: com.example.client_mobile.screens.shared.VaultDocument? = null
     ): SendMessageResponseDto? {
         // Optimistic local insert
         if (isFromUser) {
-            ConversationRepository.sendUserMessage(conversationId, content, senderName, tempId)
+            ConversationRepository.sendUserMessage(conversationId, content, senderName, tempId, document)
         } else {
-            ConversationRepository.sendLawyerMessage(conversationId, content, senderName, tempId)
+            ConversationRepository.sendLawyerMessage(conversationId, content, senderName, tempId, document)
         }
 
         return try {
-            val response = RetrofitClient.haqApi.sendMessage(
-                conversationId,
-                SendMessageRequest(conversationId = conversationId, content = content)
+            val request = SendMessageRequest(
+                conversationId = conversationId,
+                content = content,
+                documentUrl = document?.urlOrUri,
+                documentName = document?.name,
+                documentMime = document?.mimeType
             )
+            val response = RetrofitClient.haqApi.sendMessage(conversationId, request)
             if (response.isSuccessful) response.body()?.data else null
         } catch (_: Exception) { null }
     }

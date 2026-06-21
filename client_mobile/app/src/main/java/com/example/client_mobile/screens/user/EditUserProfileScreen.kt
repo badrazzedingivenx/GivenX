@@ -43,6 +43,7 @@ fun EditUserProfileScreen(
     val updateSuccess by userViewModel.updateSuccess.collectAsStateWithLifecycle()
     val errorMessage by userViewModel.errorMessage.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(updateSuccess) {
         if (updateSuccess) {
@@ -115,6 +116,13 @@ fun EditUserProfileScreen(
                         if (selectedImageUri != null) {
                             AsyncImage(
                                 model = selectedImageUri,
+                                contentDescription = "Photo de profil",
+                                modifier = Modifier.size(88.dp).clip(CircleShape).border(2.dp, AppGoldColor, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else if (!profile?.effectiveAvatarUrl().isNullOrBlank()) {
+                            AsyncImage(
+                                model = profile?.effectiveAvatarUrl(),
                                 contentDescription = "Photo de profil",
                                 modifier = Modifier.size(88.dp).clip(CircleShape).border(2.dp, AppGoldColor, CircleShape),
                                 contentScale = ContentScale.Crop
@@ -215,7 +223,7 @@ fun EditUserProfileScreen(
                     Button(
                         onClick = {
                             showSaveDialog = false
-                            userViewModel.saveProfile(fullName, phone, address)
+                            userViewModel.saveProfile(context, fullName, phone, address, selectedImageUri)
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)

@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PictureAsPdf
 
 /**
  * Fetches historical messages for [conversationId] from
@@ -52,12 +56,30 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                 val response = RetrofitClient.haqApi.getChatDetails(conversationId)
                 if (response.isSuccessful && response.body()?.success == true) {
                     val messages = response.body()?.data?.mapIndexed { index, dto ->
+                        val doc = if (dto.documentUrl != null) {
+                            val ext = dto.documentName?.substringAfterLast('.', "")?.lowercase() ?: ""
+                            val icon = when (ext) {
+                                "jpg", "jpeg", "png" -> Icons.Default.Image
+                                "pdf"                -> Icons.Default.PictureAsPdf
+                                else                 -> Icons.AutoMirrored.Filled.InsertDriveFile
+                            }
+                            VaultDocument(
+                                id = 0L,
+                                name = dto.documentName ?: "Document",
+                                addedDate = "",
+                                icon = icon,
+                                urlOrUri = dto.documentUrl,
+                                mimeType = dto.documentMime
+                            )
+                        } else null
+
                         ChatMessage(
                             id         = dto.id.ifBlank { "${dto.senderId}_${dto.effectiveTime()}_$index" },
                             content    = dto.effectiveContent(),
                             senderName = dto.senderName.ifBlank { dto.senderId },
                             timestamp  = dto.effectiveTime(),
-                            isFromUser = dto.isFromUser
+                            isFromUser = dto.isFromUser,
+                            document   = doc
                         )
                     } ?: emptyList()
                     ConversationRepository.replaceMessagesFromApi(conversationId, messages)
@@ -121,17 +143,37 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
         }
     }
 
-    fun sendDocumentMessage(document: VaultDocument, senderName: String, isFromUser: Boolean) {
-        if (conversationId.isBlank()) return
+    private suspend fun copyUriToInternalStorage(context: android.content.Context, uriString: String, extension: String): String {
+        val uri = android.net.Uri.parse(uriString)
+        if (uri.scheme != "content") return uriString // Already a file path or URL
+        
+        val fileName = "doc_${java.util.UUID.randomUUID()}.$extension"
+        val file = java.io.File(context.filesDir, fileName)
+        
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            java.io.FileOutputStream(file).use { output ->
+                input.copyTo(output)
+            }
+        } ?: throw Exception("Impossible d'ouvrir le fichier")
+        
+        return file.absolutePath
+    }
 
-        val safeName    = document.name.takeIf { it.isNotBlank() } ?: "Document"
-        val safeUri     = document.urlOrUri
-        val safeMime    = document.mimeType
-        val messageText = "\uD83D\uDCCE Document partag\u00e9: $safeName"
-        val tempId      = java.util.UUID.randomUUID().toString()
+    fun sendDocumentMessage(document: VaultDocument?, senderName: String?, isFromUser: Boolean, context: android.content.Context) {
+        if (conversationId.isBlank() || document == null) return
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
+                val safeName    = document.name.takeIf { it.isNotBlank() } ?: "Document"
+                val safeMime    = document.mimeType ?: "*/*"
+                val extension   = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(safeMime) ?: "bin"
+                
+                // 1. Copy to internal storage securely to prevent SecurityException
+                val safeUri = copyUriToInternalStorage(context, document.urlOrUri, extension)
+
+                val messageText = ""
+                val tempId      = java.util.UUID.randomUUID().toString()
+
                 val safeDocument = document.copy(
                     name     = safeName,
                     urlOrUri = safeUri,
@@ -141,33 +183,26 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                 val chatMessage = ChatMessage(
                     id         = tempId,
                     content    = messageText,
-                    senderName = senderName.ifBlank { "Moi" },
+                    senderName = senderName?.ifBlank { "Moi" } ?: "Moi",
                     timestamp  = time,
                     isFromUser = isFromUser,
                     document   = safeDocument
                 )
-                withContext(Dispatchers.Main) {
-                    ConversationRepository.getMessages(conversationId).add(chatMessage)
+                try {
+                    MainRepository.sendMessage(
+                        conversationId = conversationId,
+                        content        = messageText,
+                        senderName     = senderName?.ifBlank { "Moi" } ?: "Moi",
+                        isFromUser     = isFromUser,
+                        tempId         = tempId,
+                        document       = safeDocument
+                    )
+                } catch (e: Exception) {
+                    Log.w("ChatViewModel", "Server send failed (doc stays local): ${e.message}")
                 }
-                withContext(Dispatchers.IO) {
-                    try {
-                        MainRepository.sendMessage(
-                            conversationId = conversationId,
-                            content        = messageText,
-                            senderName     = senderName.ifBlank { "Moi" },
-                            isFromUser     = isFromUser,
-                            tempId         = tempId
-                        )
-                    } catch (e: Exception) {
-                        Log.w("ChatViewModel", "Server send failed (doc stays local): ${e.message}")
-                    }
-                }
-            } catch (e: SecurityException) {
-                Log.e("ChatViewModel", "URI SecurityException: ${e.message}")
-                _userMessage.value = "Erreur de permission lors de l'envoi du fichier"
             } catch (e: Exception) {
-                Log.e("ChatViewModel", "Unexpected error sending doc: ${e.message}")
-                _userMessage.value = "Erreur lors de l'envoi du fichier"
+                Log.e("ChatError", "Crash avoided", e)
+                _errorMessage.value = "Impossible d'envoyer le document"
             }
         }
     }
