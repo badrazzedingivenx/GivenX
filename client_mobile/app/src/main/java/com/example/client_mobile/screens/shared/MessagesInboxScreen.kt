@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -153,11 +155,14 @@ fun MessagesInboxScreen(
                         bottom = paddingValues.calculateBottomPadding() + 100.dp
                     )
             ) {
-                MessagesInboxContent(
-                    conversations    = conversations,
-                    isLawyer         = isLawyer,
-                    onNavigateToChat = onNavigateToChat
-                )
+                if (!isLoading || conversations.isNotEmpty()) {
+                    MessagesInboxContent(
+                        conversations    = conversations,
+                        isLawyer         = isLawyer,
+                        onNavigateToChat = onNavigateToChat,
+                        onDeleteConversation = { conversationViewModel.deleteConversation(it) }
+                    )
+                }
             }
 
             SnackbarHost(
@@ -260,7 +265,8 @@ private fun SkeletonConversationCard() {
 private fun MessagesInboxContent(
     conversations: List<Conversation>,
     isLawyer: Boolean,
-    onNavigateToChat: (String) -> Unit
+    onNavigateToChat: (String) -> Unit,
+    onDeleteConversation: (String) -> Unit
 ) {
     if (conversations.isEmpty()) {
         InboxEmptyState(isLawyer = isLawyer)
@@ -303,12 +309,50 @@ private fun MessagesInboxContent(
                     ),
                     label = "card_alpha_$index"
                 )
-                ConversationCard(
-                    conversation = conv,
-                    isLawyer     = isLawyer,
-                    modifier     = Modifier.graphicsLayer(alpha = enterAlpha),
-                    onClick      = { onNavigateToChat(conv.id) }
+                val dismissState = rememberSwipeToDismissBoxState(
+                    confirmValueChange = { dismissValue ->
+                        if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                            onDeleteConversation(conv.id)
+                            true
+                        } else {
+                            false
+                        }
+                    }
                 )
+                
+                SwipeToDismissBox(
+                    state = dismissState,
+                    enableDismissFromStartToEnd = false,
+                    backgroundContent = {
+                        val color by animateColorAsState(
+                            targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 
+                                Color(0xFFD32F2F) else Color(0xFFEF5350),
+                            label = "delete_color"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(color)
+                                .padding(end = 24.dp),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Supprimer la conversation",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                ) {
+                    ConversationCard(
+                        conversation = conv,
+                        isLawyer     = isLawyer,
+                        modifier     = Modifier.graphicsLayer(alpha = enterAlpha),
+                        onClick      = { onNavigateToChat(conv.id) }
+                    )
+                }
             }
 
             item { Spacer(Modifier.height(16.dp)) }
@@ -325,7 +369,8 @@ private fun InboxEmptyState(isLawyer: Boolean) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier          = Modifier.padding(horizontal = 32.dp)
         ) {
             // Icon container
             Box(
@@ -335,8 +380,8 @@ private fun InboxEmptyState(isLawyer: Boolean) {
                     .background(
                         Brush.radialGradient(
                             colors = listOf(
-                                Color(0xFF1B4332).copy(alpha = 0.12f),
-                                Color(0xFF0F291E).copy(alpha = 0.05f)
+                                Color.LightGray.copy(alpha = 0.2f),
+                                Color.LightGray.copy(alpha = 0.05f)
                             )
                         )
                     ),
@@ -345,12 +390,12 @@ private fun InboxEmptyState(isLawyer: Boolean) {
                 Icon(
                     imageVector        = Icons.Default.ChatBubbleOutline,
                     contentDescription = null,
-                    tint               = AppDarkGreen.copy(alpha = 0.35f),
+                    tint               = Color.LightGray,
                     modifier           = Modifier.size(40.dp)
                 )
             }
             Text(
-                text       = "Aucune conversation",
+                text       = if (isLawyer) "Aucune conversation" else "Aucun message pour le moment",
                 fontSize   = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 color      = NameColor
@@ -359,10 +404,11 @@ private fun InboxEmptyState(isLawyer: Boolean) {
                 text    = if (isLawyer)
                     "Les messages de vos clients apparaîtront ici."
                 else
-                    "Consultez un avocat et commencez une discussion.",
+                    "Réservez une consultation avec un avocat pour commencer à discuter.",
                 fontSize    = 14.sp,
                 color       = SnippetColor,
-                lineHeight  = 20.sp
+                lineHeight  = 20.sp,
+                textAlign   = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }
@@ -470,22 +516,26 @@ private fun ConversationCard(
                         .background(AvatarBg),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (conversation.avatarUrl.isNotBlank()) {
-                        AsyncImage(
-                            model              = conversation.avatarUrl,
-                            contentDescription = otherName,
-                            contentScale       = ContentScale.Crop,
-                            modifier           = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                        )
-                    } else {
+                    val fallbackInitials = @Composable {
                         Text(
                             text       = initials,
                             fontSize   = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color      = AvatarInitialColor
                         )
+                    }
+
+                    if (conversation.avatarUrl.isNotBlank()) {
+                        coil.compose.SubcomposeAsyncImage(
+                            model              = conversation.avatarUrl,
+                            contentDescription = otherName,
+                            contentScale       = ContentScale.Crop,
+                            modifier           = Modifier.fillMaxSize().clip(CircleShape),
+                            error              = { fallbackInitials() },
+                            loading            = { fallbackInitials() }
+                        )
+                    } else {
+                        fallbackInitials()
                     }
                 }
             }

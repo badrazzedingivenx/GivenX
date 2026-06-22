@@ -94,14 +94,62 @@ object MainRepository {
         }
 
         return try {
+            // Attempt to map local placeholder IDs to real API IDs
+            var actualConversationId = conversationId
+            if (actualConversationId.contains("_")) {
+                val localConvo = ConversationRepository.conversations.find { it.id == conversationId }
+                if (localConvo != null) {
+                    val apiConvo = ConversationRepository.conversations.find { 
+                        it.otherPartyName == localConvo.otherPartyName && !it.id.contains("_") 
+                    }
+                    if (apiConvo != null) {
+                        actualConversationId = apiConvo.id
+                    } else {
+                        // Persist conversation to the server!
+                        val newConvoId = "conv_${System.currentTimeMillis()}"
+                        val clientIdStr = com.example.client_mobile.network.TokenManager.getUserIdInt().toString()
+                        val lawyerIdStr = conversationId.substringAfterLast("_")
+                        
+                        val newConvo = com.example.client_mobile.network.dto.ConversationApiDto(
+                            id = newConvoId,
+                            client = com.example.client_mobile.network.dto.ConvoParticipant(id = clientIdStr, fullName = senderName),
+                            lawyer = com.example.client_mobile.network.dto.ConvoParticipant(id = lawyerIdStr, fullName = localConvo.otherPartyName, avatarUrl = localConvo.avatarUrl),
+                            createdAt = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date())
+                        )
+                        
+                        try {
+                            val createResponse = RetrofitClient.haqApi.createConversation(newConvo)
+                            if (createResponse.isSuccessful) {
+                                val createdConvo = createResponse.body()?.data
+                                if (createdConvo != null && createdConvo.id.isNotBlank()) {
+                                    actualConversationId = createdConvo.id
+                                    // IMPORTANT: Replace the local mock ID with the real server ID so the UI state matches the backend
+                                    ConversationRepository.replaceId(conversationId, actualConversationId)
+                                } else {
+                                    actualConversationId = newConvoId
+                                    ConversationRepository.replaceId(conversationId, actualConversationId)
+                                }
+                            } else {
+                                actualConversationId = newConvoId
+                                ConversationRepository.replaceId(conversationId, actualConversationId)
+                            }
+                        } catch (e: Exception) {
+                            // Fallback to local if server fails to create
+                            actualConversationId = newConvoId
+                            ConversationRepository.replaceId(conversationId, actualConversationId)
+                        }
+                    }
+                }
+            }
+
             val request = SendMessageRequest(
-                conversationId = conversationId,
+                conversationId = actualConversationId,
                 content = content,
                 documentUrl = document?.urlOrUri,
                 documentName = document?.name,
                 documentMime = document?.mimeType
             )
-            val response = RetrofitClient.haqApi.sendMessage(conversationId, request)
+            val response = RetrofitClient.haqApi.sendMessage(actualConversationId, request)
             if (response.isSuccessful) response.body()?.data else null
         } catch (_: Exception) { null }
     }

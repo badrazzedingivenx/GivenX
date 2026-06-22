@@ -364,7 +364,7 @@ fun AppNavigation() {
             LawyerDetailScreen(
                 lawyerId = lawyerId,
                 onBack = { navController.popBackStack() },
-                onNavigateToChat = { convId -> navController.navigate(Route.Chat.createRoute(convId)) }
+                onNavigateToChat = { convId, name, avatar -> navController.navigate(Route.Chat.createRoute(convId, name, avatar)) }
             )
         }
 
@@ -381,10 +381,22 @@ fun AppNavigation() {
 
         composable(
             route = Route.Chat.route,
-            arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("conversationId") { type = NavType.StringType },
+                navArgument("lawyerName") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("avatarUrl") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
-            ChatScreen(conversationId = conversationId, isLawyer = false, onBack = { navController.popBackStack() })
+            val lawyerName = backStackEntry.arguments?.getString("lawyerName") ?: ""
+            val avatarUrl = backStackEntry.arguments?.getString("avatarUrl") ?: ""
+            ChatScreen(
+                conversationId = conversationId,
+                passedLawyerName = lawyerName,
+                passedAvatarUrl = avatarUrl,
+                isLawyer = false,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

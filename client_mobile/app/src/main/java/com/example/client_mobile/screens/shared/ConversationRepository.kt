@@ -22,7 +22,9 @@ data class Conversation(
     val lastMessage: String = "",
     val timestamp: String = "",
     val unreadCount: Int = 0,
-    val avatarUrl: String = ""
+    val avatarUrl: String = "",
+    val lawyerId: String = "",
+    val clientId: String = ""
 )
 
 // ─── Conversation Repository ──────────────────────────────────────────────────
@@ -45,11 +47,19 @@ object ConversationRepository {
         avatarUrl: String = ""
     ): Conversation {
         val id = "${clientName.replace(" ", "_")}_$lawyerId"
-        return conversations.find { it.id == id } ?: Conversation(
+        // Prevent duplicate local conversations for the same lawyer
+        return conversations.find { it.otherPartyName == lawyerName || it.id == id } ?: Conversation(
             id = id,
             otherPartyName = lawyerName,
-            avatarUrl = avatarUrl
+            avatarUrl = avatarUrl,
+            lawyerId = lawyerId,
+            clientId = com.example.client_mobile.network.TokenManager.getUserIdInt().toString()
         ).also { conversations.add(it) }
+    }
+
+    fun removeConversation(conversationId: String) {
+        conversations.removeAll { it.id == conversationId }
+        messageMap.remove(conversationId)
     }
 
     fun sendUserMessage(conversationId: String, content: String, senderName: String, tempId: String? = null, document: VaultDocument? = null) {
@@ -82,6 +92,14 @@ object ConversationRepository {
         updateMeta(conversationId, content, time)
     }
 
+    fun replaceId(oldId: String, newId: String) {
+        val idx = conversations.indexOfFirst { it.id == oldId }
+        if (idx >= 0) {
+            conversations[idx] = conversations[idx].copy(id = newId)
+            messageMap[newId] = messageMap.remove(oldId) ?: mutableStateListOf()
+        }
+    }
+
     fun markRead(conversationId: String) {
         val idx = conversations.indexOfFirst { it.id == conversationId }
         if (idx >= 0) conversations[idx] = conversations[idx].copy(unreadCount = 0)
@@ -93,10 +111,21 @@ object ConversationRepository {
      * is not yet in the API response is appended after.
      */
     fun replaceFromApi(items: List<Conversation>) {
-        val apiIds = items.map { it.id }.toSet()
-        val localOnly = conversations.filter { it.id !in apiIds }
+        val apiNames = items.map { it.otherPartyName }.toSet()
+        val localOnly = conversations.filter { it.otherPartyName !in apiNames }
+        
+        val mergedItems = items.map { apiConv ->
+            val localConv = conversations.find { it.otherPartyName == apiConv.otherPartyName || it.id == apiConv.id }
+            if (localConv != null && localConv.timestamp > apiConv.timestamp && localConv.lastMessage.isNotBlank()) {
+                // If local state has a newer message (e.g. just sent but not yet on server), merge it!
+                apiConv.copy(lastMessage = localConv.lastMessage, timestamp = localConv.timestamp)
+            } else {
+                apiConv
+            }
+        }
+        
         conversations.clear()
-        conversations.addAll(items)
+        conversations.addAll(mergedItems)
         conversations.addAll(localOnly)
     }
 
@@ -105,13 +134,16 @@ object ConversationRepository {
      * Locally-sent messages that are not yet returning from the API are kept.
      */
     fun replaceMessagesFromApi(conversationId: String, items: List<ChatMessage>) {
-        Log.d("ConversationRepo", "Replacing messages for $conversationId. API count: ${items.size}")
-        val existing = getMessages(conversationId)
-        val apiIds   = items.map { it.id }.toSet()
-        val localOnly = existing.filter { it.id !in apiIds }
-        existing.clear()
-        existing.addAll(items)
-        existing.addAll(localOnly)
+        val list = getMessages(conversationId)
+        
+        // Rigorously deduplicate by ID, prioritizing server items over local ones
+        val combined = (items + list).distinctBy { it.id }
+        
+        // Also distinct by content + time for optimistic dupes where the UUID didn't sync
+        val fullyDeduplicated = combined.distinctBy { it.content + it.timestamp }
+        
+        list.clear()
+        list.addAll(fullyDeduplicated)
     }
 
     private fun updateMeta(conversationId: String, content: String, time: String) {

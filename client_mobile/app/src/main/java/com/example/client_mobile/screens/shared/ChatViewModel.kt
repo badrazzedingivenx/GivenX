@@ -25,7 +25,19 @@ import androidx.compose.material.icons.filled.PictureAsPdf
  * which inserts them optimistically into [ConversationRepository] before the
  * API round-trip completes.
  */
-class ChatViewModel(private val conversationId: String) : ViewModel() {
+class ChatViewModel(private val savedStateHandle: androidx.lifecycle.SavedStateHandle) : ViewModel() {
+
+    val conversationId: String = savedStateHandle.get<String>("conversationId") ?: ""
+
+    // Persisted UI State for Header
+    val headerName: StateFlow<String> = savedStateHandle.getStateFlow(
+        "headerName", 
+        savedStateHandle.get<String>("lawyerName") ?: ""
+    )
+    val headerAvatarUrl: StateFlow<String> = savedStateHandle.getStateFlow(
+        "headerAvatarUrl", 
+        savedStateHandle.get<String>("avatarUrl") ?: ""
+    )
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -36,11 +48,26 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
     private val _userMessage = MutableStateFlow<String?>(null)
     val userMessage: StateFlow<String?> = _userMessage
 
+    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val messages: StateFlow<List<ChatMessage>> = _messages
+
     fun clearError() { _errorMessage.value = null }
     fun clearUserMessage() { _userMessage.value = null }
 
     init {
         Log.d("ChatViewModel", "Initializing for conversationId: $conversationId")
+        
+        // 1. If Nav arguments were empty (e.g. from Inbox), fallback to Repository
+        if (headerName.value.isBlank()) {
+            val localConv = ConversationRepository.conversations.find { it.id == conversationId }
+            if (localConv != null) {
+                savedStateHandle["headerName"] = localConv.otherPartyName
+                savedStateHandle["headerAvatarUrl"] = localConv.avatarUrl
+            }
+        }
+
+        // 2. Seed with any existing local messages if available
+        _messages.value = ConversationRepository.getMessages(conversationId).toList()
         fetchMessages()
     }
 
@@ -55,7 +82,7 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
             try {
                 val response = RetrofitClient.haqApi.getChatDetails(conversationId)
                 if (response.isSuccessful && response.body()?.success == true) {
-                    val messages = response.body()?.data?.mapIndexed { index, dto ->
+                    val serverMessages = response.body()?.data?.mapIndexed { index, dto ->
                         val doc = if (dto.documentUrl != null) {
                             val ext = dto.documentName?.substringAfterLast('.', "")?.lowercase() ?: ""
                             val icon = when (ext) {
@@ -82,7 +109,20 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                             document   = doc
                         )
                     } ?: emptyList()
-                    ConversationRepository.replaceMessagesFromApi(conversationId, messages)
+                    
+                    // Strict Message Deduplication
+                    // We prioritize serverMessages (they come first).
+                    // We strictly deduplicate by ID, and then aggressively deduplicate
+                    // by document name or text content to wipe out local placeholders that lost sync.
+                    val combined = (serverMessages + _messages.value)
+                        .distinctBy { it.id }
+                        .distinctBy { msg ->
+                            val docName = msg.document?.name
+                            if (!docName.isNullOrBlank()) docName else msg.content
+                        }
+                    
+                    _messages.value = combined.sortedBy { it.timestamp }
+                    ConversationRepository.replaceMessagesFromApi(conversationId, combined)
                 } else {
                     _errorMessage.value = "Impossible de charger les messages."
                 }
@@ -96,12 +136,22 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
 
     /**
      * Sends [text] via POST /api/messages/send through [MainRepository].
-     * The local conversation list is updated optimistically — no need to
-     * call [ConversationRepository] directly from the UI.
      */
     fun send(text: String, senderName: String, isFromUser: Boolean) {
         if (text.isBlank() || conversationId.isBlank()) return
         val tempId = java.util.UUID.randomUUID().toString()
+        val time = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+        
+        // 1. Immediate Optimistic UI Update
+        val optimisticMsg = ChatMessage(
+            id         = tempId,
+            content    = text,
+            senderName = senderName.ifBlank { "Moi" },
+            timestamp  = time,
+            isFromUser = isFromUser
+        )
+        _messages.value = _messages.value + optimisticMsg
+
         viewModelScope.launch {
             val response = MainRepository.sendMessage(
                 conversationId = conversationId,
@@ -111,16 +161,17 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                 tempId         = tempId
             )
             
-            // Replace optimistic message with the real one from DB to prevent duplication
+            // 2. Safely update the placeholder with the real API response
             if (response != null) {
-                val messages = ConversationRepository.getMessages(conversationId)
-                val idx = messages.indexOfFirst { it.id == tempId }
-                if (idx != -1) {
-                    messages[idx] = messages[idx].copy(
-                        id = response.id.ifBlank { "${response.senderId}_${response.time}_new" },
-                        timestamp = response.time
-                    )
+                _messages.value = _messages.value.map { msg ->
+                    if (msg.id == tempId) {
+                        msg.copy(
+                            id = response.id.ifBlank { "${response.senderId}_${response.time}_new" },
+                            timestamp = response.time
+                        )
+                    } else msg
                 }
+                ConversationRepository.replaceMessagesFromApi(conversationId, _messages.value)
             }
         }
     }
@@ -130,10 +181,11 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
      * then best-effort deletes them from the json-server.
      */
     fun clearChat() {
-        val messages = ConversationRepository.getMessages(conversationId)
-        val idsToDelete = messages.map { it.id }.toList()
+        val idsToDelete = _messages.value.map { it.id }
         // 1. Instant UI update
-        messages.clear()
+        _messages.value = emptyList()
+        ConversationRepository.getMessages(conversationId).clear()
+        
         // 2. Best-effort server delete (json-server supports DELETE /messages/:id)
         viewModelScope.launch(Dispatchers.IO) {
             idsToDelete.forEach { id ->
@@ -180,7 +232,8 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                     mimeType = safeMime
                 )
                 val time = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
-                val chatMessage = ChatMessage(
+                
+                val optimisticMsg = ChatMessage(
                     id         = tempId,
                     content    = messageText,
                     senderName = senderName?.ifBlank { "Moi" } ?: "Moi",
@@ -188,8 +241,12 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                     isFromUser = isFromUser,
                     document   = safeDocument
                 )
+                
+                // Immediate Optimistic UI Update
+                _messages.value = _messages.value + optimisticMsg
+
                 try {
-                    MainRepository.sendMessage(
+                    val response = MainRepository.sendMessage(
                         conversationId = conversationId,
                         content        = messageText,
                         senderName     = senderName?.ifBlank { "Moi" } ?: "Moi",
@@ -197,6 +254,18 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
                         tempId         = tempId,
                         document       = safeDocument
                     )
+                    
+                    if (response != null) {
+                        _messages.value = _messages.value.map { msg ->
+                            if (msg.id == tempId) {
+                                msg.copy(
+                                    id = response.id.ifBlank { "${response.senderId}_${response.time}_new" },
+                                    timestamp = response.time
+                                )
+                            } else msg
+                        }
+                        ConversationRepository.replaceMessagesFromApi(conversationId, _messages.value)
+                    }
                 } catch (e: Exception) {
                     Log.w("ChatViewModel", "Server send failed (doc stays local): ${e.message}")
                 }
@@ -207,11 +276,4 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
         }
     }
 
-    // ── Factory ───────────────────────────────────────────────────────────────
-
-    class Factory(private val conversationId: String) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ChatViewModel(conversationId) as T
-    }
 }

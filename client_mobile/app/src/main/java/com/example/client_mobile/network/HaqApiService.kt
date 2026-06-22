@@ -233,7 +233,22 @@ interface HaqApiService {
 
     /** GET /conversations — all conversations for the authenticated user or lawyer. */
     @GET("conversations")
-    suspend fun getMessages(): Response<ApiResponse<List<ConversationApiDto>>>
+    suspend fun getMessages(
+        @Query("client.id") clientId: String? = null,
+        @Query("lawyer.id") lawyerId: String? = null
+    ): Response<ApiResponse<List<ConversationApiDto>>>
+
+    /** POST /conversations — initialize a conversation thread. */
+    @POST("conversations")
+    suspend fun createConversation(
+        @Body conversation: ConversationApiDto
+    ): Response<ApiResponse<ConversationApiDto>>
+
+    /** DELETE /conversations/{id} — delete a conversation thread completely. */
+    @DELETE("conversations/{id}")
+    suspend fun deleteConversation(
+        @Path("id") id: String
+    ): Response<ApiResponse<Unit>>
 
     /** GET /conversations/{id}/messages — historical messages for a conversation. */
     @GET("conversations/{id}/messages")

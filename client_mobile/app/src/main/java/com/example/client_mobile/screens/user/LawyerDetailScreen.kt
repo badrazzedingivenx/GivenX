@@ -45,7 +45,7 @@ import com.example.client_mobile.network.TokenManager
 fun LawyerDetailScreen(
     lawyerId: String = "",
     onBack: () -> Unit = {},
-    onNavigateToChat: (String) -> Unit = {},
+    onNavigateToChat: (String, String, String) -> Unit = { _, _, _ -> },
     userViewModel: UserViewModel = viewModel()
 ) {
     val lawyerListViewModel: LawyerListViewModel = viewModel(key = "lawyer_list")
@@ -56,14 +56,11 @@ fun LawyerDetailScreen(
     val lawyer  = lawyers?.firstOrNull { it.id == lawyerId }
 
     var showBookingDialog by remember { mutableStateOf(false) }
-<<<<<<< HEAD
-    val scope = rememberCoroutineScope()
-=======
     var showAccessDeniedDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     val handleSecureMessageClick = {
-        coroutineScope.launch {
+        scope.launch {
             // Verify payment status securely before allowing chat access
             val hasAccess = userViewModel.hasPaidConsultation(
                 clientId = TokenManager.getUserIdInt().toString(), 
@@ -77,13 +74,12 @@ fun LawyerDetailScreen(
                     clientName = UserSession.name,
                     avatarUrl  = lawyer?.avatarUrl ?: ""
                 )
-                onNavigateToChat(conv.id)
+                onNavigateToChat(conv.id, lawyer?.name ?: "", lawyer?.avatarUrl ?: "")
             } else {
                 showBookingDialog = true
             }
         }
     }
->>>>>>> 2847bdd4393248f8578018cba67af1df915df812
 
     BaseScreen(
         title = "Fiche Avocat",
@@ -330,57 +326,50 @@ fun LawyerDetailScreen(
                 onDismiss = { showBookingDialog = false },
                 onPaymentValidated = { reservationData ->
                     showBookingDialog = false
-<<<<<<< HEAD
-                    val clientId = TokenManager.getClientId().toString()
-                    scope.launch {
-                        try {
-                            val resResponse = RetrofitClient.reservationApi.createReservation(
-                                CreateReservationRequest(
-                                    lawyerId    = lawyerId,
-                                    lawyerName  = reservationData.lawyerName,
-                                    clientId    = clientId,
-                                    fullName    = reservationData.nom,
-                                    contact     = reservationData.contact,
-                                    domain      = reservationData.domaine,
-                                    description = reservationData.description,
-                                    mode        = reservationData.mode.name,
-                                    price       = reservationData.mode.price
-                                )
-                            )
-                            val savedRes = resResponse.body()?.data
-                            Log.d("LawyerDetail", "Reservation created: id=${savedRes?.id}, clientId=$clientId, lawyerId=$lawyerId")
-                        } catch (e: Exception) {
-                            Log.e("LawyerDetail", "Reservation creation failed: ${e.message}")
-                        }
-                    }
-=======
-                    
                     val safeLawyerId = reservationData.lawyerId
                     val clientId = TokenManager.getUserIdInt().toString()
                     
-                    // 1. Persist the paid consultation
-                    ConsultationRepository.addConsultation(
-                        Consultation(
-                            id = "${clientId}_${safeLawyerId}_${System.currentTimeMillis()}",
-                            clientId = clientId,
-                            lawyerId = safeLawyerId,
-                            lawyerName = reservationData.lawyerName,
-                            avatarUrl = reservationData.lawyerAvatarUrl,
-                            isPaid = true,
-                            status = ConsultationStatus.ACTIVE
-                        )
+                    // Local entity for shared UI logic
+                    val localConsultation = Consultation(
+                        id = "${clientId}_${safeLawyerId}_${System.currentTimeMillis()}",
+                        clientId = clientId,
+                        lawyerId = safeLawyerId,
+                        lawyerName = reservationData.lawyerName,
+                        avatarUrl = reservationData.lawyerAvatarUrl,
+                        isPaid = true,
+                        status = ConsultationStatus.ACTIVE
                     )
+                    
+                    // API DTO for server persistence
+                    val apiConsultation = com.example.client_mobile.network.dto.Consultation(
+                        id = null, // Let json-server auto-increment
+                        clientId = clientId.toIntOrNull() ?: 0,
+                        lawyerId = safeLawyerId.toIntOrNull() ?: 0,
+                        status = "accepted",
+                        subject = reservationData.domaine,
+                        date = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date())
+                    )
+                    
+                    // 1. Persist the paid consultation locally
+                    ConsultationRepository.addConsultation(localConsultation)
+
+                    // 2. Persist securely to backend so strict filtering works on restart
+                    scope.launch {
+                        try {
+                            com.example.client_mobile.network.RetrofitClient.haqApi.createConsultation(apiConsultation)
+                        } catch (e: Exception) {
+                            // Fallback securely
+                        }
+                    }
 
                     // Parent handles: grant messaging access, send to API, etc.
-                    // reservationData contains all form + payment info.
->>>>>>> 2847bdd4393248f8578018cba67af1df915df812
                     val conv = ConversationRepository.getOrCreate(
                         lawyerId   = lawyerId,
                         lawyerName = reservationData.lawyerName,
                         clientName = reservationData.nom,
                         avatarUrl  = reservationData.lawyerAvatarUrl
                     )
-                    onNavigateToChat(conv.id)
+                    onNavigateToChat(conv.id, reservationData.lawyerName, reservationData.lawyerAvatarUrl)
                 }
             )
         }

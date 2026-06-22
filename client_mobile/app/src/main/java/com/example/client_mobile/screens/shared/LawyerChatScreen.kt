@@ -29,26 +29,28 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 
 // --- Chat Screen (bidirectional) ----------------------------------------------
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     conversationId: String,
+    passedLawyerName: String = "",
+    passedAvatarUrl: String = "",
     isLawyer: Boolean = false,
     currentUserName: String = if (isLawyer) "Avocat" else UserSession.name.ifBlank { "" },
     onBack: () -> Unit = {}
 ) {
-    // Fetch messages from API on first composition
-    val chatViewModel: ChatViewModel = viewModel(
-        key = conversationId,
-        factory = ChatViewModel.Factory(conversationId)
-    )
-    val conversation = ConversationRepository.conversations.find { it.id == conversationId }
-    val messages = ConversationRepository.getMessages(conversationId)
+    // Fetch messages and preserved Header State via natively injected SavedStateHandle
+    val chatViewModel: ChatViewModel = viewModel()
+    
+    val messages by chatViewModel.messages.collectAsStateWithLifecycle()
+    val headerName by chatViewModel.headerName.collectAsStateWithLifecycle()
+    val headerAvatarUrl by chatViewModel.headerAvatarUrl.collectAsStateWithLifecycle()
 
-    val otherName = conversation?.otherPartyName ?: ""
     val otherSubtitle = ""
 
-    val initials = otherName
+    val initials = headerName
         .removePrefix("Maître ")
         .split(" ")
         .mapNotNull { it.firstOrNull()?.uppercaseChar() }
@@ -113,25 +115,27 @@ fun ChatScreen(
                                 .border(1.5.dp, AppGoldColor, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (conversation?.avatarUrl?.isNotBlank() == true) {
+                            if (headerAvatarUrl.isNotBlank()) {
                                 AsyncImage(
-                                    model = conversation.avatarUrl,
-                                    contentDescription = otherName,
+                                    model = headerAvatarUrl,
+                                    contentDescription = headerName,
                                     modifier = Modifier.fillMaxSize().clip(CircleShape)
                                 )
                             } else {
                                 Text(
-                                    initials,
-                                    fontFamily = FontFamily.Serif,
+                                    text = initials,
+                                    color = AppGoldColor,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = AppGoldColor
+                                    fontSize = 16.sp
                                 )
                             }
                         }
+                        
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
                         Column {
                             Text(
-                                otherName,
+                                text = headerName,
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
@@ -213,7 +217,7 @@ fun ChatScreen(
                                     textAlign = TextAlign.Center
                                 )
                                 Text(
-                                    "Écrivez à $otherName pour commencer.",
+                                    "Écrivez à $headerName pour commencer.",
                                     fontFamily = FontFamily.Serif,
                                     fontSize = 12.sp,
                                     color = AppDarkGreen.copy(alpha = 0.35f),

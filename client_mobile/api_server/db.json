@@ -49,8 +49,8 @@
       "id": 6,
       "userId": 6,
       "full_name": "Tarik oulehiane",
-      "avatar_url": "/data/user/0/com.example.client_mobile/files/profile_1782053713817.jpg",
-      "phone": "+212 6464646464",
+      "avatar_url": "/data/user/0/com.example.client_mobile/files/profile_1782083381795.jpg",
+      "phone": "+212 55555555",
       "role": "CLIENT",
       "address": "Casablanca"
     },
@@ -500,6 +500,46 @@
       "date": "2024-06-20T16:00:00Z",
       "status": "pending",
       "subject": "Plainte pour vol"
+    },
+    {
+      "client_id": 6,
+      "date": "2026-06-21T22:33:03Z",
+      "lawyer_id": 5,
+      "status": "accepted",
+      "subject": "Droit de la Famille",
+      "id": 6
+    },
+    {
+      "client_id": 6,
+      "date": "2026-06-21T23:04:49Z",
+      "lawyer_id": 2,
+      "status": "accepted",
+      "subject": "Droit Pénal",
+      "id": 7
+    },
+    {
+      "client_id": 6,
+      "date": "2026-06-21T23:36:04Z",
+      "lawyer_id": 1,
+      "status": "accepted",
+      "subject": "Droit Pénal",
+      "id": 8
+    },
+    {
+      "client_id": 6,
+      "date": "2026-06-21T23:46:02Z",
+      "lawyer_id": 3,
+      "status": "accepted",
+      "subject": "Droit de la Famille",
+      "id": 9
+    },
+    {
+      "client_id": 6,
+      "date": "2026-06-22T00:00:09Z",
+      "lawyer_id": 4,
+      "status": "accepted",
+      "subject": "Droit Pénal",
+      "id": 10
     }
   ],
   "documents": [
@@ -722,6 +762,41 @@
       "name": "image",
       "type": "",
       "id": "yvzl9-B"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "K4FsnZR"
+    },
+    {
+      "name": "IDIDI",
+      "type": "",
+      "id": "9y9Y_3y"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "5QMSm26"
+    },
+    {
+      "name": "document",
+      "type": "",
+      "id": "nTe9CAJ"
+    },
+    {
+      "name": "image",
+      "type": "",
+      "id": "iLH74_b"
+    },
+    {
+      "name": "TESY",
+      "type": "",
+      "id": "Bdr20Uk"
+    },
+    {
+      "name": "test",
+      "type": "",
+      "id": "zM6BH33"
     }
   ],
   "dossiers": [
@@ -776,6 +851,558 @@
       "unread_count_user": 1,
       "unread_count_lawyer": 0,
       "created_at": "2024-06-01T09:00:00Z"
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T21:19:17Z",
+      "id": "conv_1782076757365",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "",
+        "full_name": "Maître Luc Bertrand",
+        "id": "5",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T21:20:17Z",
+      "id": "conv_1782076817079",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "",
+        "full_name": "Maître Marc Villeneuve",
+        "id": "4",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T21:20:42Z",
+      "id": "conv_1782076842937",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "",
+        "full_name": "Maître Marc Villeneuve",
+        "id": "4",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T21:20:45Z",
+      "id": "conv_1782076845903",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "",
+        "full_name": "Maître Marc Villeneuve",
+        "id": "4",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T21:57:12Z",
+      "id": "conv_1782079032154",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "",
+        "full_name": "Maître Luc Bertrand",
+        "id": "5",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T22:12:56Z",
+      "id": "conv_1782079976364",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "",
+        "full_name": "Maître Luc Bertrand",
+        "id": "5",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T22:23:27Z",
+      "id": "conv_1782080607796",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
+        "full_name": "Maître Luc Bertrand",
+        "id": "5",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T22:33:10Z",
+      "id": "conv_1782081190748",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
+        "full_name": "Maître Luc Bertrand",
+        "id": "5",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:04:56Z",
+      "id": "conv_1782083096455",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
+        "full_name": "Maître Marie Legrand",
+        "id": "2",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:09:56Z",
+      "id": "conv_1782083396872",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
+        "full_name": "Maître Marie Legrand",
+        "id": "1782077930543",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:10:09Z",
+      "id": "conv_1782083409878",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
+        "full_name": "Luc Bertrand",
+        "id": "1782070288364",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:10:51Z",
+      "id": "conv_1782083451804",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
+        "full_name": "Maître Marie Legrand",
+        "id": "1782083396872",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:16:59Z",
+      "id": "conv_1782083819607",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
+        "full_name": "Maître Marie Legrand",
+        "id": "1782077930543",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:17:09Z",
+      "id": "conv_1782083829832",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
+        "full_name": "Maître Marie Legrand",
+        "id": "1782083819607",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:17:26Z",
+      "id": "conv_1782083846813",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
+        "full_name": "Luc Bertrand",
+        "id": "1782070288364",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:46:09Z",
+      "id": "conv_1782085569315",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
+        "full_name": "Maître Sofia Benali",
+        "id": "3",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:46:50Z",
+      "id": "conv_1782085610249",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
+        "full_name": "Maître Sofia Benali",
+        "id": "1782077781489",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:47:06Z",
+      "id": "conv_1782085626405",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
+        "full_name": "Maître Sofia Benali",
+        "id": "1782085610249",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:47:28Z",
+      "id": "conv_1782085648757",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
+        "full_name": "Maître Sofia Benali",
+        "id": "1782085626405",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-21T23:47:41Z",
+      "id": "conv_1782085661979",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
+        "full_name": "Maître Sofia Benali",
+        "id": "1782085648757",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-22T00:00:53Z",
+      "id": "conv_1782086453156",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
+        "full_name": "Maître Marc Villeneuve",
+        "id": "1782086421441",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-22T00:01:23Z",
+      "id": "conv_1782086483568",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/1.jpg",
+        "full_name": "Maître Jean Dupont",
+        "id": "1782084969868",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-22T00:01:36Z",
+      "id": "conv_1782086496747",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
+        "full_name": "Maître Marc Villeneuve",
+        "id": "1782086453156",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
+    },
+    {
+      "avatarUrl": "",
+      "client": {
+        "avatar_url": "",
+        "full_name": "Tarik oulehiane",
+        "id": "6",
+        "speciality": ""
+      },
+      "created_at": "2026-06-22T00:01:45Z",
+      "id": "conv_1782086505200",
+      "lastMessage": "",
+      "lawyer": {
+        "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
+        "full_name": "Maître Marc Villeneuve",
+        "id": "1782086496747",
+        "speciality": ""
+      },
+      "otherPartyName": "",
+      "timestamp": "",
+      "unreadCount": 0,
+      "unread_count_lawyer": 0,
+      "unread_count_user": 0
     }
   ],
 <<<<<<< HEAD
@@ -818,19 +1445,169 @@
       "id": "RwJ7Rsq"
     },
     {
-      "content": "",
-      "conversationId": "conv_002",
-      "documentMime": "image/jpeg",
-      "documentName": "image",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782063404502_image.jpg",
+      "content": "HEY",
+      "conversationId": "conv_1782076757365",
       "type": "text",
-      "id": "5WHF0SD"
+      "id": "blOkvaC"
+    },
+    {
+      "content": "EFF",
+      "conversationId": "conv_1782076817079",
+      "type": "text",
+      "id": "ViiMF8G"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782076842937",
+      "documentMime": "application/pdf",
+      "documentName": "IDIDI",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782076834777_IDIDI.pdf",
+      "type": "text",
+      "id": "R-799RH"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782076845903",
+      "documentMime": "application/pdf",
+      "documentName": "IDIDI",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782076834777_IDIDI.pdf",
+      "type": "text",
+      "id": "ujHh3tX"
+    },
+    {
+      "content": "HEYS",
+      "conversationId": "conv_1782079032154",
+      "type": "text",
+      "id": "nxRgWKj"
+    },
+    {
+      "content": "HET",
+      "conversationId": "conv_1782079976364",
+      "type": "text",
+      "id": "jDGoPsb"
     },
     {
       "content": "HEY ",
-      "conversationId": "TARIK_OULE_4",
+      "conversationId": "conv_1782080607796",
       "type": "text",
-      "id": "goMLYbv"
+      "id": "-wh9AAr"
+    },
+    {
+      "content": "HEY",
+      "conversationId": "conv_1782081190748",
+      "type": "text",
+      "id": "skBcaQ7"
+    },
+    {
+      "content": "TEST",
+      "conversationId": "conv_1782083096455",
+      "type": "text",
+      "id": "hsUo_bS"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782083396872",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083366130_image.jpg",
+      "type": "text",
+      "id": "aAXpP8t"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782083409878",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083366130_image.jpg",
+      "type": "text",
+      "id": "_D8lR0N"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782083451804",
+      "documentMime": "application/pdf",
+      "documentName": "document",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083443770_document.pdf",
+      "type": "text",
+      "id": "4a_NHJf"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782083819607",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083812751_image.jpg",
+      "type": "text",
+      "id": "PYVP7Uu"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782083829832",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083812751_image.jpg",
+      "type": "text",
+      "id": "O8l7L0T"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782083846813",
+      "documentMime": "image/jpeg",
+      "documentName": "image",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083812751_image.jpg",
+      "type": "text",
+      "id": "eX0QHNX"
+    },
+    {
+      "content": "SALUT",
+      "conversationId": "conv_1782085569315",
+      "type": "text",
+      "id": "u094aIS"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782085610249",
+      "documentMime": "application/pdf",
+      "documentName": "TESY",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782085600268_TESY.pdf",
+      "type": "text",
+      "id": "THxoa1Y"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782085661979",
+      "documentMime": "application/pdf",
+      "documentName": "TESY",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782085600268_TESY.pdf",
+      "type": "text",
+      "id": "W1DXeyA"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782086453156",
+      "documentMime": "application/pdf",
+      "documentName": "test",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782086441618_test.pdf",
+      "type": "text",
+      "id": "9wZtpux"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782086483568",
+      "documentMime": "application/pdf",
+      "documentName": "test",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782086441618_test.pdf",
+      "type": "text",
+      "id": "aUDDM0B"
+    },
+    {
+      "content": "",
+      "conversationId": "conv_1782086496747",
+      "documentMime": "application/pdf",
+      "documentName": "test",
+      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782086441618_test.pdf",
+      "type": "text",
+      "id": "TQvA8Tq"
     }
   ],
 >>>>>>> 2847bdd4393248f8578018cba67af1df915df812

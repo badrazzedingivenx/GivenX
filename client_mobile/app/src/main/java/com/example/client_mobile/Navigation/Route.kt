@@ -51,8 +51,12 @@ sealed class Route(val route: String) {
         fun createRoute(lawyerId: String) = "LawyerDetail/$lawyerId"
     }
 
-    data object Chat : Route("Chat/{conversationId}") {
-        fun createRoute(conversationId: String) = "Chat/$conversationId"
+    data object Chat : Route("Chat/{conversationId}?lawyerName={lawyerName}&avatarUrl={avatarUrl}") {
+        fun createRoute(conversationId: String, lawyerName: String = "", avatarUrl: String = ""): String {
+            val encodedName = android.net.Uri.encode(lawyerName)
+            val encodedAvatar = android.net.Uri.encode(avatarUrl)
+            return "Chat/$conversationId?lawyerName=$encodedName&avatarUrl=$encodedAvatar"
+        }
     }
 
     data object DossierDetail : Route("DossierDetail/{caseId}") {
