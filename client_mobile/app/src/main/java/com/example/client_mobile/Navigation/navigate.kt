@@ -364,7 +364,7 @@ fun AppNavigation() {
             LawyerDetailScreen(
                 lawyerId = lawyerId,
                 onBack = { navController.popBackStack() },
-                onNavigateToChat = { convId, name, avatar -> navController.navigate(Route.Chat.createRoute(convId, name, avatar)) }
+                onNavigateToChat = { convId -> navController.navigate(Route.Chat.createRoute(convId)) }
             )
         }
 

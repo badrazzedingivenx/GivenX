@@ -8,6 +8,8 @@ import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.PaymentDto
 import com.example.client_mobile.network.dto.PaymentSummary
 import com.example.client_mobile.network.dto.ReservationDto
+import com.example.client_mobile.repository.ReservationRepository
+import com.example.client_mobile.repository.Result
 import com.example.client_mobile.screens.shared.ConsultationRepository
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,7 +104,12 @@ class PaymentViewModel(
 
     private fun observeReservations() {
         Log.d("PaymentVM", "Lawyer mode: observing reservation flow (id=$lawyerId)")
-        ConsultationRepository.refresh()
+        ConsultationRepository.refresh(forceRefresh = true)
+
+        // 1. Direct API fetch — immediate, reliable data (fallback if repo isn't loaded)
+        viewModelScope.launch { fetchLawyerReservations() }
+
+        // 2. Reactive observer — stays in sync when dashboard accept/reject changes
         viewModelScope.launch {
             ConsultationRepository.reservationsFlow.collect { reservations ->
                 val myReservations = reservations.filter { it.lawyerId == lawyerId.toString() }
@@ -113,22 +120,37 @@ class PaymentViewModel(
         }
     }
 
+    private suspend fun fetchLawyerReservations() {
+        try {
+            val repo = ReservationRepository()
+            when (val result = repo.getLawyerReservations(lawyerId.toString())) {
+                is Result.Success -> {
+                    val list = result.data
+                    Log.d("PaymentVM", "Direct fetch: ${list.size} reservations for lawyer $lawyerId")
+                    _transactions.value = list.filter { it.status == "accepted" }
+                    computeSummary(list)
+                }
+                is Result.Error -> {
+                    Log.w("PaymentVM", "Direct fetch failed: ${result.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("PaymentVM", "Direct fetch threw: ${e.message}")
+        }
+    }
+
     /**
      * Summarises reservation amounts per the payment workflow:
      *  - **totalPaid**  = sum of price where status == "accepted" AND paymentStatus == "paid"
      *  - **pendingAmount** = sum of price where status == "accepted" AND paymentStatus == "unpaid"
      */
     private fun computeSummary(reservations: List<ReservationDto>) {
-        var paid = 0
-        var pending = 0
-        reservations.forEach {
-            if (it.status == "accepted") {
-                when (it.paymentStatus) {
-                    "paid"   -> paid   += it.price
-                    "unpaid" -> pending += it.price
-                }
-            }
-        }
+        val paid = reservations
+            .filter { it.status == "accepted" && it.paymentStatus == "paid" }
+            .sumOf { it.price }
+        val pending = reservations
+            .filter { it.status == "accepted" && it.paymentStatus == "unpaid" }
+            .sumOf { it.price }
         _totalPaid.value   = "${formatPrice(paid)} DH"
         _pendingAmount.value = "${formatPrice(pending)} DH"
         Log.d("PaymentVM", "Summary: paid=$paid, pending=$pending")

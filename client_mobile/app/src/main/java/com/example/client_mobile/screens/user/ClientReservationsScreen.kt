@@ -40,7 +40,7 @@ fun ClientReservationsScreen(
             error = null
             Log.d("ClientReservations", "Fetching reservations for clientId=$clientId")
             try {
-                val response = RetrofitClient.reservationApi.getReservations(clientId = clientId.toIntOrNull())
+                val response = RetrofitClient.reservationApi.getReservations(clientId = clientId)
                 if (response.isSuccessful && response.body()?.success == true) {
                     reservations = response.body()?.data ?: emptyList()
                     Log.d("ClientReservations", "Found ${reservations.size} reservations")

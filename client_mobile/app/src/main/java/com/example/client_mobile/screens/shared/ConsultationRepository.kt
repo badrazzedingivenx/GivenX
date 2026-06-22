@@ -1,5 +1,6 @@
 package com.example.client_mobile.screens.shared
 
+import android.util.Log
 import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.ReservationDto
 import com.example.client_mobile.repository.ReservationRepository
@@ -55,20 +56,28 @@ object ConsultationRepository {
     }
 
     private suspend fun loadFromApi() {
-        val userIdInt = TokenManager.getUserIdInt().takeIf { it > 0 } ?: return
-        val userIdStr = userIdInt.toString()
+        try {
+            val userIdInt = TokenManager.getUserIdInt().takeIf { it > 0 } ?: run {
+                Log.w("ConsultRepo", "loadFromApi: invalid userId, skipping")
+                return
+            }
+            val userIdStr = userIdInt.toString()
 
-        val clientResult = reservationRepo.getClientReservations(userIdStr)
-        val lawyerResult = reservationRepo.getLawyerReservations(userIdStr)
+            val clientResult = reservationRepo.getClientReservations(userIdStr)
+            val lawyerResult = reservationRepo.getLawyerReservations(userIdStr)
 
-        val all = mutableListOf<ReservationDto>()
-        if (clientResult is Result.Success) all.addAll(clientResult.data)
-        if (lawyerResult is Result.Success) all.addAll(lawyerResult.data)
+            val all = mutableListOf<ReservationDto>()
+            if (clientResult is Result.Success) all.addAll(clientResult.data)
+            if (lawyerResult is Result.Success) all.addAll(lawyerResult.data)
 
-        synchronized(_reservations) {
-            _reservations.clear()
-            _reservations.addAll(all.distinctBy { it.id })
-            _reservationsFlow.value = _reservations.toList()
+            synchronized(_reservations) {
+                _reservations.clear()
+                _reservations.addAll(all.distinctBy { it.id })
+                _reservationsFlow.value = _reservations.toList()
+            }
+            Log.d("ConsultRepo", "loadFromApi: loaded ${all.size} reservations")
+        } catch (e: Exception) {
+            Log.e("ConsultRepo", "loadFromApi failed: ${e.message}", e)
         }
     }
 
