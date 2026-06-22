@@ -102,11 +102,8 @@ fun MainDashboardHost(
 
     var reservationLawyerId by remember { mutableStateOf<String?>(null) }
     var reservationLawyerName by remember { mutableStateOf("") }
-<<<<<<< HEAD
     val scope = rememberCoroutineScope()
-=======
     var reservationLawyerAvatar by remember { mutableStateOf("") }
->>>>>>> 2847bdd4393248f8578018cba67af1df915df812
 
     AppScaffold(
         showBackground = false,
@@ -268,11 +265,11 @@ fun MainDashboardHost(
             prefillNom = UserSession.name,
             onDismiss = { reservationLawyerId = null },
             onPaymentValidated = { reservationData ->
-<<<<<<< HEAD
                 val rLawyerId = reservationLawyerId ?: ""
                 val rLawyerName = reservationLawyerName
                 reservationLawyerId = null
                 val clientId = TokenManager.getClientId().toString()
+                
                 scope.launch {
                     try {
                         val resResponse = RetrofitClient.reservationApi.createReservation(
@@ -294,17 +291,9 @@ fun MainDashboardHost(
                         Log.e("HomeScreen", "Reservation creation failed: ${e.message}")
                     }
                 }
-                val conv = ConversationRepository.getOrCreate(
-                    lawyerId   = rLawyerId,
-                    lawyerName = rLawyerName,
-                    clientName = reservationData.nom
-=======
-                // Dismiss the reservation sheet to seamlessly reveal the origin screen (Reels/Profile)
-                reservationLawyerId = null
                 
                 // Safe data extraction (fixes the NullPointerException crash)
                 val safeLawyerId = reservationData.lawyerId
-                val clientId = TokenManager.getUserIdInt().toString()
                 
                 // 1. Persist the paid consultation
                 ConsultationRepository.addConsultation(
@@ -317,7 +306,6 @@ fun MainDashboardHost(
                         isPaid = true,
                         status = ConsultationStatus.ACTIVE
                     )
->>>>>>> 2847bdd4393248f8578018cba67af1df915df812
                 )
                 
                 // 2. Initialize the conversation
