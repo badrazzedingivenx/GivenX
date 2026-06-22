@@ -27,6 +27,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.client_mobile.screens.shared.*
 import com.example.client_mobile.network.dto.PaymentDto
 import com.example.client_mobile.network.dto.PaymentSummary
+import com.example.client_mobile.network.dto.ReservationDto
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun PaymentScreen(
@@ -41,6 +44,9 @@ fun PaymentScreen(
         viewModel.fetchPayments()
     }
     val uiState by viewModel.uiState.collectAsState()
+    val totalPaid by viewModel.totalPaid.collectAsState()
+    val pendingAmount by viewModel.pendingAmount.collectAsState()
+    val transactions by viewModel.transactions.collectAsState()
 
     BaseScreen(
         title = "PAIEMENTS",
@@ -51,27 +57,41 @@ fun PaymentScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            when (val state = uiState) {
-                is PaymentState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-                is PaymentState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(state.message, color = MaterialTheme.colorScheme.error)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            LegalButton(
-                                text = "Réessayer",
-                                onClick = { viewModel.fetchPayments() },
-                                modifier = Modifier.width(200.dp)
-                            )
+            if (lawyerId != -1) {
+                // Lawyer mode — financial data is reactive from reservation flow
+                PaymentContent(
+                    reservationTransactions = transactions,
+                    totalPaid = totalPaid,
+                    pendingAmount = pendingAmount
+                )
+            } else {
+                // Client mode — existing API-based flow
+                when (val state = uiState) {
+                    is PaymentState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         }
                     }
-                }
-                is PaymentState.Success -> {
-                    PaymentContent(state.payments, state.summary)
+                    is PaymentState.Error -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(state.message, color = MaterialTheme.colorScheme.error)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                LegalButton(
+                                    text = "Réessayer",
+                                    onClick = { viewModel.fetchPayments() },
+                                    modifier = Modifier.width(200.dp)
+                                )
+                            }
+                        }
+                    }
+                    is PaymentState.Success -> {
+                        PaymentContent(
+                            payments = state.payments,
+                            totalPaid = state.summary.totalPaid,
+                            pendingAmount = state.summary.pendingAmount
+                        )
+                    }
                 }
             }
         }
@@ -79,7 +99,12 @@ fun PaymentScreen(
 }
 
 @Composable
-fun PaymentContent(payments: List<PaymentDto>, summary: PaymentSummary) {
+fun PaymentContent(
+    payments: List<PaymentDto> = emptyList(),
+    reservationTransactions: List<ReservationDto> = emptyList(),
+    totalPaid: String,
+    pendingAmount: String
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -87,22 +112,30 @@ fun PaymentContent(payments: List<PaymentDto>, summary: PaymentSummary) {
     ) {
         item { Spacer(Modifier.height(4.dp)) }
         item {
-            PaymentSummarySection(summary)
+            PaymentSummarySection(totalPaid, pendingAmount)
         }
 
         item {
             SectionHeader(title = "Historique des transactions")
         }
 
-        if (payments.isEmpty()) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text("Aucun paiement trouvé", style = MaterialTheme.typography.bodyMedium, color = AppDarkGreen.copy(alpha = 0.5f))
+        when {
+            reservationTransactions.isNotEmpty() -> {
+                items(reservationTransactions, key = { it.id }) { r ->
+                    TransactionRow(r)
                 }
             }
-        } else {
-            items(payments) { payment ->
-                PaymentItem(payment)
+            payments.isNotEmpty() -> {
+                items(payments) { payment ->
+                    PaymentItem(payment)
+                }
+            }
+            else -> {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text("Aucun paiement trouvé", style = MaterialTheme.typography.bodyMedium, color = AppDarkGreen.copy(alpha = 0.5f))
+                    }
+                }
             }
         }
         item { Spacer(Modifier.height(8.dp)) }
@@ -110,21 +143,96 @@ fun PaymentContent(payments: List<PaymentDto>, summary: PaymentSummary) {
 }
 
 @Composable
-fun PaymentSummarySection(summary: PaymentSummary) {
+private fun TransactionRow(reservation: ReservationDto) {
+    val paymentLabel = if (reservation.paymentStatus == "paid") "Payé" else "En attente"
+    val (chipBg, chipColor) = if (reservation.paymentStatus == "paid")
+        StatusGreenBg to StatusGreen
+    else
+        StatusOrangeBg to StatusOrange
+
+    DashCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(AppDarkGreen.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                    contentDescription = null,
+                    tint = AppDarkGreen
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = reservation.fullName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen
+                )
+                Text(
+                    text = formatPaymentDate(reservation.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppDarkGreen.copy(alpha = 0.5f)
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${reservation.price} DH",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AppDarkGreen
+                )
+                com.example.client_mobile.screens.shared.StatusChip(
+                    label = paymentLabel,
+                    containerColor = chipBg,
+                    textColor = chipColor
+                )
+            }
+        }
+    }
+}
+
+/** Parses ISO 8601 date and returns French short format e.g. "12 Juin". */
+private fun formatPaymentDate(isoDate: String): String {
+    if (isoDate.isBlank()) return ""
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.FRENCH)
+        val date = parser.parse(isoDate)
+        val formatter = SimpleDateFormat("d MMM", Locale.FRENCH)
+        formatter.format(date!!)
+            .replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
+    } catch (_: Exception) {
+        try {
+            val parts = isoDate.take(10).split("-")
+            val months = listOf("Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc")
+            "${parts[2].trimStart('0')} ${months.getOrNull(parts[1].toInt() - 1) ?: parts[1]}"
+        } catch (_: Exception) { isoDate }
+    }
+}
+
+@Composable
+fun PaymentSummarySection(totalPaid: String, pendingAmount: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SummaryCard(
             label = "Total Payé",
-            amount = summary.totalPaid,
+            amount = totalPaid,
             containerColor = StatusGreenBg,
             contentColor = StatusGreen,
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
             label = "En attente",
-            amount = summary.pendingAmount,
+            amount = pendingAmount,
             containerColor = StatusOrangeBg,
             contentColor = StatusOrange,
             modifier = Modifier.weight(1f)

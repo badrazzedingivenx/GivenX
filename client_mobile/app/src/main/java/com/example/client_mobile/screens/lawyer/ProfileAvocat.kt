@@ -2,6 +2,8 @@ package com.example.client_mobile.screens.lawyer
 
 import com.example.client_mobile.screens.shared.*
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -28,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +59,7 @@ fun AvocatProfile(
     onLogout: () -> Unit = {},
     dashboardViewModel: LawyerDashboardViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val lawyerProfile  by dashboardViewModel.profile.collectAsStateWithLifecycle()
     val lawyerStats    by dashboardViewModel.stats.collectAsStateWithLifecycle()
     val isRefreshing   by dashboardViewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -101,7 +105,7 @@ fun AvocatProfile(
                 title = "Profil Avocat",
                 onBack = onBack,
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = { shareProfile(context, displayName) }) {
                         Icon(
                             Icons.Default.Share,
                             contentDescription = "Partager",
@@ -774,4 +778,16 @@ private fun LawyerDivider() {
         modifier = Modifier.padding(vertical = 12.dp),
         color = AppDarkGreen.copy(alpha = 0.07f)
     )
+}
+
+/** Opens the system share sheet with the lawyer's profile info. */
+private fun shareProfile(context: Context, lawyerName: String) {
+    val lawyerId = TokenManager.getUserIdInt().takeIf { it > 0 }?.toString() ?: "0"
+    val deepLink = "haqqi://profile/$lawyerId"
+    val message = "Découvrez le profil de Maître $lawyerName sur HAQQI : $deepLink"
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, message)
+    }
+    context.startActivity(Intent.createChooser(intent, "Partager le profil"))
 }

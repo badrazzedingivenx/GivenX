@@ -265,18 +265,33 @@ fun MainDashboardHost(
             prefillNom = UserSession.name,
             onDismiss = { reservationLawyerId = null },
             onPaymentValidated = { reservationData ->
-                val rLawyerId = reservationLawyerId ?: ""
-                val rLawyerName = reservationLawyerName
+                // Dismiss the reservation sheet
                 reservationLawyerId = null
-                val clientId = TokenManager.getClientId().toString()
                 
+                val safeLawyerId = reservationData.lawyerId
+                val clientIdStr = TokenManager.getUserIdInt().let { if (it == -1) "" else it.toString() }
+                
+                // 1. Persist the paid consultation locally
+                ConsultationRepository.addConsultation(
+                    Consultation(
+                        id = "${clientIdStr}_${safeLawyerId}_${System.currentTimeMillis()}",
+                        clientId = clientIdStr,
+                        lawyerId = safeLawyerId,
+                        lawyerName = reservationData.lawyerName,
+                        avatarUrl = reservationData.lawyerAvatarUrl,
+                        isPaid = true,
+                        status = ConsultationStatus.ACTIVE
+                    )
+                )
+                
+                // 2. Call backend API
                 scope.launch {
                     try {
                         val resResponse = RetrofitClient.reservationApi.createReservation(
                             CreateReservationRequest(
-                                lawyerId    = rLawyerId,
-                                lawyerName  = rLawyerName,
-                                clientId    = clientId,
+                                lawyerId    = safeLawyerId,
+                                lawyerName  = reservationData.lawyerName,
+                                clientId    = clientIdStr,
                                 fullName    = reservationData.nom,
                                 contact     = reservationData.contact,
                                 domain      = reservationData.domaine,
@@ -286,27 +301,11 @@ fun MainDashboardHost(
                             )
                         )
                         val savedRes = resResponse.body()?.data
-                        Log.d("HomeScreen", "Reservation created: id=${savedRes?.id}, clientId=$clientId, lawyerId=$rLawyerId")
+                        Log.d("HomeScreen", "Reservation created: id=${savedRes?.id}, clientId=$clientIdStr, lawyerId=$safeLawyerId")
                     } catch (e: Exception) {
                         Log.e("HomeScreen", "Reservation creation failed: ${e.message}")
                     }
                 }
-                
-                // Safe data extraction (fixes the NullPointerException crash)
-                val safeLawyerId = reservationData.lawyerId
-                
-                // 1. Persist the paid consultation
-                ConsultationRepository.addConsultation(
-                    Consultation(
-                        id = "${clientId}_${safeLawyerId}_${System.currentTimeMillis()}",
-                        clientId = clientId,
-                        lawyerId = safeLawyerId,
-                        lawyerName = reservationData.lawyerName,
-                        avatarUrl = reservationData.lawyerAvatarUrl,
-                        isPaid = true,
-                        status = ConsultationStatus.ACTIVE
-                    )
-                )
                 
                 // 2. Initialize the conversation
                 val conv = ConversationRepository.getOrCreate(

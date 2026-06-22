@@ -5,7 +5,10 @@ import com.example.client_mobile.network.RetrofitClient
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
+import com.example.client_mobile.network.dto.ReservationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
+import com.example.client_mobile.repository.ReservationRepository
+import com.example.client_mobile.repository.Result
 
 /**
  * Service layer for the Avocat Dashboard.
@@ -129,5 +132,27 @@ class DashboardRepository {
         }
 
         return emptyList()
+    }
+
+    // ── Lawyer reservations (raw ReservationDto) ──────────────────────────────
+
+    /**
+     * Fetches all reservations for the current lawyer.
+     * Returns the raw [ReservationDto] objects (not mapped to [RecentConsultationDto]).
+     */
+    suspend fun fetchLawyerReservations(lawyerId: String): List<ReservationDto> {
+        return try {
+            val repo = ReservationRepository()
+            when (val result = repo.getLawyerReservations(lawyerId)) {
+                is Result.Success -> result.data
+                is Result.Error -> {
+                    Log.w("DashboardRepo", "Lawyer reservations fetch failed: ${result.message}")
+                    emptyList()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("DashboardRepo", "Lawyer reservations fetch threw: ${e.message}")
+            emptyList()
+        }
     }
 }

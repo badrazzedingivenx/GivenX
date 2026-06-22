@@ -110,20 +110,20 @@
     {
       "id": 6,
       "userId": 6,
-      "full_name": "Tarik oulehiane",
-      "avatar_url": "/data/user/0/com.example.client_mobile/files/profile_1782088123854.jpg",
-      "phone": "+212 1111111111",
+      "full_name": "Alice Martin",
+      "avatar_url": "https://randomuser.me/api/portraits/women/6.jpg",
+      "phone": "+33 7 11 22 33 44",
       "role": "CLIENT",
-      "address": "Casablanca"
+      "address": "15 Rue de Rivoli, Paris"
     },
     {
       "id": 7,
       "userId": 7,
       "full_name": "Robert Brown",
       "avatar_url": "https://randomuser.me/api/portraits/men/7.jpg",
-      "phone": "+33 2145365485",
+      "phone": "+33 7 22 33 44 55",
       "role": "CLIENT",
-      "address": "Paris"
+      "address": "London, UK"
     },
     {
       "id": 8,
@@ -287,102 +287,185 @@
       "company_name": "Tech Solutions IO"
     }
   ],
-  "consultations": [
+  "reservations": [
     {
-      "id": 1,
-      "clientId": 1,
-      "lawyerId": 1,
-      "date": "2024-06-01T10:00:00Z",
+      "id": "res_001",
+      "lawyerId": "1",
+      "lawyerName": "Maître Jean Dupont",
+      "clientId": "6",
+      "fullName": "Alice Martin",
+      "contact": "alice.martin@gmail.com",
+      "domain": "Droit Immobilier",
+      "description": "Je souhaite obtenir des conseils pour l'achat d'un appartement à Paris 15e. Le compromis de vente est signé mais j'ai des doutes sur certaines clauses.",
+      "mode": "VIDEO",
+      "price": 350,
       "status": "accepted",
-      "subject": "Achat appartement Paris 15"
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-01T10:30:00Z"
     },
     {
-      "id": 2,
-      "clientId": 2,
-      "lawyerId": 5,
-      "date": "2024-06-05T14:30:00Z",
+      "id": "res_002",
+      "lawyerId": "1",
+      "lawyerName": "Maître Jean Dupont",
+      "clientId": "9",
+      "fullName": "Pierre Durand",
+      "contact": "pierre.durand@company.com",
+      "domain": "Droit Immobilier",
+      "description": "Litige avec mon propriétaire concernant des charges locatives abusives. Je voudrais savoir quels sont mes recours.",
+      "mode": "CABINET",
+      "price": 700,
       "status": "pending",
-      "subject": "Rédaction contrat de services"
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-10T14:00:00Z"
     },
     {
-      "id": 3,
-      "clientId": 3,
-      "lawyerId": 2,
-      "date": "2024-06-10T09:00:00Z",
+      "id": "res_003",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "8",
+      "fullName": "Claire Martin",
+      "contact": "claire.martin@outlook.com",
+      "domain": "Droit de la Famille",
+      "description": "Je suis en procédure de divorce et j'ai besoin d'un accompagnement pour la garde de mes deux enfants ainsi que la pension alimentaire.",
+      "mode": "CABINET",
+      "price": 700,
+      "status": "accepted",
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-05T09:00:00Z"
+    },
+    {
+      "id": "res_004",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "10",
+      "fullName": "Emma Wilson",
+      "contact": "emma.wilson@tech.io",
+      "domain": "Droit de la Famille",
+      "description": "Consultation pour une succession internationale. Mon père résidait au Maroc et moi en France. Quelles sont les démarches ?",
+      "mode": "VIDEO",
+      "price": 350,
       "status": "rejected",
-      "subject": "Procédure de divorce"
+      "paymentStatus": "unpaid",
+      "createdAt": "2026-05-28T16:30:00Z"
     },
     {
-      "id": 4,
-      "clientId": 4,
-      "lawyerId": 4,
-      "date": "2024-06-15T11:00:00Z",
-      "status": "accepted",
-      "subject": "Licenciement abusif"
-    },
-    {
-      "id": 5,
-      "clientId": 5,
-      "lawyerId": 3,
-      "date": "2024-06-20T16:00:00Z",
+      "id": "res_005",
+      "lawyerId": "3",
+      "lawyerName": "Maître Sofia Benali",
+      "clientId": "10",
+      "fullName": "Emma Wilson",
+      "contact": "emma.wilson@tech.io",
+      "domain": "Droit Pénal",
+      "description": "J'ai été victime d'une escroquerie en ligne et je souhaite déposer plainte. J'ai besoin de conseils sur la procédure à suivre.",
+      "mode": "VIDEO",
+      "price": 350,
       "status": "pending",
-      "subject": "Plainte pour vol"
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-12T11:15:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-21T22:33:03Z",
-      "lawyer_id": 5,
+      "id": "res_006",
+      "lawyerId": "4",
+      "lawyerName": "Maître Marc Villeneuve",
+      "clientId": "7",
+      "fullName": "Robert Brown",
+      "contact": "robert.brown@yahoo.fr",
+      "domain": "Droit du Travail",
+      "description": "Mon employeur m'a licencié verbalement sans lettre de licenciement. Je suis en CDI depuis 4 ans. Quels sont mes droits ?",
+      "mode": "CABINET",
+      "price": 700,
       "status": "accepted",
-      "subject": "Droit de la Famille",
-      "id": 6
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-08T08:45:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-21T23:04:49Z",
-      "lawyer_id": 2,
-      "status": "accepted",
-      "subject": "Droit Pénal",
-      "id": 7
+      "id": "res_007",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "11",
+      "fullName": "Amine Bennani",
+      "contact": "amine.bennani@gmail.com",
+      "domain": "Droit des Affaires",
+      "description": "Je souhaite créer une SARL avec deux associés à Casablanca. J'ai besoin de conseils sur le statut juridique et les formalités de création.",
+      "mode": "VIDEO",
+      "price": 350,
+      "status": "pending",
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-15T09:30:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-21T23:36:04Z",
-      "lawyer_id": 1,
-      "status": "accepted",
-      "subject": "Droit Pénal",
-      "id": 8
+      "id": "res_008",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "12",
+      "fullName": "Sara Lamrini",
+      "contact": "sara.lamrini@entreprise.ma",
+      "domain": "Droit du Travail",
+      "description": "Mon employeur me refuse mes congés payés et mes heures supplémentaires ne sont pas rémunérées. Je travaille dans une entreprise à Rabat depuis 3 ans.",
+      "mode": "MESSAGE",
+      "price": 150,
+      "status": "pending",
+      "paymentStatus": "unpaid",
+      "createdAt": "2026-06-18T14:00:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-21T23:46:02Z",
-      "lawyer_id": 3,
+      "id": "res_009",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "13",
+      "fullName": "Youssef Tazi",
+      "contact": "youssef.tazi@menara.ma",
+      "domain": "Droit Immobilier",
+      "description": "Litige foncier à Marrakech concernant une propriété héritée. Le titre foncier est contesté par un voisin qui revendique une partie du terrain.",
+      "mode": "CABINET",
+      "price": 700,
       "status": "accepted",
-      "subject": "Droit de la Famille",
-      "id": 9
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-12T10:00:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-22T00:00:09Z",
-      "lawyer_id": 4,
+      "id": "res_010",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "14",
+      "fullName": "Nadia El Fassi",
+      "contact": "nadia.elfassi@outlook.fr",
+      "domain": "Droit de la Famille",
+      "description": "Je souhaite entamer une procédure de divorce à l'amiable avec mon époux. Nous avons deux enfants en bas âge et je voudrais fixer les modalités de garde.",
+      "mode": "VIDEO",
+      "price": 350,
       "status": "accepted",
-      "subject": "Droit Pénal",
-      "id": 10
+      "paymentStatus": "paid",
+      "createdAt": "2026-06-20T11:15:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-22T00:26:20Z",
-      "lawyer_id": 4,
-      "status": "accepted",
-      "subject": "Droit Pénal",
-      "id": 11
+      "id": "res_011",
+      "lawyerId": "2",
+      "lawyerName": "Maître Marie Legrand",
+      "clientId": "15",
+      "fullName": "Karim Oualili",
+      "contact": "karim.oualili@gmail.com",
+      "domain": "Droit Pénal",
+      "description": "J'ai été victime d'une escroquerie lors de l'achat d'une voiture d'occasion. Le vendeur a falsifié les documents du véhicule.",
+      "mode": "MESSAGE",
+      "price": 150,
+      "status": "rejected",
+      "paymentStatus": "unpaid",
+      "createdAt": "2026-06-08T16:45:00Z"
     },
     {
-      "client_id": 6,
-      "date": "2026-06-22T00:27:26Z",
-      "lawyer_id": 3,
-      "status": "accepted",
-      "subject": "Droit Pénal",
-      "id": 12
+      "clientId": "6",
+      "contact": "131231231",
+      "description": "fdwfwfw",
+      "domain": "Généraliste",
+      "fullName": "Alice Martin",
+      "lawyerId": "4",
+      "lawyerName": "Maître Marc Villeneuve",
+      "mode": "VIDEO",
+      "paymentStatus": "unpaid",
+      "price": 350,
+      "id": "aH1wUuT",
+      "status": "accepted"
     }
   ],
   "documents": [
@@ -505,146 +588,6 @@
       "name": "images.jpeg",
       "type": "jpeg",
       "id": "sCrJz7d"
-    },
-    {
-      "name": "cin",
-      "type": "",
-      "id": "53t8cEz"
-    },
-    {
-      "name": "councourss",
-      "type": "",
-      "id": "FKoutbx"
-    },
-    {
-      "name": "lisence",
-      "type": "",
-      "id": "iRL5UJg"
-    },
-    {
-      "name": "Image",
-      "type": "",
-      "id": "KN5usCS"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "2TBLNg6"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "SWp4awA"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "aoinf-g"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "ENrHCik"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "9VrS-JP"
-    },
-    {
-      "name": "document",
-      "type": "",
-      "id": "0Zxvr4a"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "IaS2zvw"
-    },
-    {
-      "name": "focument",
-      "type": "",
-      "id": "LGJL5Vj"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "uuGKhZG"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "_Z0enHY"
-    },
-    {
-      "name": "document",
-      "type": "",
-      "id": "aLg6z6x"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "aeQlm1b"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "z6UzIiX"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "I_QUYo7"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "RYEbq7G"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "yvzl9-B"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "K4FsnZR"
-    },
-    {
-      "name": "IDIDI",
-      "type": "",
-      "id": "9y9Y_3y"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "5QMSm26"
-    },
-    {
-      "name": "document",
-      "type": "",
-      "id": "nTe9CAJ"
-    },
-    {
-      "name": "image",
-      "type": "",
-      "id": "iLH74_b"
-    },
-    {
-      "name": "TESY",
-      "type": "",
-      "id": "Bdr20Uk"
-    },
-    {
-      "name": "test",
-      "type": "",
-      "id": "zM6BH33"
-    },
-    {
-      "name": "RGGRG",
-      "type": "",
-      "id": "YaZiURe"
     }
   ],
   "dossiers": [
@@ -675,6 +618,28 @@
   ],
   "conversations": [
     {
+      "id": "conv_001",
+      "lawyer": {
+        "id": "1",
+        "full_name": "Jean Dupont",
+        "speciality": "Droit Immobilier",
+        "avatar_url": "https://randomuser.me/api/portraits/men/1.jpg"
+      },
+      "client": {
+        "id": "6",
+        "full_name": "Alice Martin",
+        "avatar_url": "https://randomuser.me/api/portraits/women/6.jpg"
+      },
+      "last_message": {
+        "content": "Merci, j'ai bien reçu le document.",
+        "sent_at": "2024-06-01T11:00:00Z",
+        "sender_id": "6"
+      },
+      "unread_count_user": 0,
+      "unread_count_lawyer": 1,
+      "created_at": "2024-05-30T10:00:00Z"
+    },
+    {
       "id": "conv_002",
       "lawyer": {
         "id": "2",
@@ -695,525 +660,56 @@
       "unread_count_user": 1,
       "unread_count_lawyer": 0,
       "created_at": "2024-06-01T09:00:00Z"
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T21:20:42Z",
-      "id": "conv_1782076842937",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "",
-        "full_name": "Maître Marc Villeneuve",
-        "id": "4",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T21:20:45Z",
-      "id": "conv_1782076845903",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "",
-        "full_name": "Maître Marc Villeneuve",
-        "id": "4",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:09:56Z",
-      "id": "conv_1782083396872",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
-        "full_name": "Maître Marie Legrand",
-        "id": "1782077930543",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:10:09Z",
-      "id": "conv_1782083409878",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
-        "full_name": "Luc Bertrand",
-        "id": "1782070288364",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:10:51Z",
-      "id": "conv_1782083451804",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
-        "full_name": "Maître Marie Legrand",
-        "id": "1782083396872",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:16:59Z",
-      "id": "conv_1782083819607",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
-        "full_name": "Maître Marie Legrand",
-        "id": "1782077930543",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:17:09Z",
-      "id": "conv_1782083829832",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/2.jpg",
-        "full_name": "Maître Marie Legrand",
-        "id": "1782083819607",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:17:26Z",
-      "id": "conv_1782083846813",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/men/5.jpg",
-        "full_name": "Luc Bertrand",
-        "id": "1782070288364",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:46:50Z",
-      "id": "conv_1782085610249",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
-        "full_name": "Maître Sofia Benali",
-        "id": "1782077781489",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:47:06Z",
-      "id": "conv_1782085626405",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
-        "full_name": "Maître Sofia Benali",
-        "id": "1782085610249",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:47:28Z",
-      "id": "conv_1782085648757",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
-        "full_name": "Maître Sofia Benali",
-        "id": "1782085626405",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-21T23:47:41Z",
-      "id": "conv_1782085661979",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
-        "full_name": "Maître Sofia Benali",
-        "id": "1782085648757",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-22T00:00:53Z",
-      "id": "conv_1782086453156",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
-        "full_name": "Maître Marc Villeneuve",
-        "id": "1782086421441",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-22T00:01:23Z",
-      "id": "conv_1782086483568",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/men/1.jpg",
-        "full_name": "Maître Jean Dupont",
-        "id": "1782084969868",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-22T00:01:36Z",
-      "id": "conv_1782086496747",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
-        "full_name": "Maître Marc Villeneuve",
-        "id": "1782086453156",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-22T00:01:45Z",
-      "id": "conv_1782086505200",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/men/4.jpg",
-        "full_name": "Maître Marc Villeneuve",
-        "id": "1782086496747",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
-    },
-    {
-      "avatarUrl": "",
-      "client": {
-        "avatar_url": "",
-        "full_name": "Tarik oulehiane",
-        "id": "6",
-        "speciality": ""
-      },
-      "created_at": "2026-06-22T00:28:00Z",
-      "id": "conv_1782088080659",
-      "lastMessage": "",
-      "lawyer": {
-        "avatar_url": "https://randomuser.me/api/portraits/women/3.jpg",
-        "full_name": "Maître Sofia Benali",
-        "id": "1782088050285",
-        "speciality": ""
-      },
-      "otherPartyName": "",
-      "timestamp": "",
-      "unreadCount": 0,
-      "unread_count_lawyer": 0,
-      "unread_count_user": 0
     }
   ],
   "messages": [
     {
-      "content": "",
-      "conversationId": "conv_1782076842937",
-      "documentMime": "application/pdf",
-      "documentName": "IDIDI",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782076834777_IDIDI.pdf",
-      "type": "text",
-      "id": "R-799RH"
+      "id": "msg_001",
+      "conversationId": "conv_001",
+      "content": "Bonjour Maître, voici le compromis.",
+      "sender_id": "6",
+      "sender_name": "Alice Martin",
+      "is_from_user": true,
+      "sent_at": "2024-06-01T10:30:00Z"
     },
     {
-      "content": "",
-      "conversationId": "conv_1782076845903",
-      "documentMime": "application/pdf",
-      "documentName": "IDIDI",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782076834777_IDIDI.pdf",
-      "type": "text",
-      "id": "ujHh3tX"
+      "id": "msg_002",
+      "conversationId": "conv_001",
+      "content": "Merci, j'ai bien reçu le document.",
+      "sender_id": "1",
+      "sender_name": "Jean Dupont",
+      "is_from_user": false,
+      "sent_at": "2024-06-01T11:00:00Z"
     },
     {
-      "content": "",
-      "conversationId": "conv_1782083396872",
-      "documentMime": "image/jpeg",
-      "documentName": "image",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083366130_image.jpg",
+      "content": "lets try if you will see the message",
+      "conversationId": "conv_001",
       "type": "text",
-      "id": "aAXpP8t"
+      "id": "ucbPIKK"
     },
     {
-      "content": "",
-      "conversationId": "conv_1782083409878",
-      "documentMime": "image/jpeg",
-      "documentName": "image",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083366130_image.jpg",
+      "content": "test message zakaria",
+      "conversationId": "conv_001",
       "type": "text",
-      "id": "_D8lR0N"
+      "id": "J9IOLsR"
     },
     {
-      "content": "",
-      "conversationId": "conv_1782083451804",
-      "documentMime": "application/pdf",
-      "documentName": "document",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083443770_document.pdf",
+      "content": "message done",
+      "conversationId": "conv_001",
       "type": "text",
-      "id": "4a_NHJf"
+      "id": "RwJ7Rsq"
     },
     {
-      "content": "",
-      "conversationId": "conv_1782083819607",
-      "documentMime": "image/jpeg",
-      "documentName": "image",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083812751_image.jpg",
+      "content": "sqdsd",
+      "conversationId": "Alice_Martin_5",
       "type": "text",
-      "id": "PYVP7Uu"
+      "id": "UJpPPNx"
     },
     {
-      "content": "",
-      "conversationId": "conv_1782083829832",
-      "documentMime": "image/jpeg",
-      "documentName": "image",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083812751_image.jpg",
+      "content": "fewfw",
+      "conversationId": "Alice_Martin_4",
       "type": "text",
-      "id": "O8l7L0T"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782083846813",
-      "documentMime": "image/jpeg",
-      "documentName": "image",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782083812751_image.jpg",
-      "type": "text",
-      "id": "eX0QHNX"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782085610249",
-      "documentMime": "application/pdf",
-      "documentName": "TESY",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782085600268_TESY.pdf",
-      "type": "text",
-      "id": "THxoa1Y"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782085661979",
-      "documentMime": "application/pdf",
-      "documentName": "TESY",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782085600268_TESY.pdf",
-      "type": "text",
-      "id": "W1DXeyA"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782086453156",
-      "documentMime": "application/pdf",
-      "documentName": "test",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782086441618_test.pdf",
-      "type": "text",
-      "id": "9wZtpux"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782086483568",
-      "documentMime": "application/pdf",
-      "documentName": "test",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782086441618_test.pdf",
-      "type": "text",
-      "id": "aUDDM0B"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782086496747",
-      "documentMime": "application/pdf",
-      "documentName": "test",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782086441618_test.pdf",
-      "type": "text",
-      "id": "TQvA8Tq"
-    },
-    {
-      "content": "",
-      "conversationId": "conv_1782088080659",
-      "documentMime": "image/jpeg",
-      "documentName": "RGGRG",
-      "documentUrl": "/data/user/0/com.example.client_mobile/files/doc_1782088071773_RGGRG.jpg",
-      "type": "text",
-      "id": "vOOLY99"
+      "id": "kWrmRc_"
     }
   ],
   "notifications": [

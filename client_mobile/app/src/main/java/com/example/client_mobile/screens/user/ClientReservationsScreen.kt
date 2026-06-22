@@ -32,7 +32,7 @@ fun ClientReservationsScreen(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val clientId = TokenManager.getClientId().toString()
+    val clientId: Int? = TokenManager.getClientId().takeIf { it > 0 }
 
     fun loadReservations() {
         scope.launch {

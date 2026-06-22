@@ -80,8 +80,8 @@ fun LawyerDashboardHost(
     val lawyerProfile            by dashboardViewModel.profile.collectAsStateWithLifecycle()
     val lawyerStats              by dashboardViewModel.stats.collectAsStateWithLifecycle()
     val revenueMonthly           by dashboardViewModel.revenueMonthly.collectAsStateWithLifecycle()
-    val recentConsultations      by dashboardViewModel.recentConsultations.collectAsStateWithLifecycle()
-    val consultationsError       by dashboardViewModel.consultationsError.collectAsStateWithLifecycle()
+    val reservations             by dashboardViewModel.reservations.collectAsStateWithLifecycle()
+    val isReservationsLoading    by dashboardViewModel.isReservationsLoading.collectAsStateWithLifecycle()
 
     val displayName       = lawyerProfile?.fullName?.takeIf { it.isNotBlank() }   ?: fullName
     val displaySpeciality = lawyerProfile?.speciality?.takeIf { it.isNotBlank() } ?: speciality
@@ -147,15 +147,16 @@ fun LawyerDashboardHost(
                 top = localPadding.calculateTopPadding(),
                 bottom = paddingValues.calculateBottomPadding()
             ),
-            profile                 = lawyerProfile,
-            stats                   = lawyerStats,
-            revenueMonthly          = revenueMonthly,
-            recentConsultations     = recentConsultations,
-            consultationsError      = consultationsError,
-            onNavigateToRequests    = onNavigateToRequests,
-            onNavigateToPayments    = onNavigateToPayments,
-            onNavigateToCreator     = onNavigateToCreator,
-            onRetryConsultations    = { dashboardViewModel.retryConsultations() }
+            profile              = lawyerProfile,
+            stats                = lawyerStats,
+            revenueMonthly       = revenueMonthly,
+            reservations         = reservations,
+            isReservationsLoading = isReservationsLoading,
+            onNavigateToRequests = onNavigateToRequests,
+            onNavigateToPayments = onNavigateToPayments,
+            onNavigateToCreator  = onNavigateToCreator,
+            onAcceptReservation  = { dashboardViewModel.acceptReservation(it) },
+            onRejectReservation  = { dashboardViewModel.rejectReservation(it) }
         )
     }
 

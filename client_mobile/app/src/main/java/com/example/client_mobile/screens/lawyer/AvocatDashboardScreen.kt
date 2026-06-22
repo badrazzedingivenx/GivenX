@@ -1,5 +1,10 @@
 package com.example.client_mobile.screens.lawyer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,8 +35,11 @@ import androidx.compose.ui.unit.sp
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
+import com.example.client_mobile.network.dto.ReservationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
 import com.example.client_mobile.screens.shared.*
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 // ─── Fallback chart data when the API hasn't returned data yet
 private val FallbackRevenue = listOf(
@@ -64,6 +72,27 @@ private fun formatConsultDate(raw: String): String {
     } catch (_: Exception) { raw }
 }
 
+/**
+ * Parses an ISO 8601 date string (e.g. "2026-05-28T16:30:00Z") and returns
+ * a French short-date like "28 Mai". Uses Locale.FRENCH for formatting.
+ */
+private fun formatReservationDate(isoDate: String): String {
+    if (isoDate.isBlank()) return ""
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.FRENCH)
+        val date = parser.parse(isoDate)
+        val formatter = SimpleDateFormat("d MMM", Locale.FRENCH)
+        formatter.format(date!!)
+            .replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
+    } catch (_: Exception) {
+        try {
+            val parts = isoDate.take(10).split("-")
+            val months = listOf("Jan","Fév","Mar","Avr","Mai","Juin","Juil","Août","Sep","Oct","Nov","Déc")
+            "${parts[2].trimStart('0')} ${months.getOrNull(parts[1].toInt() - 1) ?: parts[1]}"
+        } catch (_: Exception) { isoDate }
+    }
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 @Composable
 fun AvocatDashboardScreen(
@@ -71,12 +100,13 @@ fun AvocatDashboardScreen(
     profile: LawyerProfileDto? = null,
     stats: LawyerStatsDto? = null,
     revenueMonthly: List<RevenueMonthDto> = emptyList(),
-    recentConsultations: List<RecentConsultationDto> = emptyList(),
-    consultationsError: Boolean = false,
+    reservations: List<ReservationDto> = emptyList(),
+    isReservationsLoading: Boolean = true,
     onNavigateToRequests: () -> Unit = {},
     onNavigateToPayments: () -> Unit = {},
     onNavigateToCreator: () -> Unit = {},
-    onRetryConsultations: () -> Unit = {}
+    onAcceptReservation: (String) -> Unit = {},
+    onRejectReservation: (String) -> Unit = {}
 ) {
     val isLoading = stats == null
 
@@ -104,11 +134,11 @@ fun AvocatDashboardScreen(
         item { DashRevenueCard(revenue = revenueMonthly, isLoading = isLoading) }
         item {
             DashConsultationsCard(
-                consultations      = recentConsultations,
-                isLoading          = isLoading,
-                consultationsError = consultationsError,
-                onRetry            = onRetryConsultations,
-                onViewAll          = onNavigateToPayments
+                reservations   = reservations,
+                isLoading      = isLoading || isReservationsLoading,
+                onViewAll      = onNavigateToPayments,
+                onAcceptClick  = onAcceptReservation,
+                onRejectClick  = onRejectReservation
             )
         }
         item { Spacer(Modifier.height(32.dp)) }
@@ -401,11 +431,11 @@ private fun DashRevenueCard(revenue: List<RevenueMonthDto>, isLoading: Boolean) 
 // ─── Recent Consultations ─────────────────────────────────────────────────────
 @Composable
 private fun DashConsultationsCard(
-    consultations: List<RecentConsultationDto>,
+    reservations: List<ReservationDto>,
     isLoading: Boolean,
-    consultationsError: Boolean = false,
-    onRetry: () -> Unit = {},
-    onViewAll: () -> Unit
+    onViewAll: () -> Unit,
+    onAcceptClick: (String) -> Unit = {},
+    onRejectClick: (String) -> Unit = {}
 ) {
     LegalDashboardCard(modifier = Modifier.fillMaxWidth()) {
             // Title row
@@ -422,7 +452,7 @@ private fun DashConsultationsCard(
                     ),
                     color = AppDarkGreen
                 )
-                if (!isLoading && consultations.isNotEmpty()) {
+                if (!isLoading && reservations.isNotEmpty()) {
                     TextButton(
                         onClick = onViewAll,
                         contentPadding = PaddingValues(0.dp)
@@ -439,88 +469,14 @@ private fun DashConsultationsCard(
             }
             Spacer(Modifier.height(12.dp))
             when {
-                isLoading -> repeat(3) { i ->
+                isLoading && reservations.isEmpty() -> repeat(3) { i ->
                     ConsultationSkeletonRow()
                     if (i < 2) HorizontalDivider(
                         modifier = Modifier.padding(vertical = 10.dp),
                         color = Color(0xFFE2E8F0)
                     )
                 }
-                consultationsError -> {
-                    // Track in-flight retry so the button shows a spinner
-                    var isRetrying by remember { mutableStateOf(false) }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 28.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.WifiOff,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                modifier = Modifier.size(36.dp)
-                            )
-                            Text(
-                                "Impossible de charger",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                "Vérifiez votre connexion internet.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                textAlign = TextAlign.Center
-                            )
-                            // Gold « Réessayer » button
-                            OutlinedButton(
-                                onClick = {
-                                    isRetrying = true
-                                    onRetry()
-                                },
-                                enabled = !isRetrying,
-                                shape = RoundedCornerShape(50.dp),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp, AppGoldColor
-                                ),
-                                contentPadding = PaddingValues(
-                                    horizontal = 20.dp, vertical = 8.dp
-                                )
-                            ) {
-                                if (isRetrying) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(14.dp),
-                                        strokeWidth = 2.dp,
-                                        color = AppGoldColor
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Default.Refresh,
-                                        contentDescription = null,
-                                        tint = AppGoldColor,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                }
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    "Réessayer",
-                                    fontSize = 13.sp,
-                                    color = AppGoldColor,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                    // Reset local spinner when the error clears (retry succeeded)
-                    LaunchedEffect(consultationsError) {
-                        if (!consultationsError) isRetrying = false
-                    }
-                }
-                consultations.isEmpty() -> Box(
+                reservations.isEmpty() -> Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 28.dp),
@@ -537,15 +493,15 @@ private fun DashConsultationsCard(
                             modifier = Modifier.size(36.dp)
                         )
                         Text(
-                            "Aucune consultation récente",
+                            "Aucune demande récente",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
                 }
-                else -> consultations.forEachIndexed { i, c ->
-                    ConsultationRow(c)
-                    if (i < consultations.lastIndex) HorizontalDivider(
+                else -> reservations.forEachIndexed { i, r ->
+                    ReservationConsultationRow(r, onAcceptClick, onRejectClick)
+                    if (i < reservations.lastIndex) HorizontalDivider(
                         modifier = Modifier.padding(vertical = 10.dp),
                         color = Color(0xFFE2E8F0)
                     )
@@ -555,15 +511,35 @@ private fun DashConsultationsCard(
 }
 
 @Composable
-private fun ConsultationRow(consultation: RecentConsultationDto) {
-    val statusText = consultation.status.ifBlank { "—" }
-    val (statusColor, statusBg) = when {
-        statusText.contains("term",    ignoreCase = true) ||
-        statusText.contains("compl",   ignoreCase = true) -> StatusGreen to StatusGreenBg
-        statusText.contains("attente", ignoreCase = true) ||
-        statusText.contains("pend",    ignoreCase = true)  -> AppGoldColor to AppGoldColor.copy(alpha = 0.12f)
-        else                                               -> StatusRed to StatusRedBg
+private fun ReservationConsultationRow(
+    reservation: ReservationDto,
+    onAcceptClick: (String) -> Unit = {},
+    onRejectClick: (String) -> Unit = {}
+) {
+    val isPending = reservation.status == "pending"
+    val statusLabel = when (reservation.status) {
+        "accepted"  -> "Accepté"
+        "rejected"  -> "Refusé"
+        "pending"   -> "En attente"
+        "completed" -> "Terminé"
+        else        -> reservation.status
     }
+    val statusColor = when (reservation.status) {
+        "accepted"  -> Color.Red
+        "rejected"  -> Color.Red
+        "pending"   -> Color(0xFFC5A059)
+        "completed" -> StatusGreen
+        else        -> StatusGray
+    }
+    val statusBg = when (reservation.status) {
+        "accepted"  -> Color(0xFFFFEBEE)
+        "rejected"  -> Color(0xFFFFEBEE)
+        "pending"   -> Color(0xFFFFF8E1)
+        "completed" -> StatusGreenBg
+        else        -> StatusGrayBg
+    }
+    val modeIcon = if (reservation.mode == "VIDEO") Icons.Default.VideoCall else Icons.Default.Email
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -578,18 +554,19 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = consultation.clientName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
+                text = reservation.fullName.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = AppDarkGreen
             )
         }
-        // ── Name + case + status pill ───────────────────────────────
+        // ── Name + domain + status + buttons ───────────────────────────
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
+            // Client name
             Text(
-                text = consultation.clientName.ifBlank { "Client" },
+                text = reservation.fullName.ifBlank { "Client Inconnu" },
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Serif
@@ -598,44 +575,70 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            // Show "Case · Date" when both fields are available; fall back gracefully
-            val consultSubtitle = buildString {
-                if (consultation.legalCase.isNotBlank()) append(consultation.legalCase)
-                val fd = formatConsultDate(consultation.date)
+            // Domain · Date
+            val subtitle = buildString {
+                if (reservation.domain.isNotBlank()) append(reservation.domain)
+                val fd = formatReservationDate(reservation.createdAt)
                 if (fd.isNotBlank()) {
                     if (isNotEmpty()) append("  ·  ")
                     append(fd)
                 }
             }.ifBlank { "—" }
             Text(
-                text = consultSubtitle,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = AppSubtitleGray
-                ),
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall.copy(color = AppSubtitleGray),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            // Status pill + price
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Status pill
-                StatusChip(
-                    label = statusText,
-                    containerColor = statusBg,
-                    textColor = statusColor
-                )
-                // Price
-                if (consultation.price > 0f) {
+                StatusChip(label = statusLabel, containerColor = statusBg, textColor = statusColor)
+                if (reservation.price > 0) {
                     Text(
-                        text = "· %.0f MAD".format(consultation.price),
+                        text = "· %d MAD".format(reservation.price),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 }
             }
+            // Accept/Reject buttons for pending reservations
+            AnimatedVisibility(
+                visible = isPending,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { onRejectClick(reservation.id) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, StatusRed),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusRed)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Refuser", modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Refuser", fontSize = 12.sp)
+                    }
+                    Button(
+                        onClick = { onAcceptClick(reservation.id) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AppDarkGreen)
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = "Accepter", modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Accepter", fontSize = 12.sp)
+                    }
+                }
+            }
         }
-        // ── Gold action button (Video/Call) ──────────────────────────
+        // ── Mode-based action icon ─────────────────────────────────────
         Box(
             modifier = Modifier
                 .size(36.dp)
@@ -644,8 +647,8 @@ private fun ConsultationRow(consultation: RecentConsultationDto) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.VideoCall,
-                contentDescription = "Démarrer la consultation",
+                imageVector = modeIcon,
+                contentDescription = if (reservation.mode == "VIDEO") "Video" else "Message",
                 tint = AppGoldColor,
                 modifier = Modifier.size(18.dp)
             )

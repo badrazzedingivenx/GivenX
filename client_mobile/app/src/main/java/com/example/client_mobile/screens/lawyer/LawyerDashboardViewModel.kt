@@ -8,7 +8,9 @@ import com.example.client_mobile.network.TokenManager
 import com.example.client_mobile.network.dto.LawyerProfileDto
 import com.example.client_mobile.network.dto.LawyerStatsDto
 import com.example.client_mobile.network.dto.RecentConsultationDto
+import com.example.client_mobile.network.dto.ReservationDto
 import com.example.client_mobile.network.dto.RevenueMonthDto
+import com.example.client_mobile.screens.shared.ConsultationRepository
 import com.example.client_mobile.screens.shared.LawyerSession
 import com.google.gson.Gson
 import kotlinx.coroutines.Job
@@ -47,6 +49,14 @@ class LawyerDashboardViewModel : ViewModel() {
     private val _recentConsultations = MutableStateFlow<List<RecentConsultationDto>>(emptyList())
     val recentConsultations: StateFlow<List<RecentConsultationDto>> = _recentConsultations
 
+    /** Raw reservations data for the dashboard cards. */
+    private val _reservations = MutableStateFlow<List<ReservationDto>>(emptyList())
+    val reservations: StateFlow<List<ReservationDto>> = _reservations
+
+    /** Separate loading flag so the card shows skeletons while reservations load (avoids race with [stats]). */
+    private val _isReservationsLoading = MutableStateFlow(true)
+    val isReservationsLoading: StateFlow<Boolean> = _isReservationsLoading
+
     /** true only when the network call failed AND there is no cached data to show. */
     private val _consultationsError = MutableStateFlow(false)
     val consultationsError: StateFlow<Boolean> = _consultationsError
@@ -66,6 +76,28 @@ class LawyerDashboardViewModel : ViewModel() {
     /** Retry fetching consultations after a network failure. Called from the 'Réessayer' button. */
     fun retryConsultations() {
         viewModelScope.launch { fetchRecentConsultations() }
+    }
+
+    /** Accept a reservation — updates status to "accepted" and refreshes the list. */
+    fun acceptReservation(reservationId: String) {
+        viewModelScope.launch {
+            if (ConsultationRepository.updateReservationStatus(reservationId, "accepted")) {
+                fetchRecentConsultations()
+            } else {
+                _errorMessage.value = "Erreur lors de l'acceptation de la réservation"
+            }
+        }
+    }
+
+    /** Reject a reservation — updates status to "rejected" and refreshes the list. */
+    fun rejectReservation(reservationId: String) {
+        viewModelScope.launch {
+            if (ConsultationRepository.updateReservationStatus(reservationId, "rejected")) {
+                fetchRecentConsultations()
+            } else {
+                _errorMessage.value = "Erreur lors du refus de la réservation"
+            }
+        }
     }
 
     fun clearError() { _errorMessage.value = null; _isError.value = false }
@@ -96,14 +128,19 @@ class LawyerDashboardViewModel : ViewModel() {
         }
         _isRefreshing.value = true
         Log.d("DashboardVM", "Fetching dashboard data (skipProfile=$skipProfile)")
+        _isReservationsLoading.value = true
         kotlinx.coroutines.coroutineScope {
             val profileJob       = if (!skipProfile) async { fetchProfile() } else null
             val statsJob         = async { fetchStats() }
             val consultationsJob = async { fetchRecentConsultations() }
+            val reservationsJob  = async { fetchLawyerReservations() }
             profileJob?.await()
             statsJob.await()
             consultationsJob.await()
+            reservationsJob.await()
         }
+        Log.d("DashboardVM", "Reservations loaded: count=${_reservations.value.size}")
+        _isReservationsLoading.value = false
         Log.d("DashboardVM", "Dashboard data fetched: profile=${_profile.value?.fullName}, stats=${_stats.value != null}, consultations=${_recentConsultations.value.size}")
         _isRefreshing.value = false
     }
@@ -178,6 +215,18 @@ class LawyerDashboardViewModel : ViewModel() {
                 statsEmbedded = stats.monthlyRevenue
             )
         }
+    }
+
+    private suspend fun fetchLawyerReservations() {
+        val rawId = TokenManager.getUserIdInt()
+        Log.d("DashboardVM", "fetchLawyerReservations: rawId=$rawId, isLoggedIn=${TokenManager.isLoggedIn()}, userType=${TokenManager.getUserType()}")
+        val lawyerId = rawId.takeIf { it > 0 }?.toString() ?: run {
+            Log.w("DashboardVM", "fetchLawyerReservations: invalid userId $rawId — skipping")
+            return
+        }
+        val result = repository.fetchLawyerReservations(lawyerId)
+        Log.d("DashboardVM", "fetchLawyerReservations: lawyerId=$lawyerId returned ${result.size} items")
+        _reservations.value = result
     }
 
     private suspend fun fetchRecentConsultations() {
